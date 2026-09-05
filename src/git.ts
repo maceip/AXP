@@ -11,9 +11,9 @@ import {
 } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
-import type { ChangesetFile } from "@microsoft/agent-host-protocol";
+import type { ChangesetFile, ContentRef } from "@microsoft/agent-host-protocol";
 import type { AxpClient } from "./client.js";
-import type { Checkpoint, Review, BlobRef } from "./protocol/types.js";
+import type { Checkpoint, Review } from "./protocol/types.js";
 import { id, sha } from "./protocol/schema.js";
 import { Codes, requireThat } from "./protocol/errors.js";
 import { hash, verifyObject } from "./hash.js";
@@ -166,8 +166,8 @@ export class Worktree {
         // git's object database provides exact bytes, including deleted files;
         // no symlink-following filesystem reads are necessary here.
         const parts: {
-          before?: { uri: string; content: BlobRef };
-          after?: { uri: string; content: BlobRef };
+          before?: { uri: string; content: ContentRef };
+          after?: { uri: string; content: ContentRef };
         } = {};
         for (const [key, commit] of [
           ["before", this.baseCommit],
@@ -188,7 +188,11 @@ export class Worktree {
             const content = await upload(stdout, "application/octet-stream");
             parts[key] = {
               uri: `axp-file:/${encodeURIComponent(channel)}/${encodeURIComponent(name)}`,
-              content,
+              content: {
+                uri: content.uri,
+                contentType: content.mediaType,
+                sizeHint: content.size,
+              },
             };
           } catch (error) {
             // Only a genuinely missing path is an absent before/after side.

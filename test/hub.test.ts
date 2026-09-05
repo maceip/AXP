@@ -14,6 +14,7 @@ import { setup, dock, prompt } from "./helpers.js";
 import { AxpClient } from "../src/client.js";
 import { SocketTransport } from "../src/transport.js";
 import { randomUUID } from "node:crypto";
+import { actionFrom } from "../src/validation.js";
 
 test("wire errors retain AHP codes and version negotiation data", async (t) => {
   const f = await setup();
@@ -241,6 +242,11 @@ test("real sockets: one atomic claim, gated AHP streaming and idempotent spendin
   assert.deepEqual(a, b);
   assert.equal(a.turns.length, 1);
   assert.equal(a.activeTurn, undefined);
+  const archive = await f.observer.call("_axp/export", {
+    channel: f.c.exchange,
+  });
+  for (const event of archive.actions)
+    if (!event.action.type.startsWith("_axp/")) actionFrom(event.action);
 });
 
 test("lease expiry conservatively settles in-flight usage and fences old output", async (t) => {

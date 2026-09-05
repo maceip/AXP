@@ -438,7 +438,22 @@ export class Sessions {
       ? Math.max(0, this.now() - reservation.startedAt)
       : 0;
     if (usage)
-      tx.emit(state.chat, { type: ActionType.ChatUsage, turnId, usage });
+      tx.emit(state.chat, {
+        type: ActionType.ChatUsage,
+        turnId,
+        usage: {
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          cacheReadTokens: usage.cacheReadTokens,
+          _meta: {
+            [CAPABILITY]: {
+              costMicros: usage.costMicros,
+              source: usage.source,
+              costSource: usage.costSource ?? usage.source,
+            },
+          },
+        },
+      });
     if (outcome === "complete")
       tx.emit(state.chat, {
         type: ActionType.ChatTurnComplete,
