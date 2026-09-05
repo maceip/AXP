@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "epoch": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "checkpoint": {
+      "type": "object",
+      "properties": {
+        "baseCommit": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "headCommit": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "branch": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "bundle": {
+          "type": "object",
+          "properties": {
+            "uri": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "mediaType": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          "required": [
+            "uri",
+            "sha256",
+            "size",
+            "mediaType"
+          ],
+          "additionalProperties": false
+        },
+        "patch": {
+          "type": "object",
+          "properties": {
+            "uri": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "mediaType": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          "required": [
+            "uri",
+            "sha256",
+            "size",
+            "mediaType"
+          ],
+          "additionalProperties": false
+        },
+        "createdAt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "baseCommit",
+        "headCommit",
+        "branch",
+        "bundle",
+        "patch",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "files": {
+      "maxItems": 2000,
+      "type": "array",
+      "items": {}
+    }
+  },
+  "required": [
+    "channel",
+    "operationId",
+    "epoch",
+    "checkpoint",
+    "files"
+  ],
+  "additionalProperties": false,
+  "title": "_axp/checkpoint"
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "proposalId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    }
+  },
+  "required": [
+    "channel",
+    "operationId",
+    "proposalId"
+  ],
+  "additionalProperties": false,
+  "title": "_axp/acceptCompaction"
+}

@@ -1,0 +1,4 @@
+* text=auto eol=lf
+# Preserve copied upstream conformance data and notices exactly.
+test/upstream/** -text whitespace=cr-at-eol
+schema/upstream/** -text whitespace=cr-at-eol

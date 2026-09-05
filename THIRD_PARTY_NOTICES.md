@@ -8,7 +8,7 @@
 AXP depends on these upstream packages. It is an independent project and is
 not endorsed by Microsoft, Zed, Google, or any model provider. Dependency
 licenses accompany their respective packages. Copied conformance fixtures
-retain the upstream MIT license beside them.
+and the copied action schema retain the upstream MIT license beside them.
 
 Design references:
 

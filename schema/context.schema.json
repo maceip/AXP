@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "maxChars": {
+      "default": 64000,
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 200000
+    }
+  },
+  "required": [
+    "channel",
+    "maxChars"
+  ],
+  "additionalProperties": false,
+  "title": "_axp/context"
+}

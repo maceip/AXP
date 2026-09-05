@@ -1,0 +1,8 @@
+*
+!package.json
+!package-lock.json
+!examples/
+!examples/fixture-agent.ts
+!test/
+!test/fixtures/
+!test/fixtures/Dockerfile

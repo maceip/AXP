@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "query": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "limit": {
+      "default": 5,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20
+    }
+  },
+  "required": [
+    "channel",
+    "query",
+    "limit"
+  ],
+  "additionalProperties": false,
+  "title": "_axp/memorySearch"
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "executorId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "grantId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "leaseMs": {
+      "type": "integer",
+      "minimum": 3000,
+      "maximum": 300000
+    }
+  },
+  "required": [
+    "channel",
+    "operationId",
+    "executorId",
+    "grantId",
+    "leaseMs"
+  ],
+  "additionalProperties": false,
+  "title": "_axp/claim"
+}

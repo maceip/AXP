@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "data": {
+      "type": "string",
+      "maxLength": 24000000
+    },
+    "mediaType": {
+      "type": "string",
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "channel",
+    "operationId",
+    "data",
+    "mediaType"
+  ],
+  "additionalProperties": false,
+  "title": "_axp/blobPut"
+}

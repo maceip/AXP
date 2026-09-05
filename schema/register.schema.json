@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "executorId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "placement": {
+      "type": "string",
+      "enum": [
+        "satellite",
+        "hosted"
+      ]
+    },
+    "capabilities": {
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 128
+      }
+    },
+    "ttlMs": {
+      "type": "integer",
+      "minimum": 3000,
+      "maximum": 300000
+    }
+  },
+  "required": [
+    "channel",
+    "operationId",
+    "executorId",
+    "name",
+    "placement",
+    "capabilities",
+    "ttlMs"
+  ],
+  "additionalProperties": false,
+  "title": "_axp/register"
+}

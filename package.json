@@ -4,16 +4,41 @@
   "description": "Park an agent at a repository. Share and steer durable AHP sessions through ACP.",
   "type": "module",
   "license": "MIT",
-  "engines": { "node": ">=24.15.0" },
-  "bin": { "axp": "dist/cli.js" },
-  "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./protocol": { "types": "./dist/protocol/index.d.ts", "default": "./dist/protocol/index.js" },
-    "./client": { "types": "./dist/client.d.ts", "default": "./dist/client.js" }
+  "engines": {
+    "node": ">=24.15.0"
   },
-  "files": ["dist", "schema", "docs", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"],
-  "repository": { "type": "git", "url": "git+https://github.com/maceip/AXP.git" },
-  "bugs": { "url": "https://github.com/maceip/AXP/issues" },
+  "bin": {
+    "axp": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./protocol": {
+      "types": "./dist/protocol/index.d.ts",
+      "default": "./dist/protocol/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    }
+  },
+  "files": [
+    "dist",
+    "schema",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maceip/AXP.git"
+  },
+  "bugs": {
+    "url": "https://github.com/maceip/AXP/issues"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
@@ -24,11 +49,13 @@
     "lint": "eslint src test scripts",
     "schema": "tsx scripts/schema.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run build && npm run test:coverage",
-    "demo": "tsx examples/demo.ts"
+    "demo": "tsx examples/demo.ts",
+    "test:package": "node scripts/package-smoke.mjs"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "1.4.0",
     "@microsoft/agent-host-protocol": "0.9.0",
+    "ajv": "^8.20.0",
     "ws": "^8.21.0",
     "zod": "^4.3.0"
   },

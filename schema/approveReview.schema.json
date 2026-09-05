@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "signature": {
+      "type": "object",
+      "properties": {
+        "publicKey": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "signature": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "publicKey",
+        "signature"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "channel",
+    "operationId",
+    "signature"
+  ],
+  "additionalProperties": false,
+  "title": "_axp/approveReview"
+}
