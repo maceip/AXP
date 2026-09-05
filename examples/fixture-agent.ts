@@ -91,10 +91,17 @@ const app = acp
       toolCallId,
       status: "in_progress",
     });
-    const wait = Number(process.argv.find((arg) => arg.startsWith("--delay-ms="))?.split("=")[1] ?? 0);
+    const wait = Number(
+      process.argv
+        .find((arg) => arg.startsWith("--delay-ms="))
+        ?.split("=")[1] ?? 0,
+    );
     if (wait) {
-      try { await delay(wait, undefined, { signal: session.controller.signal }); }
-      catch { return { stopReason: "cancelled" as const }; }
+      try {
+        await delay(wait, undefined, { signal: session.controller.signal });
+      } catch {
+        return { stopReason: "cancelled" as const };
+      }
     }
     await writeFile(
       join(session.cwd, "sum.js"),

@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { pathToFileURL } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   ActionType,
@@ -78,15 +79,25 @@ try {
     repository: directory,
     agent: {
       command: process.execPath,
-      args: liveAgent ? [resolve(liveAgent)] : [
-        "--import",
-        resolve("node_modules/tsx/dist/loader.mjs"),
-        resolve("examples/fixture-agent.ts"),
-      ],
+      args: liveAgent
+        ? [resolve(liveAgent)]
+        : [
+            "--import",
+            pathToFileURL(resolve("node_modules/tsx/dist/loader.mjs")).href,
+            resolve("examples/fixture-agent.ts"),
+          ],
       isolation: "native",
     },
-    allowance: { tokens: 100_000, costMicros: liveAgent ? 5_000_000 : 0, turns: 5 },
-    perTurn: { tokens: liveAgent ? 100_000 : 2000, costMicros: liveAgent ? 5_000_000 : 0, turns: 1 },
+    allowance: {
+      tokens: 100_000,
+      costMicros: liveAgent ? 5_000_000 : 0,
+      turns: 5,
+    },
+    perTurn: {
+      tokens: liveAgent ? 100_000 : 2000,
+      costMicros: liveAgent ? 5_000_000 : 0,
+      turns: 1,
+    },
   });
   satellite.on("fault", (error) => console.error(error.message));
   await satellite.start();
@@ -112,9 +123,15 @@ try {
       (p) =>
         p.kind === "toolCall" && p.toolCall.status === "pending-confirmation",
     );
-    if (tool?.kind === "toolCall" && tool.toolCall.status === 'pending-confirmation' && !approved.has(tool.toolCall.toolCallId)) {
-      const selected = tool.toolCall.options?.find(o => o.kind === 'approve' && !/always|session/i.test(o.label));
-      assert.ok(selected, 'No one-time approval option');
+    if (
+      tool?.kind === "toolCall" &&
+      tool.toolCall.status === "pending-confirmation" &&
+      !approved.has(tool.toolCall.toolCallId)
+    ) {
+      const selected = tool.toolCall.options?.find(
+        (o) => o.kind === "approve" && !/always|session/i.test(o.label),
+      );
+      assert.ok(selected, "No one-time approval option");
       await maintainer.dispatch(c.chat, {
         type: ActionType.ChatToolCallConfirmed,
         turnId,
@@ -129,7 +146,10 @@ try {
       );
     }
     const state = await maintainer.snapshot<ExchangeState>(c.exchange);
-    if (!chat.activeTurn && chat.turns.length && !state.checkpoint) throw new Error(`Agent ended without a checkpoint: ${JSON.stringify(chat.turns.at(-1)?.responseParts)}`);
+    if (!chat.activeTurn && chat.turns.length && !state.checkpoint)
+      throw new Error(
+        `Agent ended without a checkpoint: ${JSON.stringify(chat.turns.at(-1)?.responseParts)}`,
+      );
     if (state.checkpoint && !state.reservation) {
       done = state;
       break;
@@ -154,7 +174,11 @@ try {
   console.log(
     `6. Contributor retained the same ${archive.actions.length} durable actions, including approvals, output and checkpoint.`,
   );
-  console.log(liveAgent ? 'Live-agent integration passed using the configured ACP adapter.' : 'Demo passed. This fixture demonstrates the protocol and real Git/test execution; it uses no model or API credits.');
+  console.log(
+    liveAgent
+      ? "Live-agent integration passed using the configured ACP adapter."
+      : "Demo passed. This fixture demonstrates the protocol and real Git/test execution; it uses no model or API credits.",
+  );
 } finally {
   await satellite?.stop();
   await maintainer.close();

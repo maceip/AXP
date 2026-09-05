@@ -6,6 +6,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
+import { pathToFileURL } from "node:url";
 import { Hub } from "../src/hub.js";
 import { AxpClient } from "../src/client.js";
 import { channels } from "../src/protocol/types.js";
@@ -35,16 +36,23 @@ test(
     const env = { ...process.env };
     delete env.NODE_TEST_CONTEXT;
     const child = fork(resolve("test/fixtures/crash-host.ts"), [config], {
-      execArgv: ["--import", resolve("node_modules/tsx/dist/loader.mjs")],
+      execArgv: [
+        "--import",
+        pathToFileURL(resolve("node_modules/tsx/dist/loader.mjs")).href,
+      ],
       env,
       stdio: ["ignore", "ignore", "inherit", "ipc"],
     });
+    let restoredHub: Hub | undefined;
+    let restoredClient: AxpClient | undefined;
     t.after(async () => {
       if (child.exitCode === null && child.signalCode === null) {
         const exited = once(child, "exit");
         child.kill("SIGKILL");
         await exited;
       }
+      await restoredClient?.close();
+      await restoredHub?.close();
       await rm(dir, { recursive: true, force: true });
     });
     const [started] = (await once(child, "message")) as [{ url: string }];
@@ -81,13 +89,12 @@ test(
     await exited;
     await contributor.close();
     await maintainer.close();
-    const hub = new Hub(options);
+    const hub = (restoredHub = new Hub(options));
     const url = await hub.listen();
-    const client = await AxpClient.connect(url, credentials[1]!.token);
-    t.after(async () => {
-      await client.close();
-      await hub.close();
-    });
+    const client = (restoredClient = await AxpClient.connect(
+      url,
+      credentials[1]!.token,
+    ));
     const state = await client.snapshot<ExchangeState>(c.exchange);
     assert.equal(state.status, "orphaned");
     assert.equal(state.grants.donation?.spent.tokens, 555);

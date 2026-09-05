@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { pathToFileURL } from "node:url";
 import {
   ActionType,
   ToolCallConfirmationReason,
@@ -40,7 +41,7 @@ function agent(delayMs = 0): AgentLaunch {
         command: process.execPath,
         args: [
           "--import",
-          resolve("node_modules/tsx/dist/loader.mjs"),
+          pathToFileURL(resolve("node_modules/tsx/dist/loader.mjs")).href,
           resolve("examples/fixture-agent.ts"),
           `--delay-ms=${delayMs}`,
         ],
@@ -130,6 +131,7 @@ test(
     });
     satellite.on("fault", (error) => {
       faults.push(error);
+      t.diagnostic(error.message);
     });
     t.after(async () => {
       await satellite.stop();
@@ -269,7 +271,10 @@ test(
       allowance: { tokens: 10_000, costMicros: 100_000, turns: 10 },
       perTurn: { tokens: 1000, costMicros: 10_000, turns: 1 },
     });
-    satellite.on("fault", (e) => faults.push(e));
+    satellite.on("fault", (e) => {
+      faults.push(e);
+      t.diagnostic(e.message);
+    });
     t.after(async () => {
       await satellite.stop();
       await f.close();

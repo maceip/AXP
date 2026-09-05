@@ -61,8 +61,16 @@ test("unmodified AHP client reconnects by replay and snapshot with convergent re
 
 test("restart preserves receipts and checkpoints but interrupts and fences old execution", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "axp-durable-"));
-  t.after(() => rm(directory, { recursive: true, force: true }));
+  let cleanup = async () => {};
+  t.after(async () => {
+    try {
+      await cleanup();
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
   const f = await setup({ database: join(directory, "state.db") });
+  cleanup = f.close;
   const lease = await dock(f.contributor, f.c.exchange);
   const turn = prompt();
   await f.maintainer.dispatch(f.c.chat, turn);
@@ -76,17 +84,19 @@ test("restart preserves receipts and checkpoints but interrupts and fences old e
   await f.contributor.call("_axp/reserve", reservation);
   const seq = f.hub.store.seq;
   await f.close();
+  cleanup = async () => {};
   const hub = new Hub({
     repository: "example/project",
     credentials: f.credentials,
     database: join(directory, "state.db"),
   });
   const url = await hub.listen();
+  cleanup = () => hub.close();
   const client = await AxpClient.connect(url, f.credentials[1]!.token);
-  t.after(async () => {
+  cleanup = async () => {
     await client.close();
     await hub.close();
-  });
+  };
   const state = await client.snapshot<ExchangeState>(f.c.exchange);
   assert.equal(state.status, "orphaned");
   assert.equal(state.lease, null);
