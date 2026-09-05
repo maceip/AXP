@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.upstream/
+.axp/
+.env
+.env.*
+*.db
+*.db-shm
+*.db-wal
+*.tgz
+.DS_Store
+# Original conversation stays on its owner's machine; decisions are in docs/.
+TODO.md

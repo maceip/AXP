@@ -1,0 +1,46 @@
+{
+  "name": "@maceip/axp",
+  "version": "0.1.0",
+  "description": "Park an agent at a repository. Share and steer durable AHP sessions through ACP.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=24.15.0" },
+  "bin": { "axp": "dist/cli.js" },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./protocol": { "types": "./dist/protocol/index.d.ts", "default": "./dist/protocol/index.js" },
+    "./client": { "types": "./dist/client.d.ts", "default": "./dist/client.js" }
+  },
+  "files": ["dist", "schema", "docs", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"],
+  "repository": { "type": "git", "url": "git+https://github.com/maceip/AXP.git" },
+  "bugs": { "url": "https://github.com/maceip/AXP/issues" },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "test:coverage": "c8 --include 'src/protocol/reducer.ts' --check-coverage --branches 100 --lines 100 npm test",
+    "format": "prettier --write src test scripts docs *.json *.md .github",
+    "format:check": "prettier --check src test scripts docs *.json README.md CONTRIBUTING.md SECURITY.md THIRD_PARTY_NOTICES.md .github",
+    "lint": "eslint src test scripts",
+    "schema": "tsx scripts/schema.ts",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run build && npm run test:coverage",
+    "demo": "tsx examples/demo.ts"
+  },
+  "dependencies": {
+    "@agentclientprotocol/sdk": "1.4.0",
+    "@microsoft/agent-host-protocol": "0.9.0",
+    "ws": "^8.21.0",
+    "zod": "^4.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.0",
+    "c8": "^11.0.0",
+    "eslint": "^10.0.0",
+    "prettier": "^3.9.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.0",
+    "typescript-eslint": "^8.65.0"
+  }
+}
