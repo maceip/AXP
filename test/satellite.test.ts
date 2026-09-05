@@ -15,6 +15,7 @@ import {
 } from "@microsoft/agent-host-protocol";
 import type { ChatState } from "@microsoft/agent-host-protocol";
 import { Satellite } from "../src/satellite.js";
+import { AxpClient } from "../src/client.js";
 import type { AgentLaunch } from "../src/acp.js";
 import { Worktree } from "../src/git.js";
 import type { ExchangeState } from "../src/protocol/types.js";
@@ -155,6 +156,16 @@ test(
       (p) => p.kind === "toolCall",
     );
     assert.ok(tool?.kind === "toolCall");
+    await f.maintainer.close();
+    const detached = await f.observer.snapshot<ChatState>(f.c.chat);
+    assert.equal(detached.activeTurn?.id, action.turnId);
+    assert.equal(
+      (await readFile(join(satellite.worktree.path, "sum.js"), "utf8")).trim(),
+      "export const sum = (a, b) => a - b;",
+      "detaching the maintainer must not approve a pending tool",
+    );
+    f.maintainer = await AxpClient.connect(f.url, f.credentials[0]!.token);
+    f.clients.push(f.maintainer);
     await f.maintainer.dispatch(f.c.chat, {
       type: ActionType.ChatToolCallConfirmed,
       turnId: action.turnId,
@@ -187,8 +198,24 @@ test(
       channel: f.c.exchange,
       digest: done.checkpoint.bundle.sha256,
     });
-    const replacement = await Worktree.restore(
+    const independent = join(repo, ".axp", "independent-clone");
+    await exec("git", [
+      "clone",
+      "--no-local",
+      "--single-branch",
+      "--branch",
+      "main",
       repo,
+      independent,
+    ]);
+    await assert.rejects(
+      exec("git", ["cat-file", "-e", done.checkpoint.headCommit], {
+        cwd: independent,
+      }),
+      "the receiver must not already possess the contributed commit",
+    );
+    const replacement = await Worktree.restore(
+      independent,
       "restored",
       done.checkpoint,
       Buffer.from(blob.data, "base64"),
