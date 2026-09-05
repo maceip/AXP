@@ -60,6 +60,14 @@ configuration alone is not a passing result.
 
 ## Evidence limits
 
+The authenticated Codex ACP 1.10.0 adapter completed the live contribution
+loop: it fixed the real repository, produced a Git checkpoint, settled usage,
+and passed independent exact-commit verification. Its configured mode used
+no interactive tool approval; approval/denial is separately exercised by the
+deterministic ACP tests. The [live receipt](evidence/live-codex.json) records
+the tested commit, verification output digest, normalized usage and retained
+history digest without credentials or private conversation data.
+
 The live `@agentclientprotocol/claude-agent-acp` 0.75.1 adapter completed
 initialization and session creation, then rejected its first turn with
 `Authentication required`. A direct Claude CLI 2.1.259 prompt also returned

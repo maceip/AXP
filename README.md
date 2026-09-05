@@ -53,18 +53,23 @@ In another terminal, create a session:
 axp create --id parser-fix --task issue-42 --title "Fix the parser"
 ```
 
-Park an ACP agent with the contributor profile. For example, after installing
-and authenticating the [Claude ACP adapter](https://github.com/agentclientprotocol/claude-agent-acp):
+Park an ACP agent with the contributor profile. For example, install the
+[Codex ACP adapter](https://github.com/agentclientprotocol/codex-acp) and supply
+your local API-key environment variable:
 
 ```sh
+npm install -g @agentclientprotocol/codex-acp@1.10.0
 axp park parser-fix --profile .axp/contributor.json \
   --native --tokens 100000 --cost-micros 1000000 --turns 10 \
   --turn-tokens 10000 --turn-cost-micros 100000 \
-  -- claude-agent-acp
+  --agent-env OPENAI_API_KEY --auth-method api-key -- codex-acp
 ```
 
 The `--` separates AXP options from the agent command. Any compatible ACP v1
-agent can replace `claude-agent-acp`; plain interactive CLIs need an ACP adapter.
+agent can replace `codex-acp`; plain interactive CLIs need an ACP adapter.
+For an already-authenticated adapter, omit the authentication and environment
+options. The [Claude ACP adapter](https://github.com/agentclientprotocol/claude-agent-acp)
+can be selected with `-- claude-agent-acp` after its normal local authentication.
 `--native` explicitly permits the agent's tools to run as your user. For an
 offline container image with its dependencies already installed, use
 `--image IMAGE` instead. Git worktrees isolate edits; they are not a sandbox.
@@ -73,6 +78,8 @@ Provider variables are explicit: add `--agent-env ANTHROPIC_API_KEY` (or your
 adapter's environment-variable names, comma-separated) before `--` to pass
 them from your local shell. Values never pass through the hub. Existing
 provider login files remain available in native mode.
+`--auth-method` invokes the adapter's advertised login method and uses its
+configured local credential store, just as its normal login does.
 
 Maintainer commands use `.axp/maintainer.json` by default:
 

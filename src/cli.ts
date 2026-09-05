@@ -59,6 +59,7 @@ Limits: --tokens 100000 --cost-micros 1000000 --turns 10
 Native execution uses your user permissions; select it explicitly.
 Container execution requires Docker and an image with its tools/dependencies.
 Pass provider environment explicitly: --agent-env ANTHROPIC_API_KEY,FOO.
+Select an advertised ACP login only when needed: --auth-method METHOD.
 Remote connections require wss://; access tokens stay in headers.
 `;
 
@@ -85,6 +86,7 @@ const stringOptions = [
   "port",
   "host",
   "agent-env",
+  "auth-method",
   "remote",
 ];
 const profileSchema = z.strictObject({
@@ -252,6 +254,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         command: commandArgs[0],
         args: commandArgs.slice(1),
         isolation: values.native ? "native" : "container",
+        ...(values["auth-method"] ? { authMethod: option("auth-method") } : {}),
         ...(values.image ? { image: option("image") } : {}),
         env: Object.fromEntries(
           option("agent-env", "")

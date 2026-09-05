@@ -50,6 +50,13 @@
                 "reported",
                 "reservation"
               ]
+            },
+            "costSource": {
+              "type": "string",
+              "enum": [
+                "reported",
+                "reservation"
+              ]
             }
           },
           "required": [

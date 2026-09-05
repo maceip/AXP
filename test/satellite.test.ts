@@ -171,6 +171,11 @@ test(
     assert.deepEqual(faults, []);
     assert.ok(done.checkpoint);
     assert.equal(
+      Object.values(done.grants)[0]?.spent.tokens,
+      130,
+      "normalize ACP cache-exclusive input without losing or double-counting tokens",
+    );
+    assert.equal(
       (await readFile(join(repo, "sum.js"), "utf8")).trim(),
       "export const sum = (a, b) => a - b;",
     );

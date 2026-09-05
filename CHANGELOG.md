@@ -11,3 +11,5 @@
 - Context compaction, reviewed repository memory, cache compatibility and an
   MTPLX HTTP/distillation adapter.
 - Upstream AHP conformance fixtures and behavioral integration tests.
+- Explicit local ACP authentication, provider-usage normalization and live
+  Codex ACP contribution evidence.

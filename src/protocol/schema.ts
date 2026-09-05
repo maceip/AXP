@@ -16,6 +16,7 @@ export const usage = z.strictObject({
   cacheReadTokens: count,
   costMicros: count,
   source: z.enum(["reported", "reservation"]),
+  costSource: z.enum(["reported", "reservation"]).optional(),
 });
 export const blobRef = z.strictObject({
   uri: z.string().max(512),

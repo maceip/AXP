@@ -15,6 +15,8 @@ const sessions = new Map<
   { cwd: string; controller: AbortController }
 >();
 const execute = promisify(execFile);
+const requireAuth = process.argv.includes("--require-auth");
+let authenticated = !requireAuth;
 const app = acp
   .agent({ name: "axp-fixture" })
   .onRequest(acp.methods.agent.initialize, ({ params }) => {
@@ -29,10 +31,23 @@ const app = acp
       protocolVersion: acp.PROTOCOL_VERSION,
       agentCapabilities: {},
       agentInfo: { name: "axp-fixture", version: "1.0.0" },
-      authMethods: [],
+      authMethods: requireAuth
+        ? [{ id: "fixture-key", name: "Fixture local key" }]
+        : [],
     };
   })
+  .onRequest(acp.methods.agent.authenticate, ({ params }) => {
+    if (
+      params.methodId !== "fixture-key" ||
+      process.env.FIXTURE_PROVIDER_KEY !== "local-only"
+    )
+      throw new Error("Fixture authentication failed");
+    authenticated = true;
+    return {};
+  })
   .onRequest(acp.methods.agent.session.new, ({ params }) => {
+    if (!authenticated)
+      throw new Error("Authenticate before creating a session");
     const sessionId = randomUUID();
     sessions.set(sessionId, {
       cwd: params.cwd,
@@ -136,9 +151,9 @@ const app = acp
       stopReason: "end_turn" as const,
       usage: {
         totalTokens: 130,
-        inputTokens: 100,
+        inputTokens: 20,
         outputTokens: 30,
-        cachedReadTokens: 50,
+        cachedReadTokens: 80,
       },
     };
   });

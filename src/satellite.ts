@@ -251,6 +251,9 @@ export class Satellite extends EventEmitter<{
       const usage = result.usage
         ? {
             ...result.usage,
+            costSource: result.costKnown
+              ? ("reported" as const)
+              : ("reservation" as const),
             costMicros: result.costKnown
               ? result.usage.costMicros
               : this.options.perTurn.costMicros,

@@ -91,6 +91,10 @@ producing output. Settlement is idempotent. Missing usage consumes the ceiling;
 reported overspend remains visible and revokes further work. An opaque ACP
 process requires an external provider/proxy cap for a hard spending boundary.
 `enforcement: provider` is a donor declaration, not an attestation by AXP.
+ACP cache-inclusive and cache-exclusive reports are normalized against their
+reported total; inconsistent telemetry falls back to the reservation. Raw
+prompt usage remains in the audit. `costSource` identifies whether USD was
+reported or charged from the reserved ceiling, independently of token source.
 
 ## Upstream compatibility
 
@@ -100,6 +104,9 @@ reference. AXP compiles the concrete discriminated definitions from that
 unchanged schema, preserving field validation.
 
 The ACP boundary advertises v1 with file and terminal provider RPCs disabled.
+An explicitly configured `authMethod` is checked against advertised methods
+and invoked before creating the agent session. Keys stay in the local agent
+environment and are never sent to the repository host.
 Permission choices keep their original IDs, allow/deny grouping and tool
 input. Edited-input approvals are rejected because ACP outcomes cannot carry
 edits. Unknown provider updates are retained as content references. ACP v1

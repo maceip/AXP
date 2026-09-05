@@ -45,6 +45,8 @@ export interface Usage {
   cacheReadTokens: number;
   costMicros: number;
   source: "reported" | "reservation";
+  /** USD provenance may differ from token provenance. */
+  costSource?: "reported" | "reservation" | undefined;
 }
 export interface Reservation {
   turnId: string;

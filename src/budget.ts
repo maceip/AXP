@@ -46,6 +46,7 @@ export function settle(
     cacheReadTokens: 0,
     costMicros: reservation.ceiling.costMicros,
     source: "reservation",
+    costSource: "reservation",
   };
   // Cache reads are a subset of input; they are never charged twice.
   requireThat(

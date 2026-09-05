@@ -27,6 +27,8 @@ export interface AgentLaunch {
   image?: string;
   /** Values are contributor-local, never supplied by the repo hub. */
   env?: Record<string, string>;
+  /** An explicitly selected, advertised ACP auth method; credentials stay local. */
+  authMethod?: string;
 }
 export interface AgentCallbacks {
   emit(actions: StateAction[]): Promise<void>;
@@ -133,6 +135,11 @@ export class AcpDriver {
   ) {}
 
   async start(): Promise<void> {
+    requireThat(
+      !this.process && !this.closing,
+      Codes.conflict,
+      "Create a new ACP driver to restart an agent",
+    );
     const child = launchAgent(this.launch, this.cwd);
     this.process = child;
     const failed = new Promise<never>((_, reject) =>
@@ -242,6 +249,18 @@ export class AcpDriver {
         "Unsupported ACP protocol version",
       );
       this.model = initialized.agentInfo?.name ?? "acp-agent";
+      if (this.launch.authMethod) {
+        requireThat(
+          initialized.authMethods?.some(
+            (method) => method.id === this.launch.authMethod,
+          ),
+          Codes.invalid,
+          "Agent did not advertise the requested authentication method",
+        );
+        await this.connection.agent.request(acp.methods.agent.authenticate, {
+          methodId: this.launch.authMethod,
+        });
+      }
       const session = await this.connection.agent.request(
         acp.methods.agent.session.new,
         {
@@ -250,6 +269,9 @@ export class AcpDriver {
         },
       );
       this.sessionId = session.sessionId;
+    } catch (error) {
+      await this.close();
+      throw error;
     } finally {
       clearTimeout(deadline);
     }
@@ -299,17 +321,32 @@ export class AcpDriver {
       await this.updates;
       if (this.updateError) throw this.updateError;
       const usage = result.usage;
+      if (usage) {
+        const ref = await this.callbacks.blob(
+          Buffer.from(JSON.stringify({ protocol: "acp", promptUsage: usage })),
+          "application/json",
+        );
+        await this.callbacks.emit([
+          {
+            type: ActionType.ChatResponsePart,
+            turnId,
+            part: {
+              kind: ResponsePartKind.ContentRef,
+              uri: ref.uri,
+              contentType: ref.mediaType,
+              sizeHint: ref.size,
+            },
+          },
+        ]);
+      }
       // ACP token reporting is optional, and has no standardized per-turn USD
       // amount. Monetary uncertainty consumes the reserved ceiling at settlement.
       return {
         usage: usage
-          ? {
-              inputTokens: usage.inputTokens,
-              outputTokens: usage.outputTokens,
-              cacheReadTokens: usage.cachedReadTokens ?? 0,
-              costMicros: Math.max(0, (this.costMicros ?? 0) - priorCost),
-              source: "reported",
-            }
+          ? normalizeUsage(
+              usage,
+              Math.max(0, (this.costMicros ?? 0) - priorCost),
+            )
           : null,
         costKnown:
           this.costUpdates > priorCostUpdates && this.costMicros! >= priorCost,
@@ -584,4 +621,47 @@ function frameLimit(): TransformStream<Uint8Array, Uint8Array> {
       controller.enqueue(chunk);
     },
   });
+}
+
+/** ACP's experimental usage implementations differ on inclusive cache/reasoning
+ * counts. Accept only a decomposition consistent with the reported total;
+ * inconsistent or malformed totals use the reserved allowance instead. */
+export function normalizeUsage(
+  value: acp.Usage,
+  costMicros: number,
+): Usage | null {
+  const cacheRead = value.cachedReadTokens ?? 0;
+  const cacheWrite = value.cachedWriteTokens ?? 0;
+  const thought = value.thoughtTokens ?? 0;
+  if (
+    ![
+      value.totalTokens,
+      value.inputTokens,
+      value.outputTokens,
+      cacheRead,
+      cacheWrite,
+      thought,
+      costMicros,
+    ].every((n) => Number.isSafeInteger(n) && n >= 0)
+  )
+    return null;
+  for (const [inputTokens, outputTokens] of [
+    [value.inputTokens, value.outputTokens],
+    [value.inputTokens + cacheRead + cacheWrite, value.outputTokens],
+    [value.inputTokens, value.outputTokens + thought],
+    [value.inputTokens + cacheRead + cacheWrite, value.outputTokens + thought],
+  ] as const) {
+    if (
+      inputTokens + outputTokens === value.totalTokens &&
+      cacheRead <= inputTokens
+    )
+      return {
+        inputTokens,
+        outputTokens,
+        cacheReadTokens: cacheRead,
+        costMicros,
+        source: "reported",
+      };
+  }
+  return null;
 }

@@ -19,6 +19,7 @@ import {
   Satellite,
   channels,
   verifyCheckpoint,
+  hashObject,
 } from "../src/index.js";
 import type { ExchangeState } from "../src/index.js";
 
@@ -87,6 +88,18 @@ try {
             resolve("examples/fixture-agent.ts"),
           ],
       isolation: "native",
+      ...(process.env.AXP_DEMO_AUTH_METHOD
+        ? { authMethod: process.env.AXP_DEMO_AUTH_METHOD }
+        : {}),
+      env: Object.fromEntries(
+        (process.env.AXP_DEMO_AGENT_ENV ?? "")
+          .split(",")
+          .filter(Boolean)
+          .map((key) => {
+            assert.ok(process.env[key] !== undefined, `${key} is not set`);
+            return [key, process.env[key]!];
+          }),
+      ),
     },
     allowance: {
       tokens: 100_000,
@@ -99,7 +112,11 @@ try {
       turns: 1,
     },
   });
-  satellite.on("fault", (error) => console.error(error.message));
+  const faults: Error[] = [];
+  satellite.on("fault", (error) => {
+    faults.push(error);
+    console.error(error.message);
+  });
   await satellite.start();
   console.log(
     "2. Contributor parked a real ACP child process over an outbound WebSocket.",
@@ -157,6 +174,11 @@ try {
     await delay(20);
   }
   assert.ok(done?.checkpoint, "Agent did not produce a checkpoint");
+  assert.deepEqual(
+    faults,
+    [],
+    "The contribution must finish without protocol or accounting faults",
+  );
   assert.match(await readFile(join(directory, "sum.js"), "utf8"), /a - b/);
   console.log(
     "4. Agent fixed the isolated worktree; the contributor checkout is unchanged.",
@@ -171,8 +193,33 @@ try {
   );
   await satellite.exportHistory();
   const archive = await maintainer.call("_axp/export", { channel: c.exchange });
+  if (process.env.AXP_DEMO_RECEIPT)
+    await writeFile(
+      resolve(process.env.AXP_DEMO_RECEIPT),
+      JSON.stringify(
+        {
+          format: "axp.demo.v1",
+          observedAt: new Date().toISOString(),
+          adapter: process.env.AXP_DEMO_LABEL ?? "fixture",
+          node: process.versions.node,
+          baseCommit: done.checkpoint.baseCommit,
+          headCommit: verified.headCommit,
+          verifierExitCode: verified.exitCode,
+          verifierOutputSha256: verified.output.sha256,
+          eventCount: archive.actions.length,
+          historyHash: hashObject(archive),
+          toolApprovals: approved.size,
+          originalCheckoutUnchanged: true,
+          faults: faults.length,
+          usage: done.usage,
+        },
+        null,
+        2,
+      ) + "\n",
+      { mode: 0o600, flag: "wx" },
+    );
   console.log(
-    `6. Contributor retained the same ${archive.actions.length} durable actions, including approvals, output and checkpoint.`,
+    `6. Contributor retained the same ${archive.actions.length} durable actions; ${approved.size} tool permission requests were approved.`,
   );
   console.log(
     liveAgent

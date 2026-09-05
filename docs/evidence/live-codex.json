@@ -1,0 +1,29 @@
+{
+  "format": "axp.demo.v1",
+  "observedAt": "2026-09-05T23:44:29.053Z",
+  "adapter": "@agentclientprotocol/codex-acp@1.10.0",
+  "node": "24.15.0",
+  "baseCommit": "0eb3727ef1e87610bd5925da5c8a1e6b6d47b381",
+  "headCommit": "aa764bcdd2484af1c0eabf0b5194df975d24418f",
+  "verifierExitCode": 0,
+  "verifierOutputSha256": "2875da03a76fd70a908ae8f14e71412d91f7bc987a4311d24823e6608ebff956",
+  "eventCount": 182,
+  "historyHash": "67ea08eeddbfc5f78acec5317c4753318844e8b5d333354c3ccb4bf413cc7f44",
+  "toolApprovals": 0,
+  "originalCheckoutUnchanged": true,
+  "faults": 0,
+  "usage": [
+    {
+      "turnId": "340dbf11-c444-43a4-aba1-53c4cf796a2d",
+      "grantId": "8e365d58-005a-4780-9b40-5781bf390bef",
+      "usage": {
+        "inputTokens": 13928,
+        "outputTokens": 39,
+        "cacheReadTokens": 13658,
+        "costMicros": 5000000,
+        "source": "reported",
+        "costSource": "reservation"
+      }
+    }
+  ]
+}
