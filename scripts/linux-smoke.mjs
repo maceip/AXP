@@ -21,8 +21,18 @@ const systemctl = (...args) => run("systemctl", args);
 const pid = () =>
   systemctl("show", "axp-host.service", "--property=MainPID", "--value").trim();
 async function waitForRestart(previous) {
-  for (let i = 0; i < 90; i++) {
-    if (pid() !== previous && pid() !== "0") {
+  const deadline = Date.now() + 90_000;
+  while (Date.now() < deadline) {
+    const active =
+      systemctl(
+        "show",
+        "axp-host.service",
+        "--property=ActiveState",
+        "--value",
+      ).trim() === "active";
+    // ExecStartPost must finish before injecting a hang. Otherwise its startup
+    // timeout could restart the process without exercising the health timer.
+    if (active && pid() !== previous && pid() !== "0") {
       try {
         await health("http://127.0.0.1:7331/healthz");
         return;
@@ -44,6 +54,7 @@ try {
   assert.equal(await readFile("/etc/axp/hub.json", "utf8"), original);
   systemctl("enable", "--now", "axp-host.service");
   assert.equal(systemctl("is-enabled", "axp-host.service").trim(), "enabled");
+  await waitForRestart("0");
   const token = JSON.parse(original).credentials[0].token;
   run("caddy", [
     "validate",
@@ -104,6 +115,16 @@ try {
   } catch {
     /* expected failed probe */
   }
+  assert.equal(
+    systemctl(
+      "show",
+      "axp-health.service",
+      "--property=Result",
+      "--value",
+    ).trim(),
+    "exit-code",
+    "The health probe must run and fail before recovery",
+  );
   await waitForRestart(previous);
   console.log("Health supervision recovered a hung process");
   const journalProbe = (value) =>
