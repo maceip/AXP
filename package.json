@@ -74,7 +74,7 @@
     "@pierre/diffs": "1.4.1",
     "@pierre/trees": "1.0.0-beta.6",
     "@playwright/test": "1.63.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.4.1",
     "@types/nodemailer": "8.0.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
