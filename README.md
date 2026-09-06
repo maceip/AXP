@@ -18,6 +18,26 @@ processes. It adds executor ownership, leases, budget accounting, Git
 checkpoints, context compaction and reviewed repository memory through
 negotiated extension channels. It does not fork either project.
 
+The browser workspace brings contributions, agent sessions, code review and
+durable discussion together. An [AAMP mailbox adapter](docs/aamp.md) admits
+authorized asynchronous tasks into those same sessions.
+
+![AXP contribution workspace with shared work, people and agent presence](docs/evidence/workspace.png)
+
+_The screenshot shows the deterministic demo workspace._
+
+## Open the workspace
+
+After building the checkout, run `npm run demo:ui` for an explorable sample
+project. For your actual host, run:
+
+```sh
+axp ui --profile .axp/maintainer.json
+```
+
+Open the private link it prints. Contributors use their own profile; signing
+keys stay local. See [workspace setup and review](docs/workspace.md).
+
 ## Try the contribution loop
 
 Requires Node **24.15+**, npm and Git. No model credentials are needed for the demo.
@@ -117,6 +137,7 @@ See [hosting and access](docs/hosting.md) for remote TLS and scoped identities.
 | Area                | Behavior                                                                                                                         |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | Collaboration       | AHP root/session/chat/changeset state, streaming, confirmations, steering, queued turns and session export                       |
+| Workspace           | Huabu-informed browser design, Pierre diffs and file navigation, live sessions, durable discussion and signed artifact review    |
 | Participation       | Outbound connections, executor discovery, atomic claims, renewable leases and increasing fencing epochs                          |
 | Recovery            | SQLite transactions before broadcast, durable retry receipts, replay/snapshot fallback and interrupted-turn recovery             |
 | AAMP mail           | Locally authorized text tasks, durable JMAP ingestion, threaded SMTP acknowledgements, permissions, cancellation and results     |
@@ -141,6 +162,7 @@ integration APIs. Install from a built tarball
 with `npm pack`; npm registry publication is not required to use the checkout.
 
 - [Protocol and interoperability](docs/protocol.md)
+- [Contribution workspace](docs/workspace.md)
 - [AAMP mailbox setup and supported profile](docs/aamp.md)
 - [Context, memory and MTPLX](docs/memory.md)
 - [Hosting and access](docs/hosting.md)

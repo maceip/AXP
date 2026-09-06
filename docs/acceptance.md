@@ -31,3 +31,14 @@ not by the number of tests or SDK languages.
   clean-install CI across supported operating systems.
 - Public documentation accurately distinguishes supported behavior, tested
   interoperability, trust assumptions and optional integrations.
+- AAMP tasks pass local sender/session/context admission before acknowledgement.
+  Duplicate delivery, uncertain host replies and uncertain SMTP delivery cannot
+  start duplicate turns. Expiry, cancellation and route revocation survive
+  adapter downtime. Results identify their own checkpoint.
+- The browser supports contribution discovery, agent permissions, code review
+  and durable attributed discussion. Separate contributor and maintainer
+  signing identities act on the exact artifact shown; a changed review cannot
+  silently replace an open approval. Disconnection is visible and recoverable.
+- The workspace is usable with a keyboard and in narrow viewports. Its
+  overview and diff integrations pass automated WCAG A/AA checks, backed by
+  visual inspection and a real browser-to-ACP-to-Git contribution test.

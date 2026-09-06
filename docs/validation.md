@@ -12,6 +12,8 @@ npm ci
 npm run check
 npm run schema
 npm run demo
+npx playwright install chromium
+npm run test:ui
 npm pack
 npm run test:package
 ```
@@ -55,6 +57,16 @@ Behavioral evidence includes:
   survive adapter restarts. Tests exercise sender/context authorization,
   cancellation before dispatch, expiry during downtime, route revocation,
   permission help and checkpoint attribution after later session changes.
+- Browser interaction exercises contribution creation, scoped controls,
+  permission choices, checkpoint diffs, file discussion, reload and reconnect.
+  A real ACP child process fixes a Git worktree after browser approval; a
+  verifier restores/tests its exact commit, a contributor signs through their
+  browser and an independent maintainer approves. A manifest changing under
+  an open approval dialog is rejected. Accessibility checks run on the overview
+  and diff surfaces; desktop and phone-sized layouts are captured and inspected.
+- A silent WebSocket proxy cannot be masked by the workspace snapshot cache:
+  the gateway's host ping fails, it reports unavailability, and it reconnects
+  with fresh state after transport recovery.
 - A tarball installs into a fresh directory, loads its packaged schema,
   executes the CLI under symlinked paths and initializes private profiles.
 

@@ -18,11 +18,12 @@ import { Hub } from "./hub.js";
 import { AxpClient } from "./client.js";
 import { Satellite } from "./satellite.js";
 import { channels, ROOT } from "./protocol/types.js";
-import type { ExchangeState, Review } from "./protocol/types.js";
+import type { ExchangeState } from "./protocol/types.js";
 import { id, allowance, methods } from "./protocol/schema.js";
 import type { Method } from "./protocol/schema.js";
 import { requireThat, Codes } from "./protocol/errors.js";
-import { hashObject, signObject } from "./hash.js";
+import { signObject } from "./hash.js";
+import { reviewManifest } from "./review.js";
 import { verifyCheckpoint } from "./verification.js";
 import { excludeLocalState, Worktree } from "./git.js";
 
@@ -50,6 +51,7 @@ const HELP = `AXP — park an agent, share the session.
   axp verify SESSION --native -- COMMAND    Test an exact checkpoint as verifier
   axp executors                            Show parked executor capabilities
   axp aamp --config .axp/aamp.json          Bridge an AAMP mailbox to assigned sessions
+  axp ui [--port 4318] [--key KEY]          Open your contribution workspace
   axp memory "query"                       Retrieve approved repository lessons
   axp rpc METHOD --params request.json      Call a typed AXP extension
 
@@ -228,6 +230,33 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       : profileSchema.parse(
           await jsonFile(option("profile", ".axp/maintainer.json")),
         );
+  if (command === "ui") {
+    const { WorkspaceServer } = await import("./workspace.js");
+    const workspace = new WorkspaceServer({
+      ...profile,
+      port: z
+        .number()
+        .int()
+        .min(0)
+        .max(65535)
+        .parse(Number(option("port", "4318"))),
+      ...(values.key
+        ? {
+            signingKey: await readFile(
+              resolve(directory, String(values.key)),
+              "utf8",
+            ),
+          }
+        : {}),
+    });
+    try {
+      print(`Open your private workspace: ${await workspace.listen()}`);
+      await waitForStop(() => workspace.close());
+    } finally {
+      await workspace.close();
+    }
+    return;
+  }
   if (command === "aamp") {
     const { AampBridge, JmapSmtpMailbox, aampRouteSchema } =
       await import("./aamp.js");
@@ -549,26 +578,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         );
         return;
       }
-      requireThat(state.checkpoint, Codes.conflict, "No checkpoint to submit");
-      const archive = await client.call("_axp/export", { channel: c.exchange });
-      const context = await client.call("_axp/context", {
-        channel: c.exchange,
-        maxChars: 200_000,
-      });
-      const manifest: Review["manifest"] = {
-        version: 1,
-        repository: state.repository,
-        session: c.session,
-        baseCommit: state.checkpoint.baseCommit,
-        headCommit: state.checkpoint.headCommit,
-        model: option("model"),
-        promptHash: hashObject(context.text),
-        traceHash: hashObject(
-          archive.actions.filter((e) => e.channel !== c.changeset),
-        ),
-        traceThroughSeq: archive.serverSeq,
-        checkpointDigest: hashObject(state.checkpoint),
-      };
+      const manifest = await reviewManifest(client, state, option("model"));
       print(
         await client.call("_axp/review", {
           channel: c.exchange,

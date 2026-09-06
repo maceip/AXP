@@ -25,8 +25,10 @@ For remote use, terminate TLS at a reverse proxy and forward WebSocket upgrade
 and Authorization headers. Keep idle timeouts longer than the heartbeat
 interval and frame limits compatible with blobs. Use `wss://your-host/axp`;
 the Node client rejects remote plaintext. Browser Origin headers are rejected
-unless listed in `allowedOrigins`. Browser applications need their own
-authenticated proxy/session integration; AXP does not ship a browser login UI.
+unless listed in `allowedOrigins`. The packaged [workspace](workspace.md)
+uses a personal loopback gateway with a local profile; each participant runs
+their own gateway against the shared host. Public browser hosting still needs
+an authenticated session integration and account provisioning.
 
 Defaults: 16 MB per blob, 2 GB aggregate blob storage, 256 subscriptions per
 connection, 64 KiB ordinary command envelopes. Large outputs use blob

@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { spawnSync } from "node:child_process";
 import assert from "node:assert/strict";
+import { pathToFileURL } from "node:url";
+import { randomBytes } from "node:crypto";
 const manifest = JSON.parse(await readFile("package.json", "utf8"));
 const tarball = `${manifest.name.replace(/^@/, "").replace("/", "-")}-${manifest.version}.tgz`;
 await access(tarball);
@@ -77,8 +79,45 @@ try {
     { encoding: "utf8", cwd: directory },
   );
   assert.equal(init.status, 0, init.stderr);
+  const { Hub, WorkspaceServer } = await import(
+    pathToFileURL(join(dirname(cli), "index.js")).href
+  );
+  const token = randomBytes(32).toString("hex");
+  const hub = new Hub({
+    repository: "test/package",
+    credentials: [
+      {
+        token,
+        principal: { id: "package-user", role: "maintainer", sessions: "*" },
+      },
+    ],
+  });
+  let workspace;
+  try {
+    workspace = new WorkspaceServer({ url: await hub.listen(), token });
+    const link = new URL(await workspace.listen());
+    const html = await (await fetch(link.origin)).text();
+    assert.match(html, /Contribution workspace/);
+    const asset = /src="(\/assets\/[^"]+\.js)"/.exec(html)?.[1];
+    assert.ok(asset, "The installed package includes its UI entrypoint");
+    assert.equal((await fetch(`${link.origin}${asset}`)).status, 200);
+    assert.match(
+      await (await fetch(`${link.origin}/licenses/bundled.txt`)).text(),
+      /react/,
+    );
+    const response = await fetch(`${link.origin}/api/workspace`, {
+      headers: {
+        authorization: `Bearer ${new URLSearchParams(link.hash.slice(1)).get("access")}`,
+      },
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).repository, "test/package");
+  } finally {
+    await workspace?.close();
+    await hub.close();
+  }
   console.log(
-    "Packaged CLI installed, loaded schemas, displayed help and initialized access profiles.",
+    "Packaged CLI, AAMP import, access profiles and authenticated workspace assets/API passed.",
   );
 } finally {
   await rm(directory, { recursive: true, force: true });

@@ -4,6 +4,10 @@ AXP **0.2.0** is negotiated alongside **AHP 0.9.0**. Published AHP and ACP
 packages are pinned. The AXP client is Node-only; other clients can use the
 wire schemas and ordinary AHP clients can render the baseline experience.
 
+Package release 0.3 adds the mailbox and workspace clients, durable dispatch
+and discussion commands. The negotiated wire version remains 0.2.0; new methods
+are advertised in initialization. Upgrade the host for these new commands.
+
 ## Baseline AHP
 
 The host implements `initialize`, `ping`, `reconnect`, `subscribe`,
@@ -48,6 +52,7 @@ a conflict. Read commands need no ID.
 | -------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `_axp/register`                                                | Discover and refresh contributor-owned executors                      |
 | `_axp/dispatch`                                                | Durable, maintainer-authorized AHP interaction across client restarts |
+| `_axp/comment`                                                 | Scoped, attributed discussion with optional checkpoint/file reference |
 | `_axp/grant`, `_axp/revoke`                                    | Donor-owned allowances and revocation                                 |
 | `_axp/claim`, `_axp/renew`, `_axp/release`                     | Atomic ownership and fencing                                          |
 | `_axp/reserve`, `_axp/settle`, `_axp/emit`                     | Accounted, authorized execution                                       |
@@ -59,6 +64,13 @@ a conflict. Read commands need no ID.
 | `_axp/context`, `_axp/export`                                  | Working context or full audit history                                 |
 
 ## Ordering and recovery
+
+`_axp/comment` appends a discussion entry to an exchange and the shared audit.
+The host assigns the authenticated author and current time. Scoped maintainers,
+contributors and verifiers can post; observers cannot. Optional file references
+must identify the current checkpoint. Retry receipts prevent duplicate posts.
+Existing persisted sessions without a discussion field render an empty thread.
+Comments remain independent of AHP user prompts and tool permissions.
 
 `AxpClient.dispatch(channel, action, operationId)` uses `_axp/dispatch` when
 an operation ID is supplied. It applies the same action validation, session

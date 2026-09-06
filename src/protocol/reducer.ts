@@ -22,6 +22,11 @@ export function exchangeReducer(
   action: ExchangeAction,
 ): ExchangeState {
   switch (action.type) {
+    case "_axp/commentAdded":
+      return {
+        ...state,
+        discussion: [...(state.discussion ?? []), action.comment],
+      };
     case "_axp/leaseChanged":
       return {
         ...state,

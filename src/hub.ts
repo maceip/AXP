@@ -353,6 +353,7 @@ export class Hub {
             methods: Object.keys(methods),
             role: peer.actor.role,
             principal: peer.actor.id,
+            repository: this.options.repository,
             memory: MEMORY,
           },
         },
@@ -427,13 +428,28 @@ export class Hub {
         .filter((c) => this.sessions.readable(peer.actor, c))
         .map((c) => {
           const s = this.store.get<SessionState>(c);
+          const exchange = this.sessions.state(c);
+          const modifiedAt = new Date(
+            Math.max(
+              Date.parse(s.chats[0]?.modifiedAt ?? "1970-01-01T00:00:00Z"),
+              exchange.checkpoint?.createdAt ?? 0,
+              exchange.verification?.verifiedAt ?? 0,
+              exchange.discussion?.at(-1)?.createdAt ?? 0,
+            ),
+          ).toISOString();
           return {
             resource: c,
             provider: s.provider,
             title: s.title,
             status: s.chats[0]?.status ?? s.status,
+            modifiedAt,
           };
-        });
+        })
+        .sort(
+          (a, b) =>
+            b.modifiedAt.localeCompare(a.modifiedAt) ||
+            a.resource.localeCompare(b.resource),
+        );
       return { items };
     }
     if (method === "createSession") {
@@ -587,6 +603,40 @@ export class Hub {
       const q = methods[method].parse(p);
       this.sessions.dispatch(tx, actor, q.channel, q.action);
       return null;
+    }
+    if (method === "_axp/comment") {
+      const q = methods[method].parse(p);
+      const state = this.sessions.state(q.channel);
+      requireThat(
+        actor.role !== "observer",
+        Codes.forbidden,
+        "Observers cannot post discussion",
+      );
+      requireThat(
+        (state.discussion?.length ?? 0) < 256,
+        Codes.limit,
+        "Discussion limit reached; the full history remains available",
+      );
+      requireThat(
+        q.checkpoint === null || q.checkpoint === state.checkpoint?.headCommit,
+        Codes.conflict,
+        "The checkpoint changed; refresh before commenting",
+      );
+      requireThat(
+        q.path === null || q.checkpoint !== null,
+        Codes.invalid,
+        "File discussion needs a checkpoint",
+      );
+      const comment = {
+        id: q.operationId,
+        author: actor.id,
+        body: q.body,
+        createdAt: this.sessions.now(),
+        checkpoint: q.checkpoint,
+        path: q.path,
+      };
+      tx.emit(state.resource, { type: "_axp/commentAdded", comment });
+      return comment;
     }
     if (method === "_axp/register")
       return this.sessions.register(tx, actor, methods[method].parse(p));

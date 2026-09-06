@@ -158,6 +158,17 @@ export interface ExchangeState {
   compaction: CompactionProposal | null;
   review: Review | null;
   verification: Verification | null;
+  /** Optional for persisted pre-workspace sessions; comments are also retained in the audit. */
+  discussion?: DiscussionComment[];
+}
+
+export interface DiscussionComment {
+  id: string;
+  author: string;
+  body: string;
+  createdAt: number;
+  checkpoint: string | null;
+  path: string | null;
 }
 export interface MemoryState {
   resource: string;
@@ -165,6 +176,7 @@ export interface MemoryState {
 }
 
 export type ExchangeAction =
+  | { type: "_axp/commentAdded"; comment: DiscussionComment }
   | {
       type: "_axp/leaseChanged";
       lease: Lease | null;

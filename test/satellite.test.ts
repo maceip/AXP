@@ -26,6 +26,8 @@ import { hashObject, signObject } from "../src/hash.js";
 import { faultProxy } from "./fault-proxy.js";
 import { setTimeout as delay } from "node:timers/promises";
 
+import { repository } from "./project-fixture.js";
+
 const exec = promisify(execFile);
 function agent(delayMs = 0): AgentLaunch {
   const image = process.env.AXP_TEST_CONTAINER;
@@ -85,37 +87,6 @@ test("a planning-only checkpoint restores the exact base and local state is excl
   assert.match(status.stdout, / D .gitignore/);
   assert.doesNotMatch(status.stdout, /\.axp/);
 });
-async function repository() {
-  const path = await mkdtemp(join(tmpdir(), "axp-project-"));
-  await exec("git", ["init", "-b", "main", path]);
-  await writeFile(join(path, "package.json"), '{"type":"module"}');
-  await writeFile(join(path, ".gitignore"), ".axp/\n");
-  await writeFile(
-    join(path, "sum.js"),
-    "export const sum = (a, b) => a - b;\n",
-  );
-  await writeFile(
-    join(path, "sum.test.js"),
-    "import { test } from 'node:test'; import assert from 'node:assert/strict'; import { sum } from './sum.js'; test('adds two numbers', () => assert.equal(sum(2, 3), 5));\n",
-  );
-  await exec("git", ["add", "."], { cwd: path });
-  await exec(
-    "git",
-    [
-      "-c",
-      "user.name=Fixture",
-      "-c",
-      "user.email=fixture@localhost",
-      "-c",
-      "commit.gpgsign=false",
-      "commit",
-      "-m",
-      "Failing addition",
-    ],
-    { cwd: path },
-  );
-  return path;
-}
 
 test(
   "a real ACP process edits an isolated worktree, asks the maintainer, tests and exports a portable Git checkpoint",

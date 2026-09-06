@@ -95,6 +95,28 @@ test("AXP reducer replay preserves prior state, audit usage, context and review 
       author: "c",
     };
     const actions: ExchangeAction[] = [
+      {
+        type: "_axp/commentAdded",
+        comment: {
+          id: "first",
+          author: "c",
+          body: "Keep the parser API stable",
+          createdAt: 1000,
+          checkpoint: null,
+          path: null,
+        },
+      },
+      {
+        type: "_axp/commentAdded",
+        comment: {
+          id: "second",
+          author: "m",
+          body: "Agreed",
+          createdAt: 1001,
+          checkpoint: null,
+          path: null,
+        },
+      },
       { type: "_axp/grantChanged", grant },
       {
         type: "_axp/leaseChanged",
@@ -166,6 +188,10 @@ test("AXP reducer replay preserves prior state, audit usage, context and review 
     }
     assert.deepEqual(actions.reduce(exchangeReducer, initial), state);
     assert.equal(state.usage.length, 1);
+    assert.deepEqual(
+      state.discussion?.map((comment) => comment.author),
+      ["c", "m"],
+    );
     assert.equal(state.context.summary, context.summary);
     assert.equal(state.compaction, null);
     assert.equal(state.reservation, null);

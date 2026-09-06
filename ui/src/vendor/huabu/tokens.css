@@ -1,0 +1,30 @@
+/* Copyright (c) Microsoft Corporation. Licensed under the MIT license.
+ * Adapted from Huabu apps/web/src/index.css at a3c411e1f655191344285141f08c4738fa6015f7.
+ * Retains Huabu's semantic surface/text/status hierarchy, with AXP's warm palette.
+ */
+:root {
+  --fg-default: #252c28;
+  --fg-muted: #626b65;
+  --fg-subtle: #657060;
+  --fg-inverse: #fff;
+  --bg-default: #f6f7f4;
+  --bg-surface: #fff;
+  --bg-hover: #edf0ea;
+  --bg-inverse: #283b31;
+  --edge-default: #e3e7e0;
+  --info: #526f91;
+  --info-bg: #edf2f8;
+  --success: #397452;
+  --success-bg: #eaf3e9;
+  --warning: #946127;
+  --warning-bg: #fbf1de;
+  --danger: #a64439;
+  --danger-bg: #faefec;
+  --ai: #8b77a3;
+  --ai-bg: #f0ebf6;
+  --diff-added-bg: var(--success-bg);
+  --diff-added-text: var(--success);
+  --diff-removed-bg: var(--danger-bg);
+  --diff-removed-text: var(--danger);
+  --canvas-grid: #d8ded5;
+}

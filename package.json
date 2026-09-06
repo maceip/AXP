@@ -1,6 +1,6 @@
 {
   "name": "@maceip/axp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Park an agent at a repository. Share and steer durable AHP sessions through ACP.",
   "type": "module",
   "license": "MIT",
@@ -44,17 +44,19 @@
     "url": "https://github.com/maceip/AXP/issues"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json && vite build --config ui/vite.config.ts && node scripts/ui-notices.mjs",
+    "typecheck": "tsc --noEmit && tsc -p ui/tsconfig.json",
     "test": "tsx --test test/*.test.ts",
     "test:coverage": "c8 --include \"src/protocol/reducer.ts\" --check-coverage --branches 100 --lines 100 npm test",
     "format": "prettier --write src test scripts examples docs *.json *.md .github",
-    "format:check": "prettier --check src test scripts examples docs *.json README.md CONTRIBUTING.md SECURITY.md THIRD_PARTY_NOTICES.md .github",
-    "lint": "eslint src test scripts examples",
+    "format:check": "prettier --check src test scripts examples docs ui *.json README.md CONTRIBUTING.md SECURITY.md THIRD_PARTY_NOTICES.md .github",
+    "lint": "eslint src test scripts examples ui/src",
     "schema": "tsx scripts/schema.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run build && npm run test:coverage",
     "demo": "tsx examples/demo.ts",
-    "test:package": "node scripts/package-smoke.mjs"
+    "test:package": "node scripts/package-smoke.mjs",
+    "test:ui": "playwright test --config ui/playwright.config.ts",
+    "demo:ui": "tsx examples/workspace-demo.ts"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "1.4.0",
@@ -65,17 +67,31 @@
     "zod": "^4.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@eslint/js": "^10.0.0",
+    "@fontsource-variable/dm-sans": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@pierre/diffs": "1.4.1",
+    "@pierre/trees": "1.0.0-beta.6",
+    "@playwright/test": "1.63.0",
     "@types/node": "^24.0.0",
     "@types/nodemailer": "8.0.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
     "@types/ws": "^8.18.0",
     "aamp-sdk": "0.1.24",
     "c8": "^11.0.0",
     "eslint": "^10.0.0",
+    "lucide-react": "1.41.0",
     "prettier": "^3.9.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.0",
-    "typescript-eslint": "^8.65.0"
+    "typescript-eslint": "^8.65.0",
+    "vite": "8.2.2"
   },
   "overrides": {
     "aamp-sdk": {

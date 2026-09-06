@@ -39,3 +39,21 @@ jobs:
       - run: npx tsx --test test/satellite.test.ts
         env:
           AXP_TEST_CONTAINER: axp-fixture
+  browser:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-evidence
+          path: test-results/

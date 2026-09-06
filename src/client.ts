@@ -17,6 +17,8 @@ import type {
   Memory,
   Review,
   ExecutorInfo,
+  DiscussionComment,
+  Principal,
 } from "./protocol/types.js";
 import { CAPABILITY, AXP_VERSION, ROOT } from "./protocol/types.js";
 import { Codes, requireThat } from "./protocol/errors.js";
@@ -29,6 +31,7 @@ export interface ConnectOptions {
 }
 
 export interface CommandResults {
+  "_axp/comment": DiscussionComment;
   "_axp/dispatch": null;
   "_axp/register": ExecutorInfo;
   "_axp/grant": Grant;
@@ -78,6 +81,8 @@ export class AxpClient extends EventEmitter<{
   lastSeenServerSeq = 0;
   private clientSeq = 0;
   principalId = "";
+  repository = "";
+  principalRole: Principal["role"] = "observer";
   private constructor(
     readonly transport: SocketTransport,
     readonly clientId: string,
@@ -121,13 +126,21 @@ export class AxpClient extends EventEmitter<{
         initialSubscriptions: [ROOT],
       });
       const capability = result._meta?.[CAPABILITY] as
-        { version?: string; principal?: string } | undefined;
+        | {
+            version?: string;
+            principal?: string;
+            role?: Principal["role"];
+            repository?: string;
+          }
+        | undefined;
       requireThat(
         capability?.version === AXP_VERSION,
         Codes.version,
         "Host does not support this AXP version",
       );
       client.principalId = capability.principal ?? "";
+      client.repository = capability.repository ?? "";
+      client.principalRole = capability.role ?? "observer";
       client.lastSeenServerSeq = result.serverSeq;
       return client;
     } catch (error) {
