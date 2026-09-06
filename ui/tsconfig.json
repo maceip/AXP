@@ -12,7 +12,8 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "paths": { "beautiful-mermaid-axp": ["./types/beautiful-mermaid-axp.d.ts"] }
   },
-  "include": ["src"]
+  "include": ["src", "types"]
 }

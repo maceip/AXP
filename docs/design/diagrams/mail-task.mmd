@@ -1,0 +1,15 @@
+graph TD
+  A[Email arrives] --> B{Sender allowed?}
+  B -->|no| C[Warn locally]
+  B -->|yes| D[Save task]
+  D --> E([Acknowledge by email])
+  D --> F{Session free?}
+  F -->|no| G[Queue behind current turn]
+  G --> F
+  F -->|yes| H[Start AHP turn]
+  H --> I[[Agent works in worktree]]
+  I --> J{Tool needs approval?}
+  J -->|yes| K[Ask a maintainer in AXP]
+  K --> I
+  J -->|no| L[(Checkpoint saved)]
+  L --> M([Reply with result])

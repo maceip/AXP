@@ -1,0 +1,15 @@
+graph LR
+  subgraph Contributor
+    A[Agent edits the worktree and runs the repository tests before saving] --> B[Checkpoint bundle]
+    B --> C>Sign manifest]
+  end
+  subgraph Maintainer
+    C --> D{Review changes}
+    D -->|approve| E[Countersign]
+    D -->|changes needed| A
+  end
+  subgraph Verifier
+    E --> F[/Restore exact commit\]
+    F --> G[Run tests]
+    G --> H(((Verified)))
+  end

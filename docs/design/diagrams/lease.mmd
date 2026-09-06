@@ -1,0 +1,10 @@
+stateDiagram-v2
+  [*] --> Connecting
+  Connecting --> Parked: claim accepted
+  Parked --> Working: prompt
+  Working --> Parked: turn settled
+  Working --> Reconnecting: socket lost
+  Reconnecting --> Parked: same epoch
+  Reconnecting --> Stopped: budget revoked
+  Parked --> Stopped: Ctrl-C
+  Stopped --> [*]

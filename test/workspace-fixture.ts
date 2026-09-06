@@ -114,7 +114,7 @@ export async function workspaceFixture() {
                 ? "The parser rejects empty input with a generic error. The patch explains how to fix the input without changing the return type.\n\nThe patch is ready for review."
                 : i === 1
                   ? "I found the first-run entry point. Before changing it, I need permission to edit the welcome screen."
-                  : "I am checking that tasks survive a restart and that retrying a message does not start the same task twice.",
+                  : "I am checking that tasks survive a restart and that retrying a message does not start the same task twice. Here is the path a task takes:\n\n```mermaid\ngraph TD\n  A[Email arrives] --> B{Sender allowed?}\n  B -->|no| C[Warn locally]\n  B -->|yes| D[Save task]\n  D --> E([Acknowledge])\n  D --> F{Session free?}\n  F -->|no| G[Queue]\n  G --> F\n  F -->|yes| H[Start turn]\n  H --> I[(Checkpoint saved with the bundle and patch)]\n  I --> J([Reply with result])\n```",
           },
         },
       ],
