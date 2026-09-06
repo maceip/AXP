@@ -1,0 +1,304 @@
+/* Liquid Leaf
+ *
+ * A translucent, glossy, slightly gooey green surface for the pieces of the
+ * workspace that should feel alive: presence, primary actions, live state.
+ * It is what "liquid glass" becomes outdoors: sap and leaf instead of glass and
+ * chrome. Borrowed from liquid-dom's glass model (an SDF rim with a specular
+ * band, blurred backdrop, corner smoothing) and rebuilt with CSS and SVG so it
+ * works in every current browser without WebGPU.
+ *
+ * Layers, back to front:
+ *   backdrop-filter  frosts whatever is behind the surface
+ *   background       the sap: a layered green gradient with a bright meniscus
+ *   ::before         specular highlight, a soft ellipse that follows the light
+ *   ::after          rim light on the top edge and a shadow line on the bottom
+ *
+ * Two palettes: outdoor (default, daytime, grass) and indoor
+ * ([data-scene="indoor"], night, moss under lamplight). */
+
+:root,
+[data-scene="outdoor"] {
+  --leaf-sprout: #b8ec9c;
+  --leaf-grass: #7dc395;
+  --leaf-leaf: #58aa72;
+  --leaf-moss: #3d7a52;
+  --leaf-ink: #1f3d2b;
+  --leaf-text: #16301f;
+  --leaf-glow: rgba(125, 195, 149, 0.45);
+  --leaf-shadow: rgba(31, 61, 43, 0.22);
+  --leaf-shine: rgba(255, 255, 255, 0.85);
+  --leaf-frost: 12px;
+  --leaf-light-x: 28%;
+  --leaf-light-y: 18%;
+}
+[data-scene="indoor"] {
+  --leaf-sprout: #9ad6a6;
+  --leaf-grass: #4c8f66;
+  --leaf-leaf: #2f6a49;
+  --leaf-moss: #1f4a34;
+  --leaf-ink: #0f2418;
+  --leaf-text: #e8f4ea;
+  --leaf-glow: rgba(154, 214, 166, 0.3);
+  --leaf-shadow: rgba(0, 0, 0, 0.5);
+  --leaf-shine: rgba(214, 245, 220, 0.75);
+}
+
+/* ---------------------------------------------------------------- surface */
+.leaf {
+  --leaf-radius: 16px;
+  position: relative;
+  isolation: isolate;
+  color: var(--leaf-text);
+  border: 0;
+  border-radius: var(--leaf-radius);
+  corner-shape: squircle;
+  background:
+    /* meniscus: the bright bead where the sap meets the rim */
+    radial-gradient(
+      120% 140% at 50% -40%,
+      var(--leaf-shine) 0%,
+      rgba(255, 255, 255, 0.35) 22%,
+      transparent 46%
+    ),
+    /* depth: darker toward the bottom edge, like a full glass */
+    linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.28) 0%,
+        rgba(255, 255, 255, 0) 38%,
+        rgba(0, 0, 0, 0) 70%,
+        rgba(0, 40, 20, 0.16) 100%
+      ),
+    /* the sap itself */
+    linear-gradient(
+        160deg,
+        color-mix(in oklab, var(--leaf-sprout) 78%, transparent) 0%,
+        color-mix(in oklab, var(--leaf-grass) 82%, transparent) 45%,
+        color-mix(in oklab, var(--leaf-leaf) 86%, transparent) 100%
+      );
+  -webkit-backdrop-filter: blur(var(--leaf-frost)) saturate(1.35);
+  backdrop-filter: blur(var(--leaf-frost)) saturate(1.35);
+  box-shadow:
+    /* rim light along the top */
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    /* thickness on the bottom edge */ inset 0 -1px 0 rgba(0, 40, 20, 0.2),
+    /* ambient lift */ 0 1px 2px var(--leaf-shadow),
+    /* coloured glow into the page, the "wet" part */ 0 8px 24px -8px
+      var(--leaf-glow);
+  transition:
+    transform 0.45s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.35s cubic-bezier(0.2, 0, 0, 1),
+    filter 0.35s ease;
+}
+/* specular highlight: an ellipse that sits where the light is */
+.leaf::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  corner-shape: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    38% 28% at var(--leaf-light-x) var(--leaf-light-y),
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.18) 40%,
+    transparent 70%
+  );
+  mix-blend-mode: soft-light;
+  transition:
+    background-position 0.4s ease,
+    opacity 0.4s ease;
+}
+/* rim: a 1px light band that fades from the lit corner to the shaded one */
+.leaf::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  corner-shape: inherit;
+  pointer-events: none;
+  padding: 1px;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0.25) 40%,
+    rgba(0, 40, 20, 0.08) 75%,
+    rgba(0, 40, 20, 0.28) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.leaf:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 40, 20, 0.2),
+    0 2px 4px var(--leaf-shadow),
+    0 12px 30px -8px var(--leaf-glow);
+}
+/* press: sap squashes, then springs back (see spring() in LiquidLeaf.tsx) */
+.leaf:active,
+.leaf.is-pressed {
+  transform: scale(0.97, 0.94);
+  transition-duration: 0.08s;
+}
+.leaf.is-releasing {
+  animation: leaf-spring 0.6s
+    linear(
+      0,
+      0.2178 2.1%,
+      1.1052 8.7%,
+      1.2103 11.4%,
+      1.2181 13.2%,
+      1.1729 15.6%,
+      1.0282 21.4%,
+      0.9575 25.3%,
+      0.9327 29.4%,
+      0.9463 33.6%,
+      1.0143 43.5%,
+      1.0091 49.4%,
+      0.9963 59.3%,
+      0.9977 69.3%,
+      1.0011 82.4%,
+      1
+    )
+    both;
+}
+@keyframes leaf-spring {
+  from {
+    transform: scale(0.97, 0.94);
+  }
+  to {
+    transform: scale(1, 1);
+  }
+}
+
+/* ------------------------------------------------------------- variants */
+.leaf-button {
+  --leaf-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+[data-scene="indoor"] .leaf-button {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+.leaf-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: saturate(0.6);
+}
+.leaf-button.small {
+  min-height: 30px;
+  padding: 5px 12px;
+  font-size: 10px;
+}
+
+.leaf-pill {
+  --leaf-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.leaf-card {
+  --leaf-radius: 18px;
+  padding: 18px 16px;
+}
+
+/* a presence dot: a drop of sap with a highlight, breathing while live */
+.leaf-dot {
+  --leaf-radius: 50%;
+  corner-shape: round;
+  --leaf-light-x: 34%;
+  --leaf-light-y: 30%;
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  flex-shrink: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 0 3px color-mix(in oklab, var(--leaf-grass) 22%, transparent),
+    0 2px 6px -1px var(--leaf-glow);
+}
+.leaf-dot.is-live {
+  animation: leaf-breathe 2.6s ease-in-out infinite;
+}
+@keyframes leaf-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 0 3px color-mix(in oklab, var(--leaf-grass) 22%, transparent),
+      0 2px 6px -1px var(--leaf-glow);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 0 5px color-mix(in oklab, var(--leaf-grass) 14%, transparent),
+      0 3px 10px -1px var(--leaf-glow);
+  }
+}
+.leaf-dot.is-off {
+  background: linear-gradient(160deg, #d9c9a8, #b9a37b);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 0 0 3px rgba(185, 163, 123, 0.2);
+}
+
+/* -------------------------------------------------------------- liquids */
+/* Goo: children of a .leaf-goo merge into one blob wherever they touch.
+ * Classic metaball trick: blur, then sharpen alpha with a colour matrix. */
+.leaf-goo {
+  filter: url("#leaf-goo");
+}
+/* Wobble: a low-frequency displacement, switched on briefly by JS so the
+ * surface shivers like a drop that has just landed. */
+.leaf.is-wobbling {
+  filter: url("#leaf-wobble");
+}
+/* The filter definitions live in <LeafDefs/>; this keeps them out of layout. */
+.leaf-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaf,
+  .leaf::before {
+    transition: none;
+  }
+  .leaf.is-releasing,
+  .leaf-dot.is-live {
+    animation: none;
+  }
+  .leaf.is-wobbling {
+    filter: none;
+  }
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .leaf {
+    background-color: color-mix(in oklab, var(--leaf-grass) 92%, #fff);
+  }
+}
