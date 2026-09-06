@@ -56,3 +56,20 @@ export interface WorkspaceCommand {
     | { kind: "accept"; checkpoint: string; manifestDigest: string }
     | { kind: "submit"; checkpoint: string; model: string };
 }
+
+/** One person's portrait in the family photo. */
+export interface Portrait {
+  id: string;
+  author: string;
+  session: string;
+  digest: string;
+  createdAt: number;
+  caption: string;
+}
+export interface FamilyPhoto {
+  /** sessions that feed the photo (task `family-photo`, `family-photo-2`, …) */
+  sessions: string[];
+  /** in join order; index is the spot */
+  portraits: Portrait[];
+  capacity: number;
+}

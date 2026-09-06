@@ -1,0 +1,130 @@
+/* The family photo */
+.family-photo {
+  margin: 0 0 34px;
+}
+.fp-frame {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #dce3d1;
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 10px 30px -14px rgba(60, 74, 60, 0.35);
+  background: #eaf2e3;
+}
+.fp-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.fp-people {
+  position: relative;
+  width: 100%;
+}
+.fp-person,
+.fp-open {
+  position: absolute;
+  /* sized against the frame so the photo scales as one picture */
+  width: 5.4%;
+  aspect-ratio: 1;
+  transform: translate(-50%, calc(-50% - var(--lift, 0px)))
+    scale(calc(var(--s, 1) * var(--z, 1)));
+  border-radius: 50%;
+  padding: 0;
+  border: 3px solid #fff;
+  background: #f4efe0;
+  box-shadow:
+    0 6px 14px -6px rgba(40, 50, 40, 0.5),
+    0 0 0 1px rgba(40, 50, 40, 0.08);
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    transform 0.28s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+.fp-person img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.fp-person:hover,
+.fp-person:focus-visible {
+  --z: 1.12;
+  --lift: 4px;
+  box-shadow:
+    0 14px 24px -8px rgba(40, 50, 40, 0.55),
+    0 0 0 1px rgba(40, 50, 40, 0.1);
+  outline: none;
+}
+.fp-person.is-mine {
+  border-color: #f3d43a;
+  box-shadow:
+    0 6px 14px -6px rgba(40, 50, 40, 0.5),
+    0 0 0 3px rgba(243, 212, 58, 0.45);
+}
+.fp-initials {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: clamp(9px, 1.4vw, 22px);
+  font-weight: 700;
+  color: #5b6a5c;
+}
+.fp-open {
+  border: 3px dashed rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+  cursor: default;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+.fp-open.is-yours {
+  border-color: #f3d43a;
+  background: rgba(243, 212, 58, 0.25);
+  animation: fp-beckon 1.8s ease-in-out infinite;
+}
+@keyframes fp-beckon {
+  50% {
+    --z: 1.08;
+  }
+}
+@property --z {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --lift {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+.family-photo figcaption {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--fg-subtle);
+}
+.family-photo figcaption strong {
+  color: var(--fg-default);
+  font-weight: 600;
+}
+.family-photo.is-compact .fp-frame {
+  border-radius: 12px;
+}
+.family-photo.is-compact figcaption {
+  font-size: 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-open.is-yours {
+    animation: none;
+  }
+  .fp-person,
+  .fp-open {
+    transition: none;
+  }
+}

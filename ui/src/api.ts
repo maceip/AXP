@@ -24,6 +24,15 @@ function headers(): Record<string, string> {
     authorization: `Bearer ${access}`,
   };
 }
+/** Raw authenticated GET for binary responses (portraits). */
+export function authorizedFetch(path: string, signal?: AbortSignal) {
+  return fetch(`/api/${path}`, {
+    headers: headers(),
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(20_000)])
+      : AbortSignal.timeout(20_000),
+  });
+}
 export function useDraft(key: string) {
   const [value, setValue] = useState(() => stored(`axp-draft:${key}`) ?? "");
   const setDraft = useCallback(

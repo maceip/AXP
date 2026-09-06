@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
-  Check,
   CircleHelp,
   GitBranch,
   LayoutGrid,
@@ -17,13 +16,14 @@ import { useWorkspace } from "./api.js";
 import {
   Avatar,
   ContributionCard,
-  Dialog,
   Empty,
   Loading,
   Mark,
   people,
 } from "./components.js";
 import { ContributionPage } from "./Contribution.js";
+import { Onboarding } from "./family/Onboarding.js";
+import { FamilyPhoto } from "./family/FamilyPhoto.js";
 
 type Page = "overview" | "contributions" | "people" | "activity";
 function currentPage(): Page {
@@ -520,6 +520,11 @@ export default function App() {
               )}
               {page === "people" && (
                 <>
+                  <FamilyPhoto
+                    refreshKey={workspace.receivedAt}
+                    you={workspace.principal.id}
+                    openSession={(id) => navigate(id)}
+                  />
                   <div className="people-grid">
                     {members.map((member) => (
                       <article className="person-card" key={member.id}>
@@ -583,58 +588,13 @@ export default function App() {
           refresh={refresh}
         />
       )}
-      {help && (
-        <Dialog title="Getting started" close={() => setHelp(false)}>
-          <div className="dialog-body onboarding">
-            <div className="onboarding-step">
-              <span>01</span>
-              <div>
-                <h3>Choose a contribution</h3>
-                <p>
-                  Find something open to join, or ask a maintainer to create a
-                  session for your idea.
-                </p>
-              </div>
-            </div>
-            <div className="onboarding-step">
-              <span>02</span>
-              <div>
-                <h3>Connect an agent (optional)</h3>
-                <p>
-                  From your checkout, connect your ACP agent using your
-                  contributor profile and a budget you choose.
-                </p>
-                <code>
-                  axp park SESSION --profile .axp/contributor.json --native --
-                  YOUR_ACP_AGENT
-                </code>
-                <p className="fine-print">
-                  Native tools run with your user permissions. Use --image for
-                  an offline container instead.
-                </p>
-              </div>
-            </div>
-            <div className="onboarding-step">
-              <span>03</span>
-              <div>
-                <h3>Review and discuss</h3>
-                <p>
-                  Review changes, ask questions and record decisions in the
-                  discussion.
-                </p>
-              </div>
-            </div>
-            <button
-              className="button primary full"
-              onClick={() => {
-                setHelp(false);
-                go("contributions");
-              }}
-            >
-              <Check size={16} /> Explore contributions
-            </button>
-          </div>
-        </Dialog>
+      {help && workspace && (
+        <Onboarding
+          workspace={workspace}
+          close={() => setHelp(false)}
+          refresh={refresh}
+          openSession={(id) => navigate(id)}
+        />
       )}
     </div>
   );

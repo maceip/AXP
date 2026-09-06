@@ -510,3 +510,69 @@ test("stored agent content is inspectable and downloadable without executing its
     await f.close();
   }
 });
+
+test("the family photo shows every posted portrait in join order and serves images only through the gateway", async ({
+  page,
+}) => {
+  const f = await workspaceFixture();
+  try {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    const link = new URL(await f.open("contributor"));
+    await page.goto(link.href);
+    await page
+      .getByRole("navigation", { name: "Workspace" })
+      .getByRole("button", { name: "People" })
+      .click();
+    const photo = page.locator(".family-photo");
+    await expect(photo.locator(".fp-person")).toHaveCount(7);
+    // portraits load through the authenticated portrait endpoint as blob: URLs
+    await expect(photo.locator(".fp-person img").first()).toHaveAttribute(
+      "src",
+      /^blob:/,
+    );
+    await expect(photo.locator("figcaption")).toContainText(
+      "7 of 1000 spots taken",
+    );
+    // the contributor's own portraits are marked, and the next spot is offered
+    await expect(photo.locator(".fp-person.is-mine")).toHaveCount(3);
+    await expect(photo.locator(".fp-open")).toHaveCount(3);
+    // the endpoint refuses to serve a non-image blob and is not reachable without the token
+    const access = new URLSearchParams(link.hash.slice(1)).get("access");
+    const family = await page.request.get(`${link.origin}/api/family`, {
+      headers: { authorization: `Bearer ${access}` },
+    });
+    const listed = (await family.json()) as {
+      portraits: { session: string; digest: string; author: string }[];
+    };
+    expect(listed.portraits.map((p) => p.author).slice(0, 3)).toEqual([
+      "contributor",
+      "maintainer",
+      "verifier",
+    ]);
+    const first = listed.portraits[0]!;
+    const image = await page.request.get(
+      `${link.origin}/api/portrait?session=${first.session}&digest=${first.digest}`,
+      { headers: { authorization: `Bearer ${access}` } },
+    );
+    expect(image.status()).toBe(200);
+    expect(image.headers()["content-type"]).toBe("image/svg+xml");
+    expect(image.headers()["content-disposition"]).toBe("inline");
+    expect(image.headers()["x-content-type-options"]).toBe("nosniff");
+    const anonymous = await page.request.get(
+      `${link.origin}/api/portrait?session=${first.session}&digest=${first.digest}`,
+    );
+    expect(anonymous.status()).toBe(403);
+    // onboarding is built around the photo
+    await page.getByRole("button", { name: "Getting started" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toContainText("Join the family photo");
+    // the fixture's contributor already has an agent connected, so step two
+    // completes itself instead of showing the park command
+    await expect(dialog).toContainText("Local ACP agent is here");
+    await expect(dialog.locator(".fp-person")).toHaveCount(7);
+    expect(errors).toEqual([]);
+  } finally {
+    await f.close();
+  }
+});

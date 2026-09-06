@@ -19,11 +19,24 @@ import { id, sha, digest } from "./protocol/schema.js";
 import { Codes, requireThat, ProtocolError } from "./protocol/errors.js";
 import { hashObject } from "./hash.js";
 import { WorkspaceCommands } from "./workspace-commands.js";
+
 import type {
   Contribution,
   ContributionDetail,
+  FamilyPhoto,
+  Portrait,
   WorkspaceView,
 } from "./workspace-contract.js";
+const PORTRAIT_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+]);
+const PORTRAIT_MAX_BYTES = 1_500_000;
+/** Spots in the photo. The layout scales to this; sharding sessions raises it. */
+const FAMILY_CAPACITY = 1000;
 
 export interface WorkspaceOptions {
   url: string;
@@ -232,6 +245,58 @@ export class WorkspaceServer {
       totalTurns: chat.turns.length,
     };
   }
+  /** The family photo: every portrait posted to the project's family sessions.
+   *
+   * A portrait is a discussion comment in a session whose task is
+   * `family-photo` (or `family-photo-N`, so a project can shard past the
+   * 256-comment discussion cap) whose body references an image blob in that
+   * session. Order is join order, which is what decides your spot. */
+  private async family(client: AxpClient): Promise<FamilyPhoto> {
+    const { items } = await client.ahp.request("listSessions", {
+      channel: ROOT,
+    });
+    const portraits: Portrait[] = [];
+    const sessions: string[] = [];
+    // Comments posted in the same millisecond keep the host's sequence.
+    const order = new Map<string, number>();
+    for (const item of items) {
+      const session = id.parse(item.resource.slice("ahp-session:/".length));
+      const state = await this.snapshot<ExchangeState>(
+        client,
+        channels(session).exchange,
+      );
+      if (!/^family-photo(-\d+)?$/.test(state.task)) continue;
+      sessions.push(session);
+      const prefix = `axp-blob:/${encodeURIComponent(state.resource)}/`;
+      for (const [index, comment] of (state.discussion ?? []).entries()) {
+        const match = comment.body.match(
+          new RegExp(
+            `${prefix.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}([a-f0-9]{64})`,
+          ),
+        );
+        if (!match) continue;
+        order.set(comment.id, index);
+        portraits.push({
+          id: comment.id,
+          author: comment.author,
+          session,
+          digest: match[1]!,
+          createdAt: comment.createdAt,
+          caption: comment.body
+            .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+            .replace(/axp-blob:\/\S+/g, "")
+            .trim()
+            .slice(0, 140),
+        });
+      }
+    }
+    portraits.sort(
+      (a, b) =>
+        a.createdAt - b.createdAt ||
+        (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
+    );
+    return { sessions, portraits, capacity: FAMILY_CAPACITY };
+  }
   private async workspace(
     client: AxpClient,
     offset: number,
@@ -333,7 +398,7 @@ export class WorkspaceServer {
     response.setHeader("referrer-policy", "no-referrer");
     response.setHeader(
       "content-security-policy",
-      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     );
     try {
       requireThat(
@@ -433,6 +498,43 @@ export class WorkspaceServer {
               truncated: isText && bytes.length > 64_000,
             });
           }
+          return;
+        }
+        if (url.pathname === "/api/family" && request.method === "GET") {
+          json(200, await this.family(client));
+          return;
+        }
+        if (url.pathname === "/api/portrait" && request.method === "GET") {
+          // Portraits are the only blobs the gateway serves as images. Content
+          // addressing makes them immutable, so they cache for a year; nosniff
+          // and an inline disposition keep an <img> the only consumer.
+          const session = id.parse(url.searchParams.get("session"));
+          const sha256 = digest.parse(url.searchParams.get("digest"));
+          const blob = await client.call("_axp/blobGet", {
+            channel: channels(session).exchange,
+            digest: sha256,
+          });
+          requireThat(
+            PORTRAIT_TYPES.has(blob.mediaType),
+            Codes.invalid,
+            "Portraits must be PNG, JPEG, WebP, GIF or SVG",
+          );
+          const bytes = Buffer.from(blob.data, "base64");
+          requireThat(
+            bytes.length <= PORTRAIT_MAX_BYTES,
+            Codes.limit,
+            "Portraits are limited to 1.5 MB",
+          );
+          response.writeHead(200, {
+            "content-type": blob.mediaType,
+            "content-length": bytes.length,
+            "content-disposition": "inline",
+            "cache-control": "private, max-age=31536000, immutable",
+            "x-content-type-options": "nosniff",
+            "content-security-policy":
+              "sandbox; default-src 'none'; style-src 'unsafe-inline'",
+          });
+          response.end(bytes);
           return;
         }
         if (url.pathname === "/api/patch" && request.method === "GET") {
