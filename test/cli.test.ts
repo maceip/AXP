@@ -1,11 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fork } from "node:child_process";
+import { fork, execFile } from "node:child_process";
 import { once } from "node:events";
-import { resolve } from "node:path";
+import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { setup, eventually } from "./helpers.js";
 import { faultProxy } from "./fault-proxy.js";
+import { promisify } from "node:util";
+import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { repository } from "./project-fixture.js";
+import { Hub } from "../src/hub.js";
+import type { HubOptions } from "../src/hub.js";
 
 test(
   "the parking CLI handles Ctrl-C during retry and removes signal handlers after natural failure",
@@ -84,3 +89,111 @@ test(
     }
   },
 );
+
+test("CLI errors precede connection setup and failed initialization preserves existing profiles", async (t) => {
+  const repo = await repository();
+  t.after(() => rm(repo, { recursive: true, force: true }));
+  const env = { ...process.env };
+  delete env.AXP_URL;
+  delete env.AXP_TOKEN;
+  const cli = (args: string[]) =>
+    promisify(execFile)(
+      process.execPath,
+      [
+        "--import",
+        pathToFileURL(resolve("node_modules/tsx/dist/loader.mjs")).href,
+        resolve("src/cli.ts"),
+        ...args,
+      ],
+      { cwd: repo, env },
+    );
+  await assert.rejects(cli(["nonsense"]), /Unknown command nonsense/);
+  await mkdir(join(repo, ".axp"));
+  const existing = join(repo, ".axp", "contributor.json");
+  await writeFile(existing, "preserve this profile");
+  await assert.rejects(cli(["init", "--repo", "test/cli"]), /EEXIST/);
+  assert.equal(await readFile(existing, "utf8"), "preserve this profile");
+  await assert.rejects(readFile(join(repo, ".axp", "hub.json")), {
+    code: "ENOENT",
+  });
+  await assert.rejects(readFile(join(repo, ".axp", "maintainer.json")), {
+    code: "ENOENT",
+  });
+});
+
+test("--directory selects host configuration and a failed bind releases the database", async (t) => {
+  const f = await setup();
+  const repo = await repository();
+  t.after(async () => {
+    await f.close();
+    await rm(repo, { recursive: true, force: true });
+  });
+  const env = { ...process.env };
+  delete env.AXP_URL;
+  delete env.AXP_TOKEN;
+  const cli = (args: string[]) =>
+    promisify(execFile)(
+      process.execPath,
+      [
+        "--import",
+        pathToFileURL(resolve("node_modules/tsx/dist/loader.mjs")).href,
+        resolve("src/cli.ts"),
+        ...args,
+        "--directory",
+        repo,
+      ],
+      { cwd: process.cwd(), env, timeout: 5000 },
+    );
+  await cli(["init", "--repo", "test/cli", "--port", new URL(f.url).port]);
+  await assert.rejects(cli(["serve"]), /EADDRINUSE/);
+  const options = JSON.parse(
+    await readFile(join(repo, ".axp", "hub.json"), "utf8"),
+  ) as HubOptions;
+  const reopened = new Hub(options);
+  await reopened.close();
+  await assert.rejects(cli(["init", "--repo", "test/cli", "--port", "0"]));
+});
+
+test("an explicit CLI profile overrides ambient credentials and a partial environment fails closed", async (t) => {
+  const f = await setup();
+  const repo = await repository();
+  t.after(async () => {
+    await f.close();
+    await rm(repo, { recursive: true, force: true });
+  });
+  const profile = join(repo, "observer.json");
+  await writeFile(
+    profile,
+    JSON.stringify({ url: f.url, token: f.credentials[2]!.token }),
+  );
+  const cli = (args: string[], env: NodeJS.ProcessEnv) =>
+    promisify(execFile)(
+      process.execPath,
+      [
+        "--import",
+        pathToFileURL(resolve("node_modules/tsx/dist/loader.mjs")).href,
+        resolve("src/cli.ts"),
+        ...args,
+      ],
+      { cwd: repo, env, timeout: 5000 },
+    );
+  await assert.rejects(
+    cli(
+      [
+        "prompt",
+        f.c.exchange.slice("axp-session:/".length),
+        "This must not run as maintainer",
+        "--profile",
+        profile,
+      ],
+      { ...process.env, AXP_URL: f.url, AXP_TOKEN: f.credentials[0]!.token },
+    ),
+    /Maintainer authority required/,
+  );
+  const env: NodeJS.ProcessEnv = { ...process.env, AXP_URL: f.url };
+  delete env.AXP_TOKEN;
+  await assert.rejects(
+    cli(["sessions"], env),
+    /Set both AXP_URL and AXP_TOKEN/,
+  );
+});

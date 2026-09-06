@@ -1,13 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomUUID, generateKeyPairSync } from "node:crypto";
 import { resolve } from "node:path";
 import { request } from "node:http";
-import { setup, prompt } from "./helpers.js";
+import { setup, prompt, dock, eventually } from "./helpers.js";
 import { WorkspaceServer } from "../src/workspace.js";
-import type { WorkspaceView } from "../src/workspace-contract.js";
+import type {
+  WorkspaceView,
+  ContributionDetail,
+  WorkspaceCommand,
+} from "../src/workspace-contract.js";
 import type { ExchangeState } from "../src/protocol/types.js";
 import { faultProxy } from "./fault-proxy.js";
+import { workspaceFixture } from "./workspace-fixture.js";
+import { ActionType } from "@microsoft/agent-host-protocol";
 
 test("workspace gateway keeps credentials private, rejects hostile origins and preserves host role authority", async (t) => {
   const f = await setup();
@@ -194,5 +200,207 @@ test("discussion has host-authored identity, scoped access, stable retry receipt
     (await f.maintainer.snapshot<ExchangeState>(f.c.exchange)).discussion
       ?.length,
     2,
+  );
+});
+
+test("streaming updates converge in the gateway without downloading another full snapshot", async (t) => {
+  const f = await setup();
+  t.after(f.close);
+  const proxy = await faultProxy(f.url);
+  t.after(proxy.close);
+  const server = new WorkspaceServer({
+    url: proxy.url,
+    token: f.credentials[0]!.token,
+  });
+  const link = new URL(await server.listen());
+  t.after(() => server.close());
+  const headers = {
+    authorization: `Bearer ${new URLSearchParams(link.hash.slice(1)).get("access")!}`,
+  };
+  const session = f.c.exchange.slice("axp-session:/".length);
+  const read = async () =>
+    (
+      await fetch(`${link.origin}/api/contribution?session=${session}`, {
+        headers,
+      })
+    ).json() as Promise<ContributionDetail>;
+  await read();
+  const before = proxy.requests.filter((m) => m === "subscribe").length;
+  const lease = await dock(f.contributor, f.c.exchange);
+  const turn = prompt();
+  await f.maintainer.dispatch(f.c.chat, turn);
+  await f.contributor.call("_axp/reserve", {
+    channel: f.c.exchange,
+    epoch: lease.epoch,
+    turnId: turn.turnId,
+    ceiling: { tokens: 1000, costMicros: 0, turns: 1 },
+  });
+  await f.contributor.call("_axp/emit", {
+    channel: f.c.exchange,
+    epoch: lease.epoch,
+    actions: [
+      {
+        type: ActionType.ChatResponsePart,
+        turnId: turn.turnId,
+        part: { kind: "markdown", id: "text", content: "" },
+      },
+    ],
+  });
+  for (let i = 0; i < 100; i++)
+    await f.contributor.call("_axp/emit", {
+      channel: f.c.exchange,
+      epoch: lease.epoch,
+      actions: [
+        {
+          type: ActionType.ChatDelta,
+          turnId: turn.turnId,
+          partId: "text",
+          content: "x",
+        },
+      ],
+    });
+  const view = await eventually(
+    read,
+    (view) =>
+      view.chat.activeTurn?.responseParts.some(
+        (p) => p.kind === "markdown" && p.content === "x".repeat(100),
+      ) ?? false,
+  );
+  assert.deepEqual(view.chat, await f.maintainer.snapshot(f.c.chat));
+  assert.equal(proxy.requests.filter((m) => m === "subscribe").length, before);
+});
+
+test("workspace retries retain an approved permission and signed manifest after lost host replies", async (t) => {
+  const f = await workspaceFixture();
+  t.after(f.close);
+  const proxy = await faultProxy(f.url);
+  t.after(proxy.close);
+  const open = async (role: "maintainer" | "contributor") => {
+    const key = generateKeyPairSync("ed25519")
+      .privateKey.export({ type: "pkcs8", format: "pem" })
+      .toString();
+    const server = new WorkspaceServer({
+      url: proxy.url,
+      token: f.credentials.find((c) => c.principal.role === role)!.token,
+      signingKey: key,
+    });
+    const link = new URL(await server.listen());
+    t.after(() => server.close());
+    return (command: WorkspaceCommand) =>
+      fetch(`${link.origin}/api/command`, {
+        method: "POST",
+        headers: {
+          origin: link.origin,
+          authorization: `Bearer ${new URLSearchParams(link.hash.slice(1)).get("access")!}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(command),
+      });
+  };
+  const maintain = await open("maintainer");
+  const permission: WorkspaceCommand = {
+    operationId: randomUUID(),
+    startedAt: new Date().toISOString(),
+    session: "first-run",
+    action: {
+      kind: "permission",
+      turnId: "demo-1",
+      toolId: "edit-welcome",
+      optionId: "allow-once",
+    },
+  };
+  proxy.dropReplyTo("_axp/dispatch");
+  assert.equal((await maintain(permission)).status, 503);
+  await f.maintainer.dispatch("ahp-chat:/first-run", {
+    type: ActionType.ChatTurnCancelled,
+    turnId: "demo-1",
+    duration: 0,
+  });
+  const retried = await maintain(permission);
+  assert.equal(retried.status, 200, await retried.text());
+  assert.equal(
+    (
+      await maintain({
+        ...permission,
+        action: {
+          kind: "permission",
+          turnId: "demo-1",
+          toolId: "edit-welcome",
+          optionId: "deny",
+        },
+      })
+    ).status,
+    409,
+  );
+  const contribute = await open("contributor");
+  const submit: WorkspaceCommand = {
+    operationId: randomUUID(),
+    startedAt: new Date().toISOString(),
+    session: "parser-errors",
+    action: { kind: "submit", checkpoint: "b".repeat(40), model: "fixture" },
+  };
+  proxy.dropReplyTo("_axp/review");
+  assert.equal((await contribute(submit)).status, 503);
+  const before = await f.contributor.snapshot<ExchangeState>(
+    "axp-session:/parser-errors",
+  );
+  await f.maintainer.call("_axp/comment", {
+    channel: "axp-session:/parser-errors",
+    body: "History advanced after the signed submission.",
+    checkpoint: null,
+    path: null,
+  });
+  assert.equal((await contribute(submit)).status, 200);
+  assert.deepEqual(
+    (await f.contributor.snapshot<ExchangeState>("axp-session:/parser-errors"))
+      .review,
+    before.review,
+  );
+});
+
+test("stored browser content is bounded, downloaded as an attachment, and scoped to its session", async (t) => {
+  const f = await setup();
+  t.after(f.close);
+  const server = new WorkspaceServer({
+    url: f.url,
+    token: f.credentials[2]!.token,
+  });
+  const link = new URL(await server.listen());
+  t.after(() => server.close());
+  const headers = {
+    authorization: `Bearer ${new URLSearchParams(link.hash.slice(1)).get("access")!}`,
+  };
+  const content = "<script>not executed</script>" + "x".repeat(70000);
+  const blob = await f.contributor.call("_axp/blobPut", {
+    channel: f.c.exchange,
+    data: Buffer.from(content).toString("base64"),
+    mediaType: "text/plain",
+  });
+  const query = `session=${f.c.exchange.slice("axp-session:/".length)}&digest=${blob.sha256}`;
+  const preview = (await (
+    await fetch(`${link.origin}/api/content?${query}`, { headers })
+  ).json()) as { text: string; truncated: boolean };
+  assert.equal(preview.text.length, 64000);
+  assert.equal(preview.truncated, true);
+  const download = await fetch(`${link.origin}/api/download?${query}`, {
+    headers,
+  });
+  assert.match(download.headers.get("content-disposition")!, /^attachment/);
+  assert.equal(
+    download.headers.get("content-type"),
+    "application/octet-stream",
+  );
+  assert.equal(await download.text(), content);
+  await f.maintainer.ahp.request("createSession", {
+    channel: "ahp-session:/empty",
+  });
+  assert.equal(
+    (
+      await fetch(
+        `${link.origin}/api/content?session=empty&digest=${blob.sha256}`,
+        { headers },
+      )
+    ).status,
+    404,
   );
 });

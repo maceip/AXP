@@ -4,6 +4,7 @@ import { Readable, Writable } from "node:stream";
 import { once } from "node:events";
 import { randomUUID } from "node:crypto";
 import { promisify } from "node:util";
+import { setTimeout as delay } from "node:timers/promises";
 import * as acp from "@agentclientprotocol/sdk";
 import {
   ActionType,
@@ -143,6 +144,10 @@ export class AcpDriver {
     );
     const child = launchAgent(this.launch, this.cwd);
     this.process = child;
+    // Clean the owned process group immediately when its leader exits, too.
+    child.once("exit", () => {
+      void this.close();
+    });
     const failed = new Promise<never>((_, reject) =>
       child.once("error", reject),
     );
@@ -584,9 +589,28 @@ export class AcpDriver {
       }).catch(() => {});
       containers.delete(child);
     }
-    if (!child.pid || child.exitCode !== null || child.signalCode !== null)
+    if (!child.pid) return;
+    const exited =
+      child.exitCode !== null || child.signalCode !== null
+        ? Promise.resolve()
+        : once(child, "exit").then(
+            () => {},
+            () => {},
+          );
+    if (
+      this.launch.isolation === "native" &&
+      process.platform === "win32" &&
+      child.exitCode === null &&
+      child.signalCode === null
+    ) {
+      await promisify(execFile)(
+        "taskkill",
+        ["/pid", String(child.pid), "/T", "/F"],
+        { timeout: 5000 },
+      ).catch(() => child.kill("SIGKILL"));
+      await exited;
       return;
-    const exited = once(child, "exit").catch(() => {});
+    }
     const kill = (signal: NodeJS.Signals) => {
       try {
         if (
@@ -601,6 +625,21 @@ export class AcpDriver {
       }
     };
     kill("SIGTERM");
+    if (this.launch.isolation === "native" && process.platform !== "win32") {
+      const deadline = Date.now() + 1500;
+      // Waiting only for the leader would spare children that ignore SIGTERM.
+      while (Date.now() < deadline) {
+        try {
+          process.kill(-child.pid, 0);
+        } catch {
+          break;
+        }
+        await delay(25);
+      }
+      kill("SIGKILL");
+      await exited;
+      return;
+    }
     const timer = setTimeout(() => kill("SIGKILL"), 1500);
     try {
       await exited;

@@ -6,14 +6,51 @@ import type {
 } from "../../src/workspace-contract.js";
 
 const fragment = new URLSearchParams(location.hash.slice(1));
+function stored(key: string, value?: string): string | null {
+  try {
+    if (value !== undefined) sessionStorage.setItem(key, value);
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+const access = fragment.get("access") ?? stored("axp-access") ?? "";
 if (fragment.has("access")) {
-  sessionStorage.setItem("axp-access", fragment.get("access")!);
+  stored("axp-access", fragment.get("access")!);
   history.replaceState(null, "", location.pathname + location.search);
 }
 function headers(): Record<string, string> {
   return {
-    authorization: `Bearer ${sessionStorage.getItem("axp-access") ?? ""}`,
+    authorization: `Bearer ${access}`,
   };
+}
+export function useDraft(key: string) {
+  const [value, setValue] = useState(() => stored(`axp-draft:${key}`) ?? "");
+  const setDraft = useCallback(
+    (next: string) => {
+      setValue(next);
+      stored(`axp-draft:${key}`, next);
+    },
+    [key],
+  );
+  return [value, setDraft] as const;
+}
+export async function downloadContent(session: string, digest: string) {
+  const response = await fetch(
+    `/api/download?session=${encodeURIComponent(session)}&digest=${digest}`,
+    {
+      headers: headers(),
+      signal: AbortSignal.timeout(15_000),
+    },
+  );
+  if (!response.ok)
+    throw new Error((await response.json()).error ?? "Download failed");
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `axp-${digest}.bin`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export async function api<T>(
   path: string,
@@ -39,10 +76,11 @@ export async function api<T>(
   return data as T;
 }
 
-export function useWorkspace(session: string | null) {
+export function useWorkspace(session: string | null, offset = 0, query = "") {
   const [workspace, setWorkspace] = useState<WorkspaceView>();
   const [detail, setDetail] = useState<ContributionDetail>();
   const [error, setError] = useState<string>();
+  const [detailError, setDetailError] = useState<string>();
   const reload = useRef<() => void>(() => {});
   const refresh = useCallback(() => reload.current(), []);
   useEffect(() => {
@@ -121,8 +159,12 @@ export function useWorkspace(session: string | null) {
       }
       if (controller.signal.aborted) return;
       running = true;
-      void Promise.all([
-        api<WorkspaceView>("workspace", undefined, controller.signal),
+      void Promise.allSettled([
+        api<WorkspaceView>(
+          `workspace?offset=${offset}&query=${encodeURIComponent(query)}`,
+          undefined,
+          controller.signal,
+        ),
         session
           ? api<ContributionDetail>(
               `contribution?session=${encodeURIComponent(session)}`,
@@ -133,16 +175,23 @@ export function useWorkspace(session: string | null) {
       ])
         .then(([view, selected]) => {
           if (controller.signal.aborted) return;
-          setWorkspace(view);
-          setDetail(selected);
-          setError(undefined);
-        })
-        .catch((failure: unknown) => {
-          if (!controller.signal.aborted)
+          if (view.status === "fulfilled") {
+            setWorkspace(view.value);
+            setError(undefined);
+          } else
             setError(
-              failure instanceof Error
-                ? failure.message
+              view.reason instanceof Error
+                ? view.reason.message
                 : "Workspace unavailable",
+            );
+          if (selected.status === "fulfilled") {
+            setDetail(selected.value);
+            setDetailError(undefined);
+          } else
+            setDetailError(
+              selected.reason instanceof Error
+                ? selected.reason.message
+                : "Contribution unavailable",
             );
         })
         .finally(() => {
@@ -156,20 +205,64 @@ export function useWorkspace(session: string | null) {
     reload.current = load;
     load();
     return () => controller.abort();
-  }, [session]);
+  }, [session, offset, query]);
   return {
     workspace,
     detail: detail?.contribution.id === session ? detail : undefined,
     error,
+    detailError,
     refresh,
   };
 }
 
 /** Keep the same operation ID and timestamp when retrying an uncertain submission. */
-export function useCommand(refresh: () => void) {
+export function useCommand(refresh: () => void, retryKey?: string) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const retry = useRef<{ key: string; command: WorkspaceCommand } | null>(null);
+  const [pending, setPending] = useState<WorkspaceCommand | null>(() => {
+    try {
+      return retryKey
+        ? (JSON.parse(
+            stored(`axp-pending:${retryKey}`) ?? "null",
+          ) as WorkspaceCommand | null)
+        : null;
+    } catch {
+      return null;
+    }
+  });
+  const retry = useRef<{ key: string; command: WorkspaceCommand } | null>(
+    pending
+      ? {
+          key: JSON.stringify({
+            session: pending.session,
+            action: pending.action,
+          }),
+          command: pending,
+        }
+      : null,
+  );
+  const acknowledge = useCallback(
+    (operationId?: string) => {
+      const id = operationId ?? retry.current?.command.operationId;
+      if (retry.current?.command.operationId === id) {
+        retry.current = null;
+        setPending(null);
+      }
+      if (retryKey) {
+        try {
+          const saved = JSON.parse(
+            stored(`axp-pending:${retryKey}`) ?? "null",
+          ) as WorkspaceCommand | null;
+          // A response from a previous mount must not erase a newer pending edit.
+          if (saved?.operationId === id)
+            stored(`axp-pending:${retryKey}`, "null");
+        } catch {
+          /* Unavailable storage does not prevent an in-memory acknowledgement. */
+        }
+      }
+    },
+    [retryKey],
+  );
   const sending = useRef(false);
   const send = async (
     session: string,
@@ -190,17 +283,22 @@ export function useCommand(refresh: () => void) {
           startedAt: new Date().toISOString(),
         },
       };
+    const attempt = retry.current;
+    setPending(attempt.command);
+    if (retryKey)
+      stored(`axp-pending:${retryKey}`, JSON.stringify(attempt.command));
     try {
-      await api("command", retry.current.command);
-      retry.current = null;
+      await api("command", attempt.command);
+      acknowledge(attempt.command.operationId);
       refresh();
       return true;
     } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : "Could not save this change",
-      );
+      if (retry.current === attempt)
+        setError(
+          failure instanceof Error
+            ? failure.message
+            : "Could not save this change",
+        );
       refresh();
       return false;
     } finally {
@@ -208,5 +306,5 @@ export function useCommand(refresh: () => void) {
       setBusy(false);
     }
   };
-  return { send, busy, error };
+  return { send, busy, error, pending, acknowledge };
 }

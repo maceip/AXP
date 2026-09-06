@@ -72,6 +72,16 @@ const app = acp
         text: "I will fix addition and run the real tests.\n",
       },
     });
+    const chunks = Number(
+      process.argv
+        .find((arg) => arg.startsWith("--stream-chunks="))
+        ?.split("=")[1] ?? 0,
+    );
+    for (let i = 0; i < chunks; i++)
+      await update({
+        sessionUpdate: "agent_message_chunk",
+        content: { type: "text", text: "stream " },
+      });
     const toolCallId = randomUUID();
     await update({
       sessionUpdate: "tool_call",

@@ -186,3 +186,7 @@ If validation fails, stop the new host and restore the old symlink and units.
 Read the release's schema compatibility notes before reopening its database with
 older code; when necessary restore the matching pre-upgrade snapshot. Do not
 start two releases against the same database or silently roll back durable data.
+
+When `aamp.json` is configured, a backup requires its `aamp.db` journal. A
+missing journal fails the snapshot and preserves the previous backup; it must
+not produce a successful-looking recovery set without delivery receipts.

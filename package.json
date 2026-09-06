@@ -1,6 +1,6 @@
 {
   "name": "@maceip/axp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Park an agent at a repository. Share and steer durable AHP sessions through ACP.",
   "type": "module",
   "license": "MIT",
@@ -50,7 +50,7 @@
     "typecheck": "tsc --noEmit && tsc -p ui/tsconfig.json",
     "test": "tsx --test test/*.test.ts",
     "test:coverage": "c8 --include \"src/protocol/reducer.ts\" --check-coverage --branches 100 --lines 100 npm test",
-    "format": "prettier --write src test scripts examples docs *.json *.md .github",
+    "format": "prettier --write src test scripts examples docs ui *.json *.md .github",
     "format:check": "prettier --check src test scripts examples docs ui *.json README.md CONTRIBUTING.md SECURITY.md THIRD_PARTY_NOTICES.md .github",
     "lint": "eslint src test scripts examples ui/src",
     "schema": "tsx scripts/schema.ts",

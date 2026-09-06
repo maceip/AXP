@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs, stripVTControlCharacters } from "node:util";
 import { randomBytes, randomUUID, generateKeyPairSync } from "node:crypto";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, unlink } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { realpathSync } from "node:fs";
@@ -55,8 +55,9 @@ const HELP = `AXP — park an agent, share the session.
   axp memory "query"                       Retrieve approved repository lessons
   axp rpc METHOD --params request.json      Call a typed AXP extension
 
-Connection: --profile .axp/maintainer.json (default), or AXP_URL + AXP_TOKEN.
-Parking: --profile .axp/contributor.json --directory /path/to/repo
+Connection: explicit --profile takes priority over AXP_URL + AXP_TOKEN.
+Default profiles: contributor for park/submit, verifier for verify, maintainer otherwise.
+Use --directory /path/to/repo to select its default .axp configuration and profiles.
 Limits: --tokens 100000 --cost-micros 1000000 --turns 10
         --turn-tokens 10000 --turn-cost-micros 100000
 Native execution uses your user permissions; select it explicitly.
@@ -93,6 +94,32 @@ const stringOptions = [
   "auth-method",
   "remote",
 ];
+const commands = new Set([
+  "init",
+  "serve",
+  "create",
+  "sessions",
+  "park",
+  "prompt",
+  "steer",
+  "queue",
+  "watch",
+  "inspect",
+  "approve",
+  "cancel",
+  "close",
+  "export",
+  "keygen",
+  "submit",
+  "accept",
+  "publish",
+  "verify",
+  "executors",
+  "aamp",
+  "ui",
+  "memory",
+  "rpc",
+]);
 const profileSchema = z.strictObject({
   url: z.string().url(),
   token: z.string().min(24),
@@ -147,6 +174,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       native: { type: "boolean" },
       "no-reconnect": { type: "boolean" },
       help: { type: "boolean", short: "h" },
+      version: { type: "boolean", short: "v" },
     },
   });
   const values: Record<string, string | boolean | undefined> = parsed.values;
@@ -160,17 +188,35 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     return typeof value === "string" ? value : fallback!;
   };
   const [command, sessionId, ...rest] = parsed.positionals;
+  if (values.version) {
+    const pkg = JSON.parse(
+      await readFile(new URL("../package.json", import.meta.url), "utf8"),
+    ) as { version: string };
+    print(`AXP ${pkg.version}`);
+    return;
+  }
   if (!command || values.help) {
     print(HELP);
     return;
   }
+  requireThat(
+    commands.has(command),
+    Codes.method,
+    `Unknown command ${command}. Run axp --help.`,
+  );
   const directory = resolve(option("directory", process.cwd()));
-  const configFile = resolve(option("config", ".axp/hub.json"));
+  const configFile = resolve(
+    option("config", resolve(directory, ".axp/hub.json")),
+  );
   if (command === "init") {
-    await excludeLocalState(directory);
     const repository = option("repo");
     const path = resolve(directory, ".axp");
-    const port = Number(option("port", "7331"));
+    const port = z
+      .number()
+      .int()
+      .min(1)
+      .max(65535)
+      .parse(Number(option("port", "7331")));
     const credentials = [
       "maintainer",
       "contributor",
@@ -187,12 +233,23 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       port,
       credentials,
     });
-    await save(resolve(path, "hub.json"), config);
-    for (const credential of credentials)
-      await save(resolve(path, `${credential.principal.role}.json`), {
-        url: `ws://127.0.0.1:${port}/axp`,
-        token: credential.token,
-      });
+    await excludeLocalState(directory);
+    const created: string[] = [];
+    try {
+      for (const credential of credentials) {
+        const file = resolve(path, `${credential.principal.role}.json`);
+        await save(file, {
+          url: `ws://127.0.0.1:${port}/axp`,
+          token: credential.token,
+        });
+        created.push(file);
+      }
+      // Publish the host config only when all its local identities are available.
+      await save(resolve(path, "hub.json"), config);
+    } catch (error) {
+      await Promise.all(created.map((file) => unlink(file)));
+      throw error;
+    }
     print(
       `Created private profiles in ${path}. Run axp serve. Share only the intended contributor profile.`,
     );
@@ -206,9 +263,13 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         ? { allowedOrigins: parsedConfig.allowedOrigins }
         : {}),
     } as ConstructorParameters<typeof Hub>[0]);
-    const url = await hub.listen();
-    print(`AXP host listening at ${url}`);
-    await waitForStop(() => hub.close());
+    try {
+      const url = await hub.listen();
+      print(`AXP host listening at ${url}`);
+      await waitForStop(() => hub.close());
+    } finally {
+      await hub.close();
+    }
     return;
   }
   if (command === "keygen") {
@@ -221,14 +282,29 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     print(file);
     return;
   }
-  const profile =
-    process.env.AXP_URL && process.env.AXP_TOKEN
+  requireThat(
+    values.profile ||
+      Boolean(process.env.AXP_URL) === Boolean(process.env.AXP_TOKEN),
+    Codes.invalid,
+    "Set both AXP_URL and AXP_TOKEN, or use an explicit --profile",
+  );
+  const profile = values.profile
+    ? profileSchema.parse(await jsonFile(option("profile")))
+    : process.env.AXP_URL && process.env.AXP_TOKEN
       ? profileSchema.parse({
           url: process.env.AXP_URL,
           token: process.env.AXP_TOKEN,
         })
       : profileSchema.parse(
-          await jsonFile(option("profile", ".axp/maintainer.json")),
+          await jsonFile(
+            option(
+              "profile",
+              resolve(
+                directory,
+                `.axp/${command === "park" || command === "submit" ? "contributor" : command === "verify" ? "verifier" : "maintainer"}.json`,
+              ),
+            ),
+          ),
         );
   if (command === "ui") {
     const { WorkspaceServer } = await import("./workspace.js");
@@ -242,10 +318,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         .parse(Number(option("port", "4318"))),
       ...(values.key
         ? {
-            signingKey: await readFile(
-              resolve(directory, String(values.key)),
-              "utf8",
-            ),
+            signingKey: await readFile(resolve(String(values.key)), "utf8"),
           }
         : {}),
     });
@@ -486,10 +559,21 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       return;
     }
     if (command === "watch") {
+      const disconnected = Promise.withResolvers<void>();
+      client.once("close", disconnected.resolve);
       print(await client.snapshot(c.chat));
       await client.snapshot(c.exchange);
       client.on("action", (event) => print(event));
-      await waitForStop(() => client.close());
+      let stopped = false;
+      await waitForStop(() => {
+        stopped = true;
+        return client.close();
+      }, disconnected.promise);
+      requireThat(
+        stopped,
+        Codes.internal,
+        "Host disconnected. Run axp watch again to fetch the current history.",
+      );
       return;
     }
     if (["prompt", "steer", "queue"].includes(command)) {

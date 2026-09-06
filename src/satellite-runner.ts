@@ -4,6 +4,7 @@ import { TransportError } from "@microsoft/agent-host-protocol/client";
 import { writeFile, mkdir, rename } from "node:fs/promises";
 import { join } from "node:path";
 import type { ChatState } from "@microsoft/agent-host-protocol";
+import { ActionType } from "@microsoft/agent-host-protocol";
 import type { AxpClient } from "./client.js";
 import { AcpDriver } from "./acp.js";
 import type { SatelliteOptions } from "./satellite.js";
@@ -36,9 +37,22 @@ export class LeaseRunner extends EventEmitter<{
         new TransportError("closed", "Contributor connection lost"),
     );
   private readonly changed = (event: Envelope) => {
+    // Output is already committed by this runner. Only control transitions can
+    // change which turn it should run; rereading full history per token is quadratic.
     if (
-      event.channel === this.session.resource ||
-      event.channel === this.session.chat
+      (event.channel === this.session.resource &&
+        [
+          "_axp/leaseChanged",
+          "_axp/grantChanged",
+          "_axp/contextChanged",
+        ].includes(event.action.type)) ||
+      (event.channel === this.session.chat &&
+        [
+          ActionType.ChatTurnStarted,
+          ActionType.ChatTurnCancelled,
+          ActionType.ChatTurnComplete,
+          ActionType.ChatError,
+        ].some((type) => type === event.action.type))
     )
       this.wake();
   };

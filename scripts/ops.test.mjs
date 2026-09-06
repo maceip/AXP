@@ -134,6 +134,12 @@ test(
     await assert.rejects(snapshot(state, configDir, backups));
     assert.deepEqual(await readdir(backups), [saved.split("/").at(-1)]);
     await rm(join(state, "aamp.db"));
+    await writeFile(
+      join(configDir, "aamp.json"),
+      JSON.stringify({ database: "aamp.db" }),
+    );
+    await assert.rejects(snapshot(state, configDir, backups), /ENOENT/);
+    assert.deepEqual(await readdir(backups), [saved.split("/").at(-1)]);
     const db = new DatabaseSync(join(saved, "hub.db"), { readOnly: true });
     try {
       assert.equal(db.prepare("PRAGMA quick_check").get().quick_check, "ok");

@@ -11,7 +11,14 @@ export interface Contribution {
   title: string;
   exchange: ExchangeState;
   activity:
-    "working" | "permission" | "review" | "ready" | "waiting" | "archived";
+    | "working"
+    | "permission"
+    | "review"
+    | "ready"
+    | "waiting"
+    | "parked"
+    | "failed"
+    | "archived";
   preview: string;
   turnCount: number;
 }
@@ -20,6 +27,8 @@ export interface WorkspaceView {
   repository: string;
   contributions: Contribution[];
   total: number;
+  matched: number;
+  offset: number;
   executors: ExecutorInfo[];
   canSign: boolean;
   receivedAt: number;

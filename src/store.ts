@@ -1,58 +1,11 @@
 import { DatabaseSync } from "node:sqlite";
 import { chmodSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import {
-  rootReducer,
-  sessionReducer,
-  chatReducer,
-  changesetReducer,
-} from "@microsoft/agent-host-protocol";
-import type {
-  ActionOrigin,
-  ChatAction,
-  ChatState,
-  RootAction,
-  RootState,
-  SessionAction,
-  SessionState,
-  ChangesetAction,
-  ChangesetState,
-} from "@microsoft/agent-host-protocol";
-import {
-  exchangeReducer,
-  memoryReducer,
-  executorReducer,
-} from "./protocol/reducer.js";
+import { reduceChannel } from "./channel-state.js";
 import { Codes, requireThat } from "./protocol/errors.js";
-import type {
-  Envelope,
-  ExchangeAction,
-  ExchangeState,
-  MemoryState,
-  ExecutorRegistry,
-  ChannelSnapshot,
-} from "./protocol/types.js";
+import type { Envelope, ChannelSnapshot } from "./protocol/types.js";
+import type { ActionOrigin } from "@microsoft/agent-host-protocol";
 import { hash } from "./hash.js";
-
-function reduce(
-  resource: string,
-  state: unknown,
-  action: Envelope["action"],
-): unknown {
-  if (resource === "ahp-root://")
-    return rootReducer(state as RootState, action as RootAction);
-  if (resource.startsWith("ahp-session:/"))
-    return sessionReducer(state as SessionState, action as SessionAction);
-  if (resource.startsWith("ahp-chat:/"))
-    return chatReducer(state as ChatState, action as ChatAction);
-  if (resource.startsWith("ahp-changeset:/"))
-    return changesetReducer(state as ChangesetState, action as ChangesetAction);
-  if (resource === "axp-executors://")
-    return executorReducer(state as ExecutorRegistry, action as ExchangeAction);
-  if (resource === "axp-memory://")
-    return memoryReducer(state as MemoryState, action as ExchangeAction);
-  return exchangeReducer(state as ExchangeState, action as ExchangeAction);
-}
 
 /** A single synchronous transaction is the serialization point, including retry receipts. */
 export class Store {
@@ -99,6 +52,9 @@ export class Store {
       CREATE TABLE IF NOT EXISTS blobs(digest TEXT PRIMARY KEY, data BLOB NOT NULL);
       CREATE TABLE IF NOT EXISTS blob_access(channel TEXT NOT NULL, digest TEXT NOT NULL REFERENCES blobs(digest), media_type TEXT NOT NULL, PRIMARY KEY(channel,digest));
       CREATE TABLE IF NOT EXISTS identity_keys(owner TEXT PRIMARY KEY, public_key TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS channels_lease_expiry ON channels(json_extract(state,'$.lease.expiresAt')) WHERE resource GLOB 'axp-session:/*';
+      CREATE INDEX IF NOT EXISTS channels_open_task ON channels(json_extract(state,'$.task')) WHERE resource GLOB 'axp-session:/*' AND json_extract(state,'$.status') != 'closed';
       PRAGMA user_version=1;`);
     } catch (error) {
       database?.close();
@@ -170,6 +126,45 @@ export class Store {
       .prepare("INSERT OR IGNORE INTO clients VALUES(?,?)")
       .run(clientId, owner);
   }
+  /** Persist repository identity independently of sessions, including an empty host. */
+  bindRepository(repository: string): void {
+    this.transaction(() => {
+      const prior = this.db
+        .prepare("SELECT value FROM metadata WHERE key='repository'")
+        .get();
+      requireThat(
+        !prior || prior.value === repository,
+        Codes.conflict,
+        "Database belongs to another repository; use its original configuration or a new database",
+      );
+      // Older databases have no metadata. Check their authoritative session records before adoption.
+      if (!prior) {
+        const mismatch = this.db
+          .prepare(
+            "SELECT 1 FROM channels WHERE resource GLOB 'axp-session:/*' AND json_extract(state,'$.repository') != ? LIMIT 1",
+          )
+          .get(repository);
+        requireThat(
+          !mismatch,
+          Codes.conflict,
+          "Database contains sessions from another repository",
+        );
+        this.db
+          .prepare("INSERT INTO metadata VALUES('repository',?)")
+          .run(repository);
+      }
+    });
+  }
+  lastClientSeq(clientId: string, owner: string): number {
+    const prefix = `dispatch:${clientId}:`;
+    return Number(
+      this.db
+        .prepare(
+          "SELECT COALESCE(MAX(CAST(substr(key,?) AS INTEGER)),0) AS seq FROM receipts WHERE owner=? AND key GLOB ?",
+        )
+        .get(prefix.length + 1, owner, `${prefix}*`)?.seq,
+    );
+  }
   bindKey(owner: string, publicKey: string): void {
     const prior = this.db
       .prepare("SELECT public_key FROM identity_keys WHERE owner=?")
@@ -207,8 +202,10 @@ export class Store {
   } {
     requireThat(!this.writing, Codes.internal, "Nested transaction");
     this.writing = true;
-    this.db.exec("BEGIN IMMEDIATE");
+    let began = false;
     try {
+      this.db.exec("BEGIN IMMEDIATE");
+      began = true;
       const tx = new Transaction(this);
       const result = work(tx);
       requireThat(
@@ -219,7 +216,7 @@ export class Store {
       this.db.exec("COMMIT");
       return { result, events: tx.events };
     } catch (error) {
-      this.db.exec("ROLLBACK");
+      if (began) this.db.exec("ROLLBACK");
       throw error;
     } finally {
       this.writing = false;
@@ -258,7 +255,7 @@ export class Transaction {
     action: Envelope["action"],
     origin?: ActionOrigin,
   ): Envelope {
-    const state = reduce(channel, this.store.get(channel), action);
+    const state = reduceChannel(channel, this.store.get(channel), action);
     const row = this.store.db
       .prepare("INSERT INTO events(channel,envelope) VALUES(?,?)")
       .run(channel, "");

@@ -35,6 +35,7 @@ export interface AampBridgeOptions {
   /** Explicit local admission rules. Mail cannot select an arbitrary AXP session. */
   routes: AampRoute[];
   pollIntervalMs?: number;
+  requestTimeoutMs?: number;
   now?: () => number;
 }
 
@@ -48,6 +49,7 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
   private closed = false;
   private closing: Promise<void> | null = null;
   private readonly interval: number;
+  private readonly requestTimeoutMs: number;
 
   constructor(readonly options: AampBridgeOptions) {
     super();
@@ -59,6 +61,12 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
       .max(60_000)
       .parse(options.pollIntervalMs ?? 5000);
     this.now = options.now ?? Date.now;
+    this.requestTimeoutMs = z
+      .number()
+      .int()
+      .min(100)
+      .max(120_000)
+      .parse(options.requestTimeoutMs ?? 10_000);
     this.journal = new AampJournal(options.database);
     const identity = hashObject({
       email: mailboxAddress.parse(options.mailbox.email),
@@ -152,7 +160,10 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
         this.options.url,
         this.options.token,
         undefined,
-        { ...(signal ? { signal } : {}) },
+        {
+          ...(signal ? { signal } : {}),
+          requestTimeoutMs: this.requestTimeoutMs,
+        },
       );
       client.once("close", () => {
         if (this.client === client) this.client = null;
@@ -175,7 +186,12 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
             "rejected",
             `AXP could not admit this task: ${asError(error).message}`,
           );
-        } else throw error;
+        } else {
+          // A timeout need not close TCP. Retire the client so the next pass
+          // negotiates a fresh connection and reconciles its durable receipts.
+          await client.close();
+          throw error;
+        }
       }
     }
     for (const entry of this.journal.outbox()) {

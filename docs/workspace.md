@@ -108,8 +108,10 @@ UI dependencies under `/licenses/bundled.txt`.
 
 `WorkspaceServer` is a small local client gateway over `AxpClient`. It exposes
 typed read models and a finite command union. Session and role checks stay on
-the AXP host. Host notifications invalidate cached snapshots; browser streams
-trigger coalesced refreshes. Every workspace refresh pings the actual host,
+the AXP host. Ordered host actions update cached snapshots through the same pure reducers
+used by the host. The cache holds at most 128 subscriptions; browser streams
+trigger coalesced refreshes. Catalog refreshes are limited to once per second
+and cold pages load four contributions concurrently. Every workspace refresh pings the actual host,
 so a responsive local gateway cannot disguise an unreachable repository host.
 Reconnection fetches fresh snapshots. Controls pause when the UI loses contact.
 
@@ -118,11 +120,31 @@ token for every API request, bounds bodies and streams, and serves only packaged
 assets. Raw HTML and remote images in Markdown are not rendered. Signing and
 protocol code stay outside the browser bundle. There is no telemetry.
 
-Views disclose their bounds: the latest 40 sessions from the host catalog,
-40 completed turns in a selected transcript, patches up to 2 MB, and up to
-256 discussion comments per session. The host retains the full audit. Open an
-older session directly with `?session=ID` or use `axp export`. Participation
-counts describe the visible sessions. Agent presence is not human online status.
+Contributions are paged in groups of 40, with Previous/Next controls and title
+or session-ID search across the host catalog. Status/person filters and
+participation counts describe the current page, as disclosed in the interface.
+A selected transcript shows 40 completed turns, patches are limited to 2 MB,
+and discussion retains up to 256 comments per session. Open a session directly
+with `?session=ID` or use `axp export` for its full audit. Agent presence is not
+human online status.
+
+Prompt and discussion drafts, including a file/checkpoint attachment, survive
+reload in the same tab when session storage is available. They are never sent
+automatically. Pending commands retain their operation ID for retry; accepted
+comments/prompts reconcile against shared history. Storage being blocked does
+not crash the application, but disables reload persistence. Drafts are local
+and are not a cross-device backup.
+
+The gateway freezes permission choices and signed manifests before sending a
+mutation. It retains up to 256 prepared command receipts during its lifetime,
+so retrying a lost response does not construct a different signature after the
+trace advances. Host receipts remain durable. After gateway restart or cache
+eviction, inspect the shared outcome before retrying a state-dependent action.
+
+Stored output has an inert, explicitly opened preview of at most 64 KB and an
+authenticated full download. HTML is displayed as text, never executed. Tool
+results and turn errors remain visible; missing contribution links have a
+working return path and do not take down the rest of the workspace.
 
 This release does not add public account provisioning, a social feed outside
 repository scope, an interactive Git merge editor, browser worktree writes or

@@ -166,6 +166,12 @@ test("browser permission drives a real ACP edit, exact Git verification and an i
       )
       .toBe(true);
     const state = await f.maintainer.snapshot<ExchangeState>(c.exchange);
+    await page.getByRole("tab", { name: "Agent session", exact: true }).click();
+    await page
+      .getByText("Fix addition and run node --test", { exact: true })
+      .click();
+    await expect(page.locator(".tool-result")).toContainText("pass 1");
+
     expect(await readFile(join(repo, "sum.js"), "utf8")).toContain("a - b");
     expect(
       (
@@ -295,7 +301,16 @@ test("maintainer creation, permission controls and reconnect converge with host 
       .getByRole("button", { name: "All contributions", exact: true })
       .click();
     await expect(
-      page.getByRole("heading", { name: "Good work adds up." }),
+      page.getByRole("heading", { name: "Contributions", exact: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "People", exact: true }).click();
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "The people behind it." }),
+    ).toBeVisible();
+    await page.goBack();
+    await expect(
+      page.getByRole("heading", { name: "Contributions", exact: true }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -306,6 +321,197 @@ test("maintainer creation, permission controls and reconnect converge with host 
       path: "test-results/workspace-phone.png",
       fullPage: true,
     });
+  } finally {
+    await f.close();
+  }
+});
+
+test("a missing deep link leaves the workspace usable and an agent failure explains itself", async ({
+  page,
+}) => {
+  const f = await workspaceFixture();
+  try {
+    const link = new URL(await f.open());
+    link.search = "?session=does-not-exist";
+    await page.goto(link.href);
+    await expect(
+      page.getByRole("heading", {
+        name: "This contribution could not be opened",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Opening contribution…", { exact: true }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "All contributions", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: /Bring asynchronous agents into the fold/ })
+      .click();
+    const state = await f.contributor.snapshot<ExchangeState>(
+      "axp-session:/mail-bridge",
+    );
+    await f.contributor.call("_axp/settle", {
+      channel: state.resource,
+      epoch: state.epoch,
+      turnId: "demo-2",
+      usage: null,
+      outcome: "error",
+      error: "Agent stopped: the build command was not found.",
+    });
+    await expect(page.getByRole("alert")).toContainText(
+      "Agent stopped: the build command was not found.",
+    );
+    await expect(
+      page.getByText("Needs attention", { exact: true }),
+    ).toBeVisible();
+  } finally {
+    await f.close();
+  }
+});
+
+test("a file discussion draft and its checkpoint reference survive reload without posting automatically", async ({
+  page,
+}) => {
+  const f = await workspaceFixture();
+  try {
+    await page.goto(await f.open("contributor"));
+    await page
+      .getByRole("button", { name: /Make parser errors feel human/ })
+      .click();
+    await page.getByRole("button", { name: "Discuss this file" }).click();
+    await page
+      .getByLabel("Join the discussion")
+      .fill("A draft attached to this exact file.");
+    const before = (
+      await f.contributor.snapshot<ExchangeState>("axp-session:/parser-errors")
+    ).discussion!.length;
+    await page.reload();
+    await page.getByRole("tab", { name: /Discussion/ }).click();
+    await expect(page.getByLabel("Join the discussion")).toHaveValue(
+      "A draft attached to this exact file.",
+    );
+    await expect(page.locator(".comment-form .comment-anchor")).toContainText(
+      "src/parser.ts",
+    );
+    expect(
+      (
+        await f.contributor.snapshot<ExchangeState>(
+          "axp-session:/parser-errors",
+        )
+      ).discussion,
+    ).toHaveLength(before);
+    await page.getByRole("button", { name: "Post comment" }).click();
+    await expect(page.getByLabel("Join the discussion")).toHaveValue("");
+    expect(
+      (
+        await f.contributor.snapshot<ExchangeState>(
+          "axp-session:/parser-errors",
+        )
+      ).discussion!.at(-1)?.path,
+    ).toBe("src/parser.ts");
+  } finally {
+    await f.close();
+  }
+});
+
+test("older contributions are reachable through pages and project-wide title search", async ({
+  page,
+}) => {
+  const f = await workspaceFixture();
+  try {
+    await f.maintainer.ahp.request("createSession", {
+      channel: "ahp-session:/old-search-target",
+      config: { title: "An older searchable contribution" },
+    });
+    for (let i = 0; i < 42; i++)
+      await f.maintainer.ahp.request("createSession", {
+        channel: `ahp-session:/recent-${i}`,
+        config: { title: `Recent work ${i}` },
+      });
+    await page.goto(await f.open());
+    await expect(
+      page.getByRole("button", { name: /An older searchable contribution/ }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Next page" }).click();
+    await expect(
+      page.getByRole("button", { name: /An older searchable contribution/ }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Previous page" }).click();
+    await expect(
+      page.getByRole("button", { name: /An older searchable contribution/ }),
+    ).toHaveCount(0);
+    await page.getByLabel("Search contributions").fill("older searchable");
+    await expect(
+      page.getByRole("button", { name: /An older searchable contribution/ }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Next page" })).toHaveCount(
+      0,
+    );
+    await page
+      .getByRole("button", { name: /An older searchable contribution/ })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "An older searchable contribution" }),
+    ).toBeVisible();
+  } finally {
+    await f.close();
+  }
+});
+
+test("stored agent content is inspectable and downloadable without executing its HTML", async ({
+  page,
+}) => {
+  const f = await workspaceFixture();
+  try {
+    const state = await f.contributor.snapshot<ExchangeState>(
+      "axp-session:/mail-bridge",
+    );
+    const text =
+      '<script>document.title="attachment executed"</script>\nA retained tool result.';
+    const blob = await f.contributor.call("_axp/blobPut", {
+      channel: state.resource,
+      data: Buffer.from(text).toString("base64"),
+      mediaType: "text/plain",
+    });
+    await f.contributor.call("_axp/emit", {
+      channel: state.resource,
+      epoch: state.epoch,
+      actions: [
+        {
+          type: "chat/responsePart",
+          turnId: "demo-2",
+          part: {
+            kind: "contentRef",
+            uri: blob.uri,
+            contentType: blob.mediaType,
+            sizeHint: blob.size,
+          },
+        },
+      ],
+    });
+    await page.goto(await f.open("observer"));
+    await page
+      .getByRole("button", { name: /Bring asynchronous agents into the fold/ })
+      .click();
+    await page
+      .getByRole("button", { name: "View content", exact: true })
+      .click();
+    await expect(page.locator(".stored-content pre")).toHaveText(text);
+    await expect(page).not.toHaveTitle("attachment executed");
+    const saved = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Download content", exact: true })
+      .click();
+    const download = await saved;
+    expect(await readFile((await download.path())!, "utf8")).toBe(text);
+    expect(
+      (
+        await new AxeBuilder({ page })
+          .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+          .analyze()
+      ).violations,
+    ).toEqual([]);
   } finally {
     await f.close();
   }

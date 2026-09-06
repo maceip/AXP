@@ -36,12 +36,16 @@ an authenticated session integration and account provisioning.
 
 Defaults: 16 MB per blob, 2 GB aggregate blob storage, 256 subscriptions per
 connection, 64 KiB ordinary command envelopes. Large outputs use blob
-references. Physical SHA-256 deduplication never grants cross-session access.
+references. The aggregate quota counts physical blob bytes: re-uploading an
+existing digest consumes no additional quota, but still requires explicit
+authorized association with the session. Deduplication never grants access on
+its own.
 
 Back up SQLite with its backup tooling or stop the host before copying files.
 Do not copy a live database without its WAL. One live hub owns a database:
 an exclusive OS-backed SQLite lock rejects a second process and releases on
-crash. Subscription fanout is process-local. This
+crash. The database is bound to its repository name, including before the first
+session; reusing it under a different name fails startup. Subscription fanout is process-local. This
 release has no automatic audit deletion or blob collection.
 
 For hosted execution, run the same satellite on project infrastructure with

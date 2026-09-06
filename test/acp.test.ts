@@ -1,8 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { AcpDriver, normalizeUsage } from "../src/acp.js";
-import { resolve } from "node:path";
+import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { setTimeout as delay } from "node:timers/promises";
 
 const callbacks = {
   emit: async () => {},
@@ -83,5 +86,48 @@ test(
     } finally {
       await driver.close();
     }
+  },
+);
+
+test(
+  "native cleanup stops a SIGTERM-resistant descendant even after the ACP leader has exited",
+  { skip: process.platform === "win32", timeout: 5000 },
+  async (t) => {
+    const directory = await mkdtemp(join(tmpdir(), "axp-descendant-"));
+    const counter = join(directory, "pulse");
+    const pidFile = join(directory, "pid");
+    const descendant = `const fs=require('node:fs'); process.on('SIGTERM',()=>{}); fs.writeFileSync(process.argv[1], 'ready'); setInterval(()=>fs.appendFileSync(process.argv[1], '.'),20);`;
+    const leader = `const {spawn}=require('node:child_process'); const fs=require('node:fs'); const c=spawn(process.execPath,['-e',process.argv[1],process.argv[2]],{stdio:'ignore'}); fs.writeFileSync(process.argv[3],String(c.pid)); const ready=setInterval(()=>{if(fs.existsSync(process.argv[2]))process.exit(0)},5);`;
+    const driver = new AcpDriver(
+      {
+        command: process.execPath,
+        args: ["-e", leader, descendant, counter, pidFile],
+        isolation: "native",
+      },
+      directory,
+      callbacks,
+    );
+    t.after(async () => {
+      await driver.close();
+      const pid = Number(await readFile(pidFile, "utf8").catch(() => "0"));
+      if (pid) {
+        try {
+          process.kill(pid, "SIGKILL");
+        } catch {
+          /* Already stopped. */
+        }
+      }
+      await rm(directory, { recursive: true, force: true });
+    });
+    await assert.rejects(driver.start());
+    await driver.close();
+    await delay(50);
+    const before = await readFile(counter, "utf8");
+    await delay(100);
+    assert.equal(
+      await readFile(counter, "utf8"),
+      before,
+      "descendant kept executing after the driver closed",
+    );
   },
 );

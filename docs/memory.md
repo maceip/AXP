@@ -75,3 +75,8 @@ text hashes agree. Text remains the portable resumption mechanism.
 HTTP and distillation contracts are tested with a real local HTTP server.
 Actual MTPLX/Qwen hardware inference and KV performance require a configured
 model runtime; those tests assert no inference speedup.
+
+Portable resume context includes completed tool results alongside assistant
+text. Provider reasoning stays in the audit rather than the portable prompt;
+stored outputs remain explicit content references. Context exceeding its bound
+requires explicit compaction rather than silent truncation.

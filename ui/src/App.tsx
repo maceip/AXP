@@ -1,21 +1,19 @@
+import { Nav, Constellation, Create, Activity } from "./WorkspacePanels.js";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
   Check,
   CircleHelp,
-  Command,
   GitBranch,
   LayoutGrid,
-  MessageCircle,
   Plus,
   Radio,
   Search,
   Users,
   Zap,
 } from "lucide-react";
-import type { Contribution } from "../../src/workspace-contract.js";
-import { useCommand, useWorkspace } from "./api.js";
+import { useWorkspace } from "./api.js";
 import {
   Avatar,
   ContributionCard,
@@ -24,34 +22,54 @@ import {
   Loading,
   Mark,
   people,
-  relativeTime,
 } from "./components.js";
 import { ContributionPage } from "./Contribution.js";
 
 type Page = "overview" | "contributions" | "people" | "activity";
+function currentPage(): Page {
+  const value = new URLSearchParams(location.search).get("page");
+  return value === "contributions" || value === "people" || value === "activity"
+    ? value
+    : "overview";
+}
 
 export default function App() {
   const [session, setSession] = useState(() =>
     new URLSearchParams(location.search).get("session"),
   );
-  const [page, setPage] = useState<Page>("overview");
+  const [page, setPage] = useState<Page>(currentPage);
   const [create, setCreate] = useState(false);
   const [help, setHelp] = useState(false);
   const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [offset, setOffset] = useState(0);
   const [filter, setFilter] = useState("all");
-  const { workspace, detail, error, refresh } = useWorkspace(session);
-  const navigate = (id: string | null) => {
-    history.pushState(
-      null,
-      "",
-      id ? `?session=${encodeURIComponent(id)}` : "/",
-    );
+  const [personFilter, setPersonFilter] = useState<string | null>(null);
+  const { workspace, detail, error, detailError, refresh } = useWorkspace(
+    session,
+    offset,
+    search,
+  );
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(query), 200);
+    return () => clearTimeout(timer);
+  }, [query]);
+  const navigate = (id: string | null, nextPage = page) => {
+    const params = new URLSearchParams();
+    if (nextPage !== "overview") params.set("page", nextPage);
+    if (id) params.set("session", id);
+    history.pushState(null, "", params.size ? `?${params}` : "/");
     setSession(id);
     window.scrollTo({ top: 0 });
   };
   useEffect(() => {
-    const changed = () =>
+    document.getElementById("main")?.focus({ preventScroll: true });
+  }, [session, page]);
+  useEffect(() => {
+    const changed = () => {
       setSession(new URLSearchParams(location.search).get("session"));
+      setPage(currentPage());
+    };
     window.addEventListener("popstate", changed);
     return () => window.removeEventListener("popstate", changed);
   }, []);
@@ -66,14 +84,19 @@ export default function App() {
   const members = workspace ? people(workspace) : [];
   const contributions = workspace?.contributions ?? [];
   const needsHelp = contributions.filter(
-    (c) => c.activity === "permission" || c.activity === "review",
+    (c) =>
+      c.activity === "permission" ||
+      c.activity === "review" ||
+      c.activity === "failed",
   );
   const visible = contributions.filter(
     (c) =>
+      (!personFilter ||
+        members
+          .find((member) => member.id === personFilter)
+          ?.sessions.has(c.id)) &&
       (!query ||
-        `${c.title} ${c.exchange.task} ${c.preview}`
-          .toLowerCase()
-          .includes(query.toLowerCase())) &&
+        `${c.title} ${c.id}`.toLowerCase().includes(query.toLowerCase())) &&
       (filter === "all" || filter === "attention"
         ? filter === "all" || needsHelp.includes(c)
         : c.activity === filter),
@@ -82,7 +105,11 @@ export default function App() {
   const go = (next: Page) => {
     setPage(next);
     setFilter("all");
-    navigate(null);
+    setPersonFilter(null);
+    setQuery("");
+    setSearch("");
+    setOffset(0);
+    navigate(null, next);
   };
   return (
     <div className="app-shell">
@@ -163,8 +190,10 @@ export default function App() {
               <span>{workspace?.principal.role ?? "Your workspace"}</span>
             </div>
             <span
-              className={`connection-dot ${error ? "offline" : ""}`}
-              title={error ? "Disconnected" : "Connected"}
+              className={`connection-dot ${error || !workspace ? "offline" : ""}`}
+              title={
+                error ? "Disconnected" : workspace ? "Connected" : "Connecting"
+              }
             />
           </div>
         </div>
@@ -203,11 +232,17 @@ export default function App() {
           </div>
         )}
         <main id="main" tabIndex={-1}>
+          {session && detail && detailError && !error && (
+            <div className="notice error" role="alert">
+              {detailError}. Showing the last received contribution; changes are
+              paused. <button onClick={refresh}>Retry contribution</button>
+            </div>
+          )}
           {!workspace ? (
             error ? (
-              <Empty title="Your private workspace link is needed">
-                Run <code>axp ui</code> in your project and open the link it
-                prints. The repository's credentials stay on your computer.
+              <Empty title="The workspace is unavailable">
+                Check the connection message above. Use the private link from
+                <code> axp ui</code> to connect, then retry.
               </Empty>
             ) : (
               <Loading />
@@ -218,16 +253,33 @@ export default function App() {
                 key={session}
                 detail={detail}
                 workspace={workspace}
-                back={() => navigate(null)}
+                back={() => go("contributions")}
                 refresh={refresh}
-                offline={!!error}
+                offline={!!error || !!detailError}
               />
             ) : (
               <>
-                <button className="back-button" onClick={() => navigate(null)}>
+                <button
+                  className="back-button"
+                  aria-label="All contributions"
+                  onClick={() => go("contributions")}
+                >
                   ← All contributions
                 </button>
-                <Loading>Opening contribution…</Loading>
+                {detailError ? (
+                  <Empty
+                    title="This contribution could not be opened"
+                    action={
+                      <button className="button" onClick={refresh}>
+                        Retry contribution
+                      </button>
+                    }
+                  >
+                    {detailError}. You can return to the other contributions.
+                  </Empty>
+                ) : (
+                  <Loading>Opening contribution…</Loading>
+                )}
               </>
             )
           ) : (
@@ -314,7 +366,11 @@ export default function App() {
                           aria-label="Search contributions"
                           placeholder="Find a contribution…"
                           value={query}
-                          onChange={(event) => setQuery(event.target.value)}
+                          onChange={(event) => {
+                            setQuery(event.target.value);
+                            setOffset(0);
+                          }}
+                          maxLength={256}
                         />
                       </label>
                     </div>
@@ -338,14 +394,26 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    {workspace.total > contributions.length && (
+                    {(workspace.matched > contributions.length || search) && (
                       <div className="notice">
-                        Showing the latest {contributions.length} of{" "}
-                        {workspace.total} contributions. Open an older session
-                        with its workspace link or the CLI.
+                        Showing{" "}
+                        {contributions.length ? workspace.offset + 1 : 0}–
+                        {workspace.offset + contributions.length} of{" "}
+                        {workspace.matched}
+                        {search ? " matching" : ""} contributions. Search covers
+                        titles and session IDs across the project; status
+                        filters apply to this page.
                       </div>
                     )}
                     <div className="contribution-grid">
+                      {personFilter && (
+                        <div className="notice">
+                          Work with {personFilter} on this page.{" "}
+                          <button onClick={() => setPersonFilter(null)}>
+                            Show everyone
+                          </button>
+                        </div>
+                      )}
                       {visible.map((contribution) => (
                         <ContributionCard
                           key={contribution.id}
@@ -366,6 +434,29 @@ export default function App() {
                           ? "Try another filter, or start a new thread of work."
                           : "Open a contribution, invite an agent, and let the work begin."}
                       </Empty>
+                    )}
+                    {(offset > 0 ||
+                      offset + contributions.length < workspace.matched) && (
+                      <nav
+                        className="pagination"
+                        aria-label="Contribution pages"
+                      >
+                        <button
+                          className="button"
+                          disabled={offset === 0}
+                          onClick={() => setOffset(Math.max(0, offset - 40))}
+                        >
+                          Previous page
+                        </button>
+                        <span>Page {Math.floor(offset / 40) + 1}</span>
+                        <button
+                          className="button"
+                          disabled={offset + 40 >= workspace.matched}
+                          onClick={() => setOffset(offset + 40)}
+                        >
+                          Next page
+                        </button>
+                      </nav>
                     )}
                   </section>
                   <aside className="community-aside">
@@ -472,14 +563,8 @@ export default function App() {
                         <button
                           className="text-button"
                           onClick={() => {
-                            setPage("contributions");
-                            setQuery(
-                              member.sessions.size === 1
-                                ? (contributions.find((c) =>
-                                    member.sessions.has(c.id),
-                                  )?.title ?? "")
-                                : "",
-                            );
+                            go("contributions");
+                            setPersonFilter(member.id);
                           }}
                         >
                           Explore the work <ArrowRight size={14} />
@@ -574,210 +659,5 @@ export default function App() {
         </Dialog>
       )}
     </div>
-  );
-}
-
-function Nav({
-  icon,
-  label,
-  active,
-  count,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  count?: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={`nav-item ${active ? "active" : ""}`}
-      onClick={onClick}
-      aria-label={label}
-      aria-current={active ? "page" : undefined}
-    >
-      {icon}
-      <span>{label}</span>
-      {count !== undefined && <span className="nav-count">{count}</span>}
-    </button>
-  );
-}
-function Constellation({ names, online }: { names: string[]; online: number }) {
-  return (
-    <div className="constellation" aria-hidden="true">
-      <div className="orbit orbit-one" />
-      <div className="orbit orbit-two" />
-      <svg className="orbit-lines" viewBox="0 0 330 220">
-        <path d="M75 60 175 114 270 53M60 164 175 114 278 177" />
-      </svg>
-      <div className="constellation-center">
-        <Mark />
-      </div>
-      <div className="floating-note note-one">
-        <GitBranch size={16} />
-        <span>One shared history</span>
-      </div>
-      <div className="floating-note note-two">
-        <MessageCircle size={15} />
-        <span>Room for your ideas</span>
-      </div>
-      <div className="orbit-person person-one">
-        <Avatar name={names[0] ?? "You"} />
-      </div>
-      <div className="orbit-person person-two">
-        {names[1] ? <Avatar name={names[1]} /> : <Command size={21} />}
-      </div>
-      <div className="orbit-caption">
-        <span className="connection-dot" />
-        {online
-          ? `${online} agent${online === 1 ? "" : "s"} connected`
-          : "Made for working together"}
-      </div>
-    </div>
-  );
-}
-function Create({
-  close,
-  created,
-  refresh,
-}: {
-  close: () => void;
-  created: (session: string) => void;
-  refresh: () => void;
-}) {
-  const [title, setTitle] = useState("");
-  const [task, setTask] = useState("");
-  const [session] = useState(() => crypto.randomUUID());
-  const command = useCommand(refresh);
-  return (
-    <Dialog title="Start a contribution" close={close}>
-      <form
-        className="dialog-body"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void command
-            .send(session, { kind: "create", title, task })
-            .then((sent) => {
-              if (sent) created(session);
-            });
-        }}
-      >
-        <p>
-          Give a useful piece of work a home. People and agents can pick it up
-          from here.
-        </p>
-        <label htmlFor="contribution-title">What do you want to work on?</label>
-        <input
-          id="contribution-title"
-          autoFocus
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="Make the parser errors easier to understand"
-          maxLength={256}
-          required
-        />
-        <label htmlFor="contribution-task">Task or issue reference</label>
-        <input
-          id="contribution-task"
-          value={task}
-          onChange={(event) => setTask(event.target.value)}
-          placeholder="issue-42 or a short, unique name"
-          maxLength={512}
-          required
-        />
-        {command.error && (
-          <div className="notice error" role="alert">
-            {command.error}
-          </div>
-        )}
-        <div className="dialog-actions">
-          <button type="button" className="button" onClick={close}>
-            Cancel
-          </button>
-          <button
-            className="button primary"
-            disabled={command.busy || !title.trim() || !task.trim()}
-          >
-            Create contribution <ArrowRight size={15} />
-          </button>
-        </div>
-      </form>
-    </Dialog>
-  );
-}
-function Activity({
-  contributions,
-  open,
-}: {
-  contributions: Contribution[];
-  open: (id: string) => void;
-}) {
-  const events = contributions
-    .flatMap((contribution) => [
-      ...(contribution.exchange.discussion ?? []).map((comment) => ({
-        id: comment.id,
-        author: comment.author,
-        text: comment.body,
-        label: "added to the discussion",
-        at: comment.createdAt,
-        contribution,
-      })),
-      ...(contribution.exchange.checkpoint
-        ? [
-            {
-              id: `checkpoint-${contribution.id}`,
-              author: "Project",
-              text: contribution.exchange.checkpoint.headCommit.slice(0, 12),
-              label: "shared a checkpoint",
-              at: contribution.exchange.checkpoint.createdAt,
-              contribution,
-            },
-          ]
-        : []),
-      ...(contribution.exchange.verification
-        ? [
-            {
-              id: `verification-${contribution.id}`,
-              author: contribution.exchange.verification.verifier,
-              text: contribution.exchange.verification.command.join(" "),
-              label:
-                contribution.exchange.verification.exitCode === 0
-                  ? "verified the checkpoint"
-                  : "reported failing checks",
-              at: contribution.exchange.verification.verifiedAt,
-              contribution,
-            },
-          ]
-        : []),
-    ])
-    .sort((a, b) => b.at - a.at);
-  return events.length ? (
-    <div className="activity-feed">
-      {events.map((event) => (
-        <article key={`${event.contribution.id}:${event.author}:${event.id}`}>
-          <Avatar name={event.author} />
-          <div>
-            <div className="activity-title">
-              <strong>{event.author}</strong> {event.label}
-              <time>{relativeTime(event.at)}</time>
-            </div>
-            <button
-              className="activity-contribution"
-              onClick={() => open(event.contribution.id)}
-            >
-              {event.contribution.title}
-              <ArrowUpRight size={14} />
-            </button>
-            <p>{event.text}</p>
-          </div>
-        </article>
-      ))}
-    </div>
-  ) : (
-    <Empty title="The story starts with a contribution.">
-      Shared checkpoints, independent checks and discussion will collect here as
-      the project grows.
-    </Empty>
   );
 }

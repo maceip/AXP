@@ -131,6 +131,7 @@ export class AxpClient extends EventEmitter<{
             principal?: string;
             role?: Principal["role"];
             repository?: string;
+            lastClientSeq?: number;
           }
         | undefined;
       requireThat(
@@ -141,6 +142,7 @@ export class AxpClient extends EventEmitter<{
       client.principalId = capability.principal ?? "";
       client.repository = capability.repository ?? "";
       client.principalRole = capability.role ?? "observer";
+      client.clientSeq = capability.lastClientSeq ?? 0;
       client.lastSeenServerSeq = result.serverSeq;
       return client;
     } catch (error) {

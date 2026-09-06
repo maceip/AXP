@@ -67,6 +67,12 @@ try {
   assert.match(help.stdout, /park an agent/);
   assert.match(help.stdout, /--no-reconnect/);
   assert.match(help.stdout, /aamp --config/);
+  const version = spawnSync(process.execPath, [cli, "--version"], {
+    encoding: "utf8",
+    cwd: directory,
+  });
+  assert.equal(version.status, 0, version.stderr);
+  assert.equal(version.stdout.trim(), `AXP ${manifest.version}`);
   const adapter = spawnSync(
     process.execPath,
     [

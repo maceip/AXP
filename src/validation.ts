@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
+import type { ValidateFunction } from "ajv";
 import type { StateAction } from "@microsoft/agent-host-protocol";
 import { Codes, requireThat } from "./protocol/errors.js";
 
@@ -27,10 +28,25 @@ const concrete = Object.entries(definitions).filter(
     name.endsWith("Action") &&
     typeof value.properties?.type?.const === "string",
 );
-const validate = ajv.compile({
-  anyOf: concrete.map(([name]) => ({ $ref: `ahp#/$defs/${name}` })),
-});
+const definitionsByType = new Map<string, string[]>();
+for (const [name, value] of concrete) {
+  const type = value.properties!.type!.const!;
+  definitionsByType.set(type, [...(definitionsByType.get(type) ?? []), name]);
+}
+const validators = new Map<string, ValidateFunction>();
 export function actionFrom(value: unknown): StateAction {
+  const type =
+    value && typeof value === "object" && "type" in value ? value.type : null;
+  const names = typeof type === "string" ? definitionsByType.get(type) : null;
+  requireThat(names, Codes.invalid, "Invalid AHP action: unknown action type");
+  const key = names.join(":");
+  let validate = validators.get(key);
+  if (!validate) {
+    validate = ajv.compile({
+      anyOf: names.map((name) => ({ $ref: `ahp#/$defs/${name}` })),
+    });
+    validators.set(key, validate);
+  }
   requireThat(
     validate(value),
     Codes.invalid,

@@ -15,6 +15,7 @@ The host implements `initialize`, `ping`, `reconnect`, `subscribe`,
 `resourceRead`. It exposes root, session, chat and changeset snapshots.
 Unsupported methods return `MethodNotFound`; no optional terminal,
 filesystem-provider, automation or multi-chat capabilities are advertised.
+Session catalog entries include stable `createdAt` and changing `modifiedAt`.
 Activity is authoritative on chat state and its catalog summary; AHP 0.9.0
 has no independent session-status mutation.
 
@@ -26,7 +27,9 @@ the standard `rejectionReason` echo; rejected request dispatches receive a
 JSON-RPC error. Rejections never alter shared state.
 
 Initialization advertises `result._meta["org.axp.exchange"]` with the extension
-version, method list and authenticated identity. Roles come from transport
+version, method list, authenticated identity and `lastClientSeq`. The latter
+lets an AXP client reuse its stable ID sequentially without colliding with
+previous dispatch receipts; it does not permit concurrent reuse. Roles come from transport
 credentials, never from client-provided initialization data.
 
 ## Extension channels

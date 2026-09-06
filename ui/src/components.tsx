@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import {
   ArrowUpRight,
@@ -55,6 +55,8 @@ export const labels: Record<Contribution["activity"], string> = {
   review: "Ready for review",
   ready: "Checkpoint ready",
   waiting: "Open for contribution",
+  parked: "Agent ready",
+  failed: "Needs attention",
   archived: "Archived",
 };
 export function Status({ activity }: { activity: Contribution["activity"] }) {
@@ -162,7 +164,7 @@ export function ContributionCard({
     </button>
   );
 }
-export function Prose({ text }: { text: string }) {
+export const Prose = memo(function Prose({ text }: { text: string }) {
   return (
     <div className="prose">
       <Markdown
@@ -184,7 +186,7 @@ export function Prose({ text }: { text: string }) {
       </Markdown>
     </div>
   );
-}
+});
 export function Empty({
   title,
   children,

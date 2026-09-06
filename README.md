@@ -2,177 +2,72 @@
 
 [![CI](https://github.com/maceip/AXP/actions/workflows/ci.yml/badge.svg)](https://github.com/maceip/AXP/actions/workflows/ci.yml)
 
-**Park your agent at a repository. Let its maintainers steer the work. Keep the shared history.**
+**A shared workspace for people and agents contributing to open source.**
 
-AXP connects contributor-owned agents to an authoritative repository host.
-Maintainers send prompts, watch streamed output, answer tool permissions and
-steer running sessions. Contributors supply their own agent and compute, set
-an allowance, and retain the same session history. The agent can run on a
-laptop or on project infrastructure. An unattended run is an ordinary session
-that people can attach to when needed.
+AXP keeps the conversation, agent work, code changes and review together.
+People can follow a contribution, share context and inspect its results.
+Contributors who choose to connect an agent control its compute allowance;
+maintainers guide the work in a shared, durable session.
 
-AXP uses the published [AHP SDK](https://github.com/microsoft/agent-host-protocol)
-for shared presentation state and the official
-[ACP SDK](https://github.com/agentclientprotocol/typescript-sdk) to drive agent
-processes. It adds executor ownership, leases, budget accounting, Git
-checkpoints, context compaction and reviewed repository memory through
-negotiated extension channels. It does not fork either project.
+The project is written in **TypeScript**, runs on **Node.js 24.15+**, and uses
+**React** for the browser workspace and **SQLite** for durable host state.
+It extends Microsoft's [Agent Host Protocol (AHP)](https://github.com/microsoft/agent-host-protocol)
+and drives agent processes through [Agent Client Protocol (ACP)](https://github.com/agentclientprotocol/typescript-sdk).
+The [AAMP adapter](docs/aamp.md) brings authorized mailbox tasks into the same sessions.
 
-The browser workspace brings contributions, agent sessions, code review and
-durable discussion together. An [AAMP mailbox adapter](docs/aamp.md) admits
-authorized asynchronous tasks into those same sessions.
+![The AXP contribution workspace](docs/evidence/workspace.png)
 
-![AXP contribution workspace with shared work, people and agent presence](docs/evidence/workspace.png)
+_The screenshot shows the deterministic demo, not live community activity._
 
-_The screenshot shows the deterministic demo workspace._
+## Try AXP
 
-## Open the workspace
-
-After building the checkout, run `npm run demo:ui` for an explorable sample
-project. For your actual host, run:
-
-```sh
-axp ui --profile .axp/maintainer.json
-```
-
-Open the private link it prints. Contributors use their own profile; signing
-keys stay local. See [workspace setup and review](docs/workspace.md).
-
-## Try the contribution loop
-
-Requires Node **24.15+**, npm and Git. No model credentials are needed for the demo.
+You need Node.js 24.15+, npm and Git. This demo needs **no model account, API key
+or donated compute**, and you do not need to set up your own project host.
 
 ```sh
 git clone https://github.com/maceip/AXP.git
 cd AXP
 npm ci
 npm run build
-npm run demo
+npm run demo:ui
 ```
 
-The demo reproduces a failing test, parks an actual ACP child process over a
-WebSocket, approves its tool, fixes code in an isolated worktree, and restores
-its Git bundle for independent verification. The contributor's original
-checkout stays intact. This deterministic fixture exercises real processes,
-Git and tests; it is explicitly not an LLM demonstration.
+Open the private link printed in your terminal. Explore contributions, inspect
+a diff and leave a comment. The demo runs locally with clearly labelled sample
+work; Ctrl-C ends it. [What to try and how it works →](docs/getting-started.md)
 
-## Use your own agent
+To exercise the complete contribution loop—an ACP process, permission,
+a real Git edit and independent verification—run `npm run demo`.
+That fixture is deterministic too; it does not call a model.
 
-Install the CLI from the built checkout:
+## Where the project stands
 
-```sh
-npm link
-cd /path/to/your/project
-axp init --repo your-org/your-project
-axp serve
-```
+AXP is a **developer preview**. The local workspace, protocol host, agent
+execution, Git artifact review and AAMP adapter are implemented. The browser
+connects through a personal loopback gateway using a host-issued identity.
+Public signup and automatic connection to the AXP community are not available yet.
 
-In another terminal, create a session:
+Our intended first shared project is **AXP itself**, with participation and
+agent time entirely optional. The proposed first contribution is an avatar for
+a community image, with recognition for helping. That onboarding change is
+[awaiting review approval](docs/community-onboarding-proposal.md).
 
-```sh
-axp create --id parser-fix --task issue-42 --title "Fix the parser"
-```
+| You want to…                                | Start here                                                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------------- |
+| Explore the workspace                       | [Getting started](docs/getting-started.md)                                      |
+| Improve AXP's code, design or documentation | [Contributing](CONTRIBUTING.md)                                                 |
+| Connect an agent to an existing host        | [Agent setup](docs/agent-setup.md)                                              |
+| Build an integration                        | [SDK guide](docs/sdk.md) · [Protocol](docs/protocol.md)                         |
+| Operate a host                              | [Hosting and access](docs/hosting.md) · [Linux services](docs/linux-hosting.md) |
+| Understand the architecture and tradeoffs   | [Design](docs/design.md) · [Engineering review](docs/review-2026-09-06.md)      |
 
-Park an ACP agent with the contributor profile. For example, install the
-[Codex ACP adapter](https://github.com/agentclientprotocol/codex-acp) and supply
-your local API-key environment variable:
+Git worktrees isolate edits; native agent tools still run with the contributor's
+user permissions. AXP accounts for reported usage and cancels work, while hard
+provider spending caps require provider limits or a quota proxy. Signatures
+identify who attested to an artifact; independent checks and human review
+establish confidence in it. Consumer TEE attestation remains deferred.
 
-```sh
-npm install -g @agentclientprotocol/codex-acp@1.10.0
-axp park parser-fix --profile .axp/contributor.json \
-  --native --tokens 100000 --cost-micros 1000000 --turns 10 \
-  --turn-tokens 10000 --turn-cost-micros 100000 \
-  --agent-env OPENAI_API_KEY --auth-method api-key -- codex-acp
-```
-
-The `--` separates AXP options from the agent command. Any compatible ACP v1
-agent can replace `codex-acp`; plain interactive CLIs need an ACP adapter.
-For an already-authenticated adapter, omit the authentication and environment
-options. The [Claude ACP adapter](https://github.com/agentclientprotocol/claude-agent-acp)
-can be selected with `-- claude-agent-acp` after its normal local authentication.
-`--native` explicitly permits the agent's tools to run as your user. For an
-offline container image with its dependencies already installed, use
-`--image IMAGE` instead. Git worktrees isolate edits; they are not a sandbox.
-
-Provider variables are explicit: add `--agent-env ANTHROPIC_API_KEY` (or your
-adapter's environment-variable names, comma-separated) before `--` to pass
-them from your local shell. Values never pass through the hub. Existing
-provider login files remain available in native mode.
-`--auth-method` invokes the adapter's advertised login method and uses its
-configured local credential store, just as its normal login does.
-
-Maintainer commands use `.axp/maintainer.json` by default:
-
-```sh
-axp executors
-axp prompt parser-fix "Reproduce issue 42 and fix it without changing the API."
-axp watch parser-fix
-axp inspect parser-fix
-axp approve parser-fix --tool TOOL_ID --option OPTION_ID
-axp steer parser-fix "Keep the change in the parser."
-axp export parser-fix --out parser-fix.json
-```
-
-Tool and option IDs are shown in `watch` and `inspect`. ACP v1 steering cancels
-the current prompt and continues in a new turn; both remain in the audit
-history. `queue` waits for the current turn. `cancel` stops it. Ctrl-C undocks
-the executor, retaining its worktree and history under `.axp/`.
-`close` archives a completed session and releases its task identity.
-
-Keep `park` running through network interruptions: it reconnects automatically
-with the same donation and worktree. The interrupted turn stays in the audit;
-send a new prompt to continue after the executor reports `Parked` again.
-Recovery stops if the donation is revoked, its allowance is exhausted or another
-executor takes ownership. `--no-reconnect` opts out. Starting a new `park` process
-creates a new donation and restores the latest uploaded checkpoint into a new
-worktree; older local work is retained for inspection.
-
-The host stores state in `.axp/hub.db`. Local profiles contain secrets and must
-stay out of Git. `init` provides separate roles for trying the workflow; give
-each real contributor a unique principal and token in the host configuration.
-See [hosting and access](docs/hosting.md) for remote TLS and scoped identities.
-
-## What the implementation provides
-
-| Area                | Behavior                                                                                                                         |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Collaboration       | AHP root/session/chat/changeset state, streaming, confirmations, steering, queued turns and session export                       |
-| Workspace           | Huabu-informed browser design, Pierre diffs and file navigation, live sessions, durable discussion and signed artifact review    |
-| Participation       | Outbound connections, executor discovery, atomic claims, renewable leases and increasing fencing epochs                          |
-| Recovery            | SQLite transactions before broadcast, durable retry receipts, replay/snapshot fallback and interrupted-turn recovery             |
-| AAMP mail           | Locally authorized text tasks, durable JMAP ingestion, threaded SMTP acknowledgements, permissions, cancellation and results     |
-| Contributor control | Per-donor token, turn and USD-micro-unit allowances; pre-turn reservations, revocation and conservative unknown-usage accounting |
-| Artifacts           | Session-scoped SHA-256 blobs, local Git checkpoints, portable bundles, dual-signed manifests and separate verifier records       |
-| Context             | Revision-checked compaction that preserves the full transcript; portable text resumption and explicit cache compatibility        |
-| Memory              | Evidence-backed success/failure lessons, deduplication, maintainer review, bounded retrieval and retirement                      |
-| Local models        | MTPLX HTTP adapter with isolated session keys, clone restore, actual cache-usage reporting and bounded distillation              |
-
-An opaque ACP agent controls its own provider calls. AXP can stop future turns
-and cancel a running process, but **a hard provider spending cap requires a
-provider limit or quota proxy**. Unknown usage consumes the reserved allowance.
-Consumer TEE attestation is deferred. Independent tests and review establish
-artifact confidence; contributor traces and signatures do not prove execution.
-
-## Build on AXP
-
-The package has four entry points: `@maceip/axp/protocol` for types, schemas and
-pure reducers; `@maceip/axp/client` for the Node client; `@maceip/axp/aamp` for
-the mailbox adapter; and `@maceip/axp` for the host, satellite, Git and model
-integration APIs. Install from a built tarball
-with `npm pack`; npm registry publication is not required to use the checkout.
-
-- [Protocol and interoperability](docs/protocol.md)
-- [Contribution workspace](docs/workspace.md)
-- [AAMP mailbox setup and supported profile](docs/aamp.md)
-- [Context, memory and MTPLX](docs/memory.md)
-- [Hosting and access](docs/hosting.md)
-- [Artifact review and verification](docs/artifacts.md)
-- [Design decisions](docs/design.md) · [Acceptance criteria](docs/acceptance.md)
-- [Validation evidence](docs/validation.md) · [Contributing](CONTRIBUTING.md)
-
-`npm run check` runs strict TypeScript checks, lint, formatting, builds, the
-upstream AHP reducer fixtures and behavioral integration tests. AXP reducers
-must maintain 100% branch and line coverage. CI also runs the complete demo
-and a packaged CLI smoke test.
+[Validation and its limits](docs/validation.md) · [Security](SECURITY.md) ·
+[Third-party notices](THIRD_PARTY_NOTICES.md)
 
 MIT licensed. AXP is an independent project.

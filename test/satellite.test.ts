@@ -29,7 +29,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { repository } from "./project-fixture.js";
 
 const exec = promisify(execFile);
-function agent(delayMs = 0): AgentLaunch {
+function agent(delayMs = 0, streamChunks = 0): AgentLaunch {
   const image = process.env.AXP_TEST_CONTAINER;
   return image
     ? {
@@ -39,6 +39,7 @@ function agent(delayMs = 0): AgentLaunch {
           "/agent/node_modules/tsx/dist/loader.mjs",
           "/agent/examples/fixture-agent.ts",
           `--delay-ms=${delayMs}`,
+          `--stream-chunks=${streamChunks}`,
         ],
         isolation: "container",
         image,
@@ -50,6 +51,7 @@ function agent(delayMs = 0): AgentLaunch {
           pathToFileURL(resolve("node_modules/tsx/dist/loader.mjs")).href,
           resolve("examples/fixture-agent.ts"),
           `--delay-ms=${delayMs}`,
+          `--stream-chunks=${streamChunks}`,
         ],
         isolation: "native",
       };
@@ -155,6 +157,15 @@ test(
     );
     assert.equal(faults.length, 0);
     assert.ok(done.checkpoint);
+    const resumed = await f.contributor.call("_axp/context", {
+      channel: f.c.exchange,
+      maxChars: 24_000,
+    });
+    assert.match(
+      resumed.text,
+      /pass 1/,
+      "resumed context retains the actual tool result",
+    );
     assert.equal(
       Object.values(done.grants)[0]?.spent.tokens,
       130,
@@ -748,6 +759,57 @@ test(
     assert.deepEqual(
       (await f.maintainer.snapshot<ExchangeState>(f.c.exchange)).grants,
       {},
+    );
+  },
+);
+
+test(
+  "a real ACP stream does not trigger per-token full-history downloads by its own satellite",
+  { timeout: 15000 },
+  async (t) => {
+    const f = await setup();
+    const repo = await repository();
+    const proxy = await faultProxy(f.url);
+    const satellite = new Satellite({
+      url: proxy.url,
+      token: f.credentials[1]!.token,
+      session: f.c.exchange,
+      repository: repo,
+      agent: agent(0, 100),
+      allowance: { tokens: 10000, costMicros: 100000, turns: 5 },
+      perTurn: { tokens: 1000, costMicros: 10000, turns: 1 },
+    });
+    t.after(async () => {
+      await satellite.stop();
+      await proxy.close();
+      await f.close();
+      await rm(repo, { recursive: true, force: true });
+    });
+    await satellite.start();
+    await f.maintainer.dispatch(f.c.chat, prompt());
+    const state = await eventually(
+      () => f.maintainer.snapshot<ChatState>(f.c.chat),
+      (chat) =>
+        chat.activeTurn?.responseParts.some(
+          (p) =>
+            p.kind === "toolCall" &&
+            p.toolCall.status === "pending-confirmation",
+        ) ?? false,
+      10000,
+    );
+    assert.ok(
+      state.activeTurn?.responseParts.some(
+        (p) =>
+          p.kind === "markdown" && p.content.endsWith("stream ".repeat(100)),
+      ),
+    );
+    const downloads = proxy.requests.filter((m) => m === "subscribe").length;
+    t.diagnostic(
+      `100 ACP text chunks required ${downloads} satellite snapshot requests, including parking and permission setup`,
+    );
+    assert.ok(
+      downloads < 20,
+      `streaming caused ${downloads} full snapshot requests`,
     );
   },
 );

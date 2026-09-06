@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.3.1
+
+- Fix uncertain browser permission/signature retries, reload-safe discussion
+  drafts, missing contribution links, tool results and stored output access.
+- Add contribution pagination and project-wide title/session search; preserve
+  workspace navigation on reload and browser history.
+- Apply streamed state locally in the gateway, reconcile satellites only on
+  control changes, index lease/task lookup and dispatch action validators by type.
+- Bind database identity, continue sequential client dispatch IDs, preserve
+  physical blob deduplication at quota, and release failed startup resources.
+- Reconnect stalled AAMP clients; terminate native process descendants after
+  their leader exits; reject incomplete configured-mail backups.
+- Correct CLI profile precedence/defaults, directory resolution and failed-init
+  cleanup. Add an installed version command.
+- Rewrite entry documentation around a local first experience, with dedicated
+  architecture, SDK, CLI and operator guides. Community onboarding is proposed
+  separately and remains unimplemented.
+- Preserve AHP 0.9.0 fixtures and AXP wire negotiation 0.2.0. Existing databases
+  adopt repository metadata after validating their stored session identities.
+
+## 0.3.0
+
+- AAMP mailbox adapter with durable admission, delivery and retry journals.
+- Personal browser workspace for contributions, discussion, streamed sessions,
+  Git diffs and independent signed artifact review.
+- Namespaced durable dispatch and attributed discussion commands.
+- Linux service wrappers, health supervision and verified SQLite backups.
+
 ## 0.2.0
 
 - Automatic satellite reconnection with bounded backoff, one donation and a

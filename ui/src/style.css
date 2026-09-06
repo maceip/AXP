@@ -2221,3 +2221,40 @@ dialog::backdrop {
   background: #fff;
   color: var(--fg-default);
 }
+.stored-content,
+.agent-context,
+.tool-result {
+  margin-block: 12px;
+  min-width: 0;
+}
+.stored-content .toolbar-actions {
+  flex-wrap: wrap;
+}
+.stored-content pre,
+.tool-result pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 360px;
+  overflow: auto;
+  font-size: 12px;
+}
+.agent-context summary {
+  cursor: pointer;
+  font-size: 13px;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+  font-size: 13px;
+}
+.status.failed {
+  color: #9b2929;
+  background: #fff0ee;
+}
+.status.parked {
+  color: #305475;
+  background: #eef5fc;
+}

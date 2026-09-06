@@ -110,7 +110,8 @@ export async function snapshot(stateDirectory, configDirectory, destination) {
   const configs = await readdir(configDirectory, { withFileTypes: true });
   if (configs.some((entry) => !entry.isFile()))
     throw new Error("Configuration backup requires regular files only");
-  if (configs.some((entry) => entry.name === "aamp.json")) {
+  const hasMail = configs.some((entry) => entry.name === "aamp.json");
+  if (hasMail) {
     const mail = JSON.parse(
       await readFile(join(configDirectory, "aamp.json"), "utf8"),
     );
@@ -130,7 +131,7 @@ export async function snapshot(stateDirectory, configDirectory, destination) {
       try {
         await stat(sourcePath);
       } catch (error) {
-        if (name === "aamp.db" && error.code === "ENOENT") continue;
+        if (name === "aamp.db" && !hasMail && error.code === "ENOENT") continue;
         throw error;
       }
       const source = new DatabaseSync(sourcePath, { readOnly: true });

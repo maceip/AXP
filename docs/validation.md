@@ -14,6 +14,8 @@ npm run schema
 npm run demo
 npx playwright install chromium
 npm run test:ui
+npm run test:ops
+npx tsx scripts/benchmark.ts
 npm pack
 npm run test:package
 ```
@@ -74,6 +76,32 @@ The deterministic demo reproduces a failing addition test, parks the fixture
 ACP agent, obtains maintainer approval, edits the isolated checkout, uploads
 a checkpoint, and independently restores and tests it as a verifier. It uses
 actual processes, Git and tests, without a model or provider credits.
+
+## September 6 review regression evidence
+
+The [engineering review](review-2026-09-06.md) adds regression coverage for
+stable client reconnect sequences, empty-database identity, failed transaction
+and startup cleanup, explicit CLI credential precedence, quota deduplication,
+and required AHP catalog fields. A real ACP child confirms that tool output
+survives portable context reconstruction and that 100 streamed text chunks do
+not cause a snapshot request for every chunk.
+
+Gateway tests prove exact snapshot convergence with no additional subscription
+RPCs during a 100-update stream, and retry the same permission and signed
+manifest after losing a committed reply and advancing host state. Browser
+checks exercise older contributions, missing links, visible agent errors,
+reload-safe file drafts and inert stored HTML previews/downloads. AAMP tests
+force a half-open RPC timeout and verify a new connection without replaying the
+admitted task. A native process test makes the leader exit while its descendant
+ignores SIGTERM, then verifies that descendant stops. Linux backup checks
+reject a missing configured mail journal without pruning the last good backup.
+
+CPU measurements use a warmup and the median of seven batches, running the
+same benchmark against the pre-review tree and revised tree on one machine.
+The [raw result](evidence/review-performance.json) records the workload and
+machine. This does not measure network latency, provider speed, disk durability
+cost or concurrent production capacity. The diff renderer and language assets
+remain lazy loaded; a large lazy chunk is still a first-open cost on slow links.
 
 ## CI
 

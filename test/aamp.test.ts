@@ -518,3 +518,26 @@ test("AAMP wire validation rejects ambiguous controls and preserves unknown-exte
     /version/,
   );
 });
+
+test("a silent host timeout retires the AAMP connection and resumes the same admitted turn", async (t) => {
+  const f = await fixture(t);
+  const proxy = await faultProxy(f.host.url);
+  t.after(proxy.close);
+  await f.restart({
+    url: proxy.url,
+    database: join(f.options.database, "..", "stall.db"),
+    requestTimeoutMs: 500,
+  });
+  f.mailbox.inbox.push(mail("stalled"));
+  await f.bridge.sync();
+  const prior = await f.host.maintainer.snapshot<ChatState>(f.host.c.chat);
+  proxy.pause(true);
+  await assert.rejects(f.bridge.sync());
+  proxy.pause(false);
+  await f.bridge.sync();
+  assert.equal(proxy.requests.filter((m) => m === "initialize").length, 2);
+  assert.equal(
+    (await f.host.maintainer.snapshot<ChatState>(f.host.c.chat)).activeTurn?.id,
+    prior.activeTurn?.id,
+  );
+});

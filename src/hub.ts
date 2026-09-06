@@ -77,8 +77,14 @@ export class Hub {
   private readonly timer: ReturnType<typeof setInterval>;
   private readonly tokens: { digest: Buffer; principal: Principal }[];
   private listening = false;
+  private closing: Promise<void> | undefined;
 
   constructor(readonly options: HubOptions) {
+    requireThat(
+      options.repository.trim().length > 0 && options.repository.length <= 512,
+      Codes.invalid,
+      "Repository identity must contain 1–512 characters",
+    );
     requireThat(
       options.credentials.length > 0 &&
         options.credentials.every((c) => c.token.length >= 24),
@@ -96,26 +102,36 @@ export class Hub {
       principal: structuredClone(c.principal),
     }));
     this.store = new Store(options.database);
-    this.sessions = new Sessions(this.store, options.repository, options.now);
-    this.knowledge = new Knowledge(this.sessions);
-    this.artifacts = new Artifacts(this.sessions);
-    // A new host process cannot vouch for any old in-flight execution. Fence
-    // it immediately rather than waiting for an old wall-clock lease to end.
-    this.store.transaction((tx) => {
-      for (const executor of Object.values(
-        this.store.get<ExecutorRegistry>(EXECUTORS).entries,
-      ))
-        if (executor.online)
-          tx.emit(EXECUTORS, {
-            type: "_axp/executorChanged",
-            executor: { ...executor, online: false },
-          });
-      for (const resource of this.store.list("axp-session:/")) {
-        const state = this.sessions.state(resource);
-        if (state.lease)
-          this.sessions.orphan(tx, state, "Host restarted; reclaim to resume");
-      }
-    });
+    try {
+      this.store.bindRepository(options.repository);
+      this.sessions = new Sessions(this.store, options.repository, options.now);
+      this.knowledge = new Knowledge(this.sessions);
+      this.artifacts = new Artifacts(this.sessions);
+      // A new host process cannot vouch for any old in-flight execution. Fence
+      // it immediately rather than waiting for an old wall-clock lease to end.
+      this.store.transaction((tx) => {
+        for (const executor of Object.values(
+          this.store.get<ExecutorRegistry>(EXECUTORS).entries,
+        ))
+          if (executor.online)
+            tx.emit(EXECUTORS, {
+              type: "_axp/executorChanged",
+              executor: { ...executor, online: false },
+            });
+        for (const resource of this.store.list("axp-session:/")) {
+          const state = this.sessions.state(resource);
+          if (state.lease)
+            this.sessions.orphan(
+              tx,
+              state,
+              "Host restarted; reclaim to resume",
+            );
+        }
+      });
+    } catch (error) {
+      this.store.close();
+      throw error;
+    }
     this.http = createServer((req, res) => {
       if (req.url === "/healthz") {
         res.writeHead(200, { "content-type": "application/json" });
@@ -229,6 +245,7 @@ export class Hub {
             changes: {
               title: state.title,
               status: state.chats[0]?.status ?? state.status,
+              modifiedAt: state.chats[0]?.modifiedAt,
             },
           },
           envelope.channel,
@@ -354,6 +371,7 @@ export class Hub {
             role: peer.actor.role,
             principal: peer.actor.id,
             repository: this.options.repository,
+            lastClientSeq: this.store.lastClientSeq(p.clientId, peer.actor.id),
             memory: MEMORY,
           },
         },
@@ -428,6 +446,7 @@ export class Hub {
         .filter((c) => this.sessions.readable(peer.actor, c))
         .map((c) => {
           const s = this.store.get<SessionState>(c);
+          const seed = this.store.seeds([c])[0]!.state as SessionState;
           const exchange = this.sessions.state(c);
           const modifiedAt = new Date(
             Math.max(
@@ -442,6 +461,7 @@ export class Hub {
             provider: s.provider,
             title: s.title,
             status: s.chats[0]?.status ?? s.status,
+            createdAt: seed.chats[0]!.modifiedAt,
             modifiedAt,
           };
         })
@@ -483,6 +503,8 @@ export class Hub {
             provider: "axp",
             title: s.title,
             status: s.status,
+            createdAt: s.chats[0]!.modifiedAt,
+            modifiedAt: s.chats[0]!.modifiedAt,
           },
         },
         result.session,
@@ -759,7 +781,12 @@ export class Hub {
             .get()?.size,
         );
         requireThat(
-          stored + data.length <=
+          stored +
+            (this.store.db
+              .prepare("SELECT 1 FROM blobs WHERE digest=?")
+              .get(hash(data))
+              ? 0
+              : data.length) <=
             (this.options.maxStorageBytes ?? 2_000_000_000),
           Codes.limit,
           "Blob storage quota reached",
@@ -787,7 +814,11 @@ export class Hub {
       mediaType: String(row.media_type),
     };
   }
-  async close(): Promise<void> {
+  close(): Promise<void> {
+    this.closing ??= this.shutdown();
+    return this.closing;
+  }
+  private async shutdown(): Promise<void> {
     clearInterval(this.timer);
     for (const peer of this.peers) peer.ws.terminate();
     await new Promise<void>((resolve) => this.wss.close(() => resolve()));

@@ -1,5 +1,11 @@
-import { lazy, Suspense, useCallback, useState } from "react";
-import type { ChatState } from "@microsoft/agent-host-protocol";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
 import {
   ArrowLeft,
   ArrowUp,
@@ -12,7 +18,6 @@ import {
   MessageCircle,
   ShieldCheck,
   Square,
-  Terminal,
   Users,
   X,
 } from "lucide-react";
@@ -31,7 +36,8 @@ import {
   relativeTime,
 } from "./components.js";
 import { TabGroup } from "./vendor/huabu/TabGroup.js";
-import { useCommand } from "./api.js";
+import { useCommand, useDraft } from "./api.js";
+import { Transcript } from "./Transcript.js";
 
 const DiffPanel = lazy(() => import("./DiffPanel.js"));
 
@@ -53,13 +59,27 @@ export function ContributionPage({
   const [tab, setTab] = useState<"conversation" | "changes" | "discussion">(
     exchange.checkpoint && !chat.activeTurn ? "changes" : "conversation",
   );
-  const [prompt, setPrompt] = useState("");
+  const draftKey = `${workspace.repository}:${workspace.principal.id}:${contribution.id}`;
+  const [prompt, setPrompt] = useDraft(`${draftKey}:prompt`);
   const [mode, setMode] = useState<"queue" | "steer">("queue");
-  const [comment, setComment] = useState("");
-  const [anchor, setAnchor] = useState<{
-    path: string;
-    checkpoint: string;
-  } | null>(null);
+  const [comment, setComment] = useDraft(`${draftKey}:comment`);
+  const [anchorText, setAnchorText] = useDraft(`${draftKey}:anchor`);
+  const anchor = useMemo(() => {
+    try {
+      const value = JSON.parse(anchorText) as {
+        path?: unknown;
+        checkpoint?: unknown;
+      };
+      return typeof value?.path === "string" &&
+        typeof value?.checkpoint === "string"
+        ? { path: value.path, checkpoint: value.checkpoint }
+        : null;
+    } catch {
+      return null;
+    }
+  }, [anchorText]);
+  const setAnchor = (value: { path: string; checkpoint: string } | null) =>
+    setAnchorText(JSON.stringify(value));
   const [loadedReview, setLoadedReview] = useState<{
     key: string;
     digest: string | null;
@@ -71,7 +91,48 @@ export function ContributionPage({
   const [submit, setSubmit] = useState<string | null>(null);
   const [model, setModel] = useState("");
   const [reviewed, setReviewed] = useState(false);
-  const command = useCommand(refresh);
+  const command = useCommand(refresh, draftKey);
+  const { pending, acknowledge } = command;
+  useEffect(() => {
+    if (!pending) return;
+    const action = pending.action;
+    if (
+      action.kind === "comment" &&
+      exchange.discussion?.some(
+        (item) =>
+          item.id === pending.operationId &&
+          item.author === workspace.principal.id,
+      )
+    ) {
+      if (comment === action.body) {
+        setComment("");
+        setAnchorText("null");
+      }
+      acknowledge();
+    } else if (
+      action.kind === "prompt" &&
+      (chat.activeTurn?.id === pending.operationId ||
+        chat.turns.some((turn) => turn.id === pending.operationId) ||
+        chat.queuedMessages?.some(
+          (message) => message.id === pending.operationId,
+        ) ||
+        chat.steeringMessage?.id === pending.operationId)
+    ) {
+      if (prompt === action.text) setPrompt("");
+      acknowledge();
+    }
+  }, [
+    pending,
+    acknowledge,
+    exchange.discussion,
+    workspace.principal.id,
+    chat,
+    comment,
+    prompt,
+    setComment,
+    setPrompt,
+    setAnchorText,
+  ]);
   const maintainer = workspace.principal.role === "maintainer";
   const writable = workspace.principal.role !== "observer";
   const disabled = offline || command.busy;
@@ -87,7 +148,6 @@ export function ContributionPage({
     if (checkpoint) setAnchor({ path, checkpoint: checkpoint.headCommit });
     setTab("discussion");
   };
-  const turns = [...chat.turns, ...(chat.activeTurn ? [chat.activeTurn] : [])];
   return (
     <section className="contribution-page">
       <button className="back-button" onClick={back}>
@@ -142,101 +202,19 @@ export function ContributionPage({
           >
             {tab === "conversation" && (
               <>
-                <div className="transcript">
-                  {detail.totalTurns > chat.turns.length && (
-                    <p className="notice">
-                      Showing the latest {chat.turns.length} of{" "}
-                      {detail.totalTurns} completed turns. The complete history
-                      is available with axp export.
-                    </p>
-                  )}
-                  {turns.length === 0 && (
-                    <Empty title="Every contribution starts somewhere">
-                      Share the context, describe a useful next step, and give a
-                      contributor's agent a place to begin.
-                    </Empty>
-                  )}
-                  {turns.map((turn) => (
-                    <article className="turn" key={turn.id}>
-                      <div className="turn-prompt">
-                        <div className="message-author">
-                          <span className="message-icon">
-                            <Users size={14} />
-                          </span>
-                          <strong>Maintainer</strong>
-                          {turn.message._meta?.["org.axp.aamp"] ? (
-                            <span className="tiny-tag">via AAMP</span>
-                          ) : null}
-                          <time>
-                            {turn.startedAt
-                              ? new Date(turn.startedAt).toLocaleTimeString(
-                                  [],
-                                  { hour: "numeric", minute: "2-digit" },
-                                )
-                              : ""}
-                          </time>
-                        </div>
-                        <Prose text={turn.message.text} />
-                      </div>
-                      <div className="turn-response">
-                        <div className="message-author">
-                          <span className="agent-symbol">✳</span>
-                          <strong>
-                            {turn.id === chat.activeTurn?.id
-                              ? (exchange.lease?.executorId ?? "Agent")
-                              : "Agent"}
-                          </strong>
-                          <span className="muted">
-                            {turn.id === chat.activeTurn?.id
-                              ? "Working"
-                              : "state" in turn
-                                ? String(turn.state)
-                                : ""}
-                          </span>
-                        </div>
-                        {turn.responseParts.map((part, index) =>
-                          part.kind === "markdown" ? (
-                            <Prose key={index} text={part.content} />
-                          ) : part.kind === "toolCall" ? (
-                            <Tool
-                              key={index}
-                              part={part}
-                              turnId={turn.id}
-                              active={turn.id === chat.activeTurn?.id}
-                              canAct={maintainer && !disabled}
-                              answer={(toolId, optionId) => {
-                                void command.send(contribution.id, {
-                                  kind: "permission",
-                                  turnId: turn.id,
-                                  toolId,
-                                  optionId,
-                                });
-                              }}
-                            />
-                          ) : (
-                            <p className="muted" key={index}>
-                              Additional agent context is retained in the
-                              session export.
-                            </p>
-                          ),
-                        )}
-                        {!turn.responseParts.length &&
-                          turn.id === chat.activeTurn?.id && (
-                            <div className="thinking">
-                              <span />
-                              <span />
-                              <span />
-                              <span>
-                                {exchange.lease
-                                  ? "Agent is working"
-                                  : "Waiting for a parked agent"}
-                              </span>
-                            </div>
-                          )}
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                <Transcript
+                  detail={detail}
+                  workspace={workspace}
+                  canAct={maintainer && !disabled}
+                  answer={(turnId, toolId, optionId) => {
+                    void command.send(contribution.id, {
+                      kind: "permission",
+                      turnId,
+                      toolId,
+                      optionId,
+                    });
+                  }}
+                />
                 {maintainer && exchange.status !== "closed" ? (
                   <form
                     className="composer"
@@ -570,19 +548,21 @@ export function ContributionPage({
                 </>
               )}
           </section>
-          <section className="aside-section join-agent">
-            <span className="agent-symbol">✳</span>
-            <h3>Bring your agent.</h3>
-            <p>Your compute, a shared contribution.</p>
-            <code>
-              axp park {contribution.id} --profile .axp/contributor.json
-              --native -- YOUR_ACP_AGENT
-            </code>
-            <p className="aside-hint">
-              Run from your checkout. Your local tools use your user
-              permissions.
-            </p>
-          </section>
+          {!exchange.lease && exchange.status !== "closed" && (
+            <section className="aside-section join-agent">
+              <span className="agent-symbol">✳</span>
+              <h3>Bring your agent.</h3>
+              <p>Your compute, a shared contribution.</p>
+              <code>
+                axp park {contribution.id} --profile .axp/contributor.json
+                --native -- YOUR_ACP_AGENT
+              </code>
+              <p className="aside-hint">
+                Run from your checkout. Your local tools use your user
+                permissions.
+              </p>
+            </section>
+          )}
         </aside>
       </div>
       {submit && (
@@ -694,67 +674,6 @@ function Evidence({ done, text }: { done: boolean; text: string }) {
     <div className={`evidence-step ${done ? "done" : ""}`}>
       {done ? <Check size={14} /> : <Circle size={12} />}
       <span>{text}</span>
-    </div>
-  );
-}
-function Tool({
-  part,
-  turnId,
-  active,
-  canAct,
-  answer,
-}: {
-  part: Extract<
-    ChatState["turns"][number]["responseParts"][number],
-    { kind: "toolCall" }
-  >;
-  turnId: string;
-  active: boolean;
-  canAct: boolean;
-  answer: (toolId: string, optionId: string) => void;
-}) {
-  const tool = part.toolCall;
-  return (
-    <div
-      className={`tool-call ${tool.status === "pending-confirmation" ? "pending" : ""}`}
-    >
-      <details open={tool.status === "pending-confirmation"}>
-        <summary>
-          <Terminal size={15} />
-          <strong>{tool.displayName}</strong>
-          <span>{tool.status.replaceAll("-", " ")}</span>
-        </summary>
-        <div className="tool-body">
-          <pre>
-            {"toolInput" in tool && tool.toolInput
-              ? typeof tool.toolInput === "string"
-                ? tool.toolInput
-                : JSON.stringify(tool.toolInput, null, 2)
-              : "invocationMessage" in tool && tool.invocationMessage
-                ? typeof tool.invocationMessage === "string"
-                  ? tool.invocationMessage
-                  : tool.invocationMessage.markdown
-                : "The agent has not supplied tool input."}
-          </pre>
-        </div>
-      </details>
-      {tool.status === "pending-confirmation" && active && (
-        <div className="permission-options">
-          <span>
-            {canAct ? "Your permission is needed" : "Waiting for a maintainer"}
-          </span>
-          {tool.options?.map((option) => (
-            <button
-              key={`${turnId}:${option.id}`}
-              disabled={!canAct}
-              className={`button small ${option.kind === "approve" ? "primary" : ""}`}
-              onClick={() => answer(tool.toolCallId, option.id)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

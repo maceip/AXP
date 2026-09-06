@@ -1,0 +1,50 @@
+{
+  "baselineCommit": "94544e919c0a2196615ffc484ae56c58421cc34b",
+  "method": "scripts/benchmark.ts copied unchanged into the baseline archive; one warmup and median of seven batches; same machine, Node and dependencies; sequential runs",
+  "before": {
+    "node": "v24.15.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5 Max",
+    "storage": "in-memory SQLite",
+    "results": [
+      {
+        "name": "validate chat delta",
+        "iterations": 20000,
+        "medianMs": 105.7595,
+        "minMs": 91.27554099999998,
+        "maxMs": 116.79141599999991
+      },
+      {
+        "name": "idle expiry tick with 1000 sessions",
+        "iterations": 100,
+        "medianMs": 316.34720800000014,
+        "minMs": 309.27395799999977,
+        "maxMs": 334.4770840000001
+      }
+    ]
+  },
+  "after": {
+    "node": "v24.15.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5 Max",
+    "storage": "in-memory SQLite",
+    "results": [
+      {
+        "name": "validate chat delta",
+        "iterations": 20000,
+        "medianMs": 0.6352499999999992,
+        "minMs": 0.5493339999999876,
+        "maxMs": 1.8432910000000078
+      },
+      {
+        "name": "idle expiry tick with 1000 sessions",
+        "iterations": 100,
+        "medianMs": 54.80670900000001,
+        "minMs": 54.266166999999996,
+        "maxMs": 61.59412499999996
+      }
+    ]
+  }
+}

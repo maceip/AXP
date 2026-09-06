@@ -5,64 +5,25 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { extname, join } from "node:path";
 import { z } from "zod";
-import {
-  ActionType,
-  MessageKind,
-  PendingMessageKind,
-  ToolCallConfirmationReason,
-  ToolCallCancellationReason,
+import type {
+  ChatState,
+  SessionState,
+  ListSessionsResult,
 } from "@microsoft/agent-host-protocol";
-import type { ChatState, SessionState } from "@microsoft/agent-host-protocol";
+import type { ChannelSnapshot } from "./protocol/types.js";
+import { reduceChannel } from "./channel-state.js";
 import { AxpClient } from "./client.js";
 import { channels, ROOT } from "./protocol/types.js";
 import type { ExchangeState, ExecutorRegistry } from "./protocol/types.js";
-import { id, sha, digest, methods } from "./protocol/schema.js";
+import { id, sha, digest } from "./protocol/schema.js";
 import { Codes, requireThat, ProtocolError } from "./protocol/errors.js";
-import { hashObject, signObject } from "./hash.js";
-import { reviewManifest } from "./review.js";
+import { hashObject } from "./hash.js";
+import { WorkspaceCommands } from "./workspace-commands.js";
 import type {
   Contribution,
   ContributionDetail,
   WorkspaceView,
 } from "./workspace-contract.js";
-
-const commandSchema = z.strictObject({
-  operationId: id,
-  startedAt: z.iso.datetime(),
-  session: id,
-  action: z.discriminatedUnion("kind", [
-    z.strictObject({
-      kind: z.literal("create"),
-      title: z.string().trim().min(1).max(256),
-      task: z.string().trim().min(1).max(512),
-    }),
-    z.strictObject({
-      kind: z.literal("prompt"),
-      text: z.string().trim().min(1).max(24_000),
-      mode: z.enum(["start", "queue", "steer"]),
-    }),
-    z.strictObject({ kind: z.literal("cancel"), turnId: id }),
-    z.strictObject({
-      kind: z.literal("permission"),
-      turnId: id,
-      toolId: z.string().min(1).max(512),
-      optionId: z.string().min(1).max(512),
-    }),
-    methods["_axp/comment"]
-      .pick({ body: true, checkpoint: true, path: true })
-      .extend({ kind: z.literal("comment") }),
-    z.strictObject({
-      kind: z.literal("accept"),
-      checkpoint: sha,
-      manifestDigest: digest,
-    }),
-    z.strictObject({
-      kind: z.literal("submit"),
-      checkpoint: sha,
-      model: z.string().trim().min(1).max(256),
-    }),
-  ]),
-});
 
 export interface WorkspaceOptions {
   url: string;
@@ -83,13 +44,21 @@ export class WorkspaceServer {
   private readonly streams = new Set<ServerResponse>();
   private readonly secret = randomBytes(32).toString("hex");
   private readonly subscriptions = new Set<string>();
-  private readonly snapshots = new Map<string, Promise<unknown>>();
-  private catalog: Promise<{ items: { resource: string }[] }> | null = null;
+  private readonly commands: WorkspaceCommands;
+  private readonly snapshots = new Map<
+    string,
+    { promise: Promise<ChannelSnapshot> }
+  >();
+  private catalog: Promise<ListSessionsResult> | null = null;
+  private catalogDirty = false;
+  private catalogAt = 0;
+  private changedTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly abort = new AbortController();
   private origin = "";
   private heartbeat: ReturnType<typeof setInterval> | undefined;
   private closing: Promise<void> | undefined;
   constructor(private readonly options: WorkspaceOptions) {
+    this.commands = new WorkspaceCommands(options.signingKey);
     this.server.requestTimeout = 15_000;
     this.server.headersTimeout = 10_000;
     this.server.maxConnections = 64;
@@ -126,13 +95,37 @@ export class WorkspaceServer {
         this.snapshots.clear();
         this.catalog = null;
         client.on("action", (event) => {
-          this.snapshots.delete(event.channel);
-          if (event.channel.startsWith("axp-session:/")) this.catalog = null;
-          this.broadcast("changed");
+          const entry = this.snapshots.get(event.channel);
+          if (entry) {
+            entry.promise = entry.promise.then((snapshot) =>
+              event.serverSeq <= snapshot.fromSeq
+                ? snapshot
+                : {
+                    resource: snapshot.resource,
+                    fromSeq: event.serverSeq,
+                    state: reduceChannel(
+                      event.channel,
+                      snapshot.state,
+                      event.action,
+                    ),
+                  },
+            );
+            void entry.promise.catch(() =>
+              this.snapshots.delete(event.channel),
+            );
+          }
+          if (
+            event.channel.startsWith("axp-session:/") &&
+            event.action.type !== "_axp/leaseChanged"
+          )
+            this.catalogDirty = true;
+          this.changed();
         });
-        client.on("notification", () => {
-          this.catalog = null;
-          this.broadcast("changed");
+        client.on("notification", (notification) => {
+          const method = (notification as { method?: string }).method;
+          if (method === "root/sessionAdded") this.catalog = null;
+          else this.catalogDirty = true;
+          this.changed();
         });
         client.once("close", () => {
           if (this.client === client) {
@@ -147,6 +140,12 @@ export class WorkspaceServer {
       });
     return this.connecting;
   }
+  private changed(): void {
+    this.changedTimer ??= setTimeout(() => {
+      this.changedTimer = undefined;
+      this.broadcast("changed");
+    }, 100);
+  }
   private broadcast(event: string): void {
     for (const stream of this.streams) {
       if (!stream.write(`event: ${event}\ndata: {}\n\n`)) {
@@ -157,23 +156,32 @@ export class WorkspaceServer {
   }
   private async snapshot<T>(client: AxpClient, resource: string): Promise<T> {
     const cached = this.snapshots.get(resource);
-    if (cached) return cached as Promise<T>;
+    if (cached) return (await cached.promise).state as T;
     // Keep recent views live while bounding host subscriptions during long browser sessions.
-    if (!this.subscriptions.has(resource) && this.subscriptions.size >= 180) {
+    if (!this.subscriptions.has(resource) && this.subscriptions.size >= 128) {
       const oldest = this.subscriptions.values().next().value!;
-      await client.ahp.unsubscribe(oldest);
       this.subscriptions.delete(oldest);
       this.snapshots.delete(oldest);
+      // Remove bookkeeping before yielding, so concurrent reads evict distinct entries.
+      void client.ahp.unsubscribe(oldest).catch(() => {});
     }
-    const result = client.snapshot<T>(resource);
-    this.snapshots.set(resource, result);
+    const result = client.ahp
+      .request("subscribe", { channel: resource })
+      .then(({ snapshot }) => {
+        requireThat(snapshot, Codes.missing, "Host returned no snapshot");
+        return snapshot;
+      });
+    const entry = { promise: result };
+    this.snapshots.set(resource, entry);
     void result.catch(() => {
-      if (this.snapshots.get(resource) === result)
+      if (this.snapshots.get(resource) === entry) {
         this.snapshots.delete(resource);
+        this.subscriptions.delete(resource);
+      }
     });
     this.subscriptions.delete(resource);
     this.subscriptions.add(resource);
-    return result;
+    return (await result).state as T;
   }
   private async contribution(
     client: AxpClient,
@@ -199,12 +207,18 @@ export class WorkspaceServer {
           : permission
             ? "permission"
             : chat.activeTurn
-              ? "working"
-              : exchange.review && !exchange.review.maintainer
-                ? "review"
-                : exchange.checkpoint
-                  ? "ready"
-                  : "waiting",
+              ? exchange.lease
+                ? "working"
+                : "waiting"
+              : chat.turns.at(-1)?.state === "error"
+                ? "failed"
+                : exchange.review && !exchange.review.maintainer
+                  ? "review"
+                  : exchange.checkpoint
+                    ? "ready"
+                    : exchange.lease
+                      ? "parked"
+                      : "waiting",
       preview: (
         chat.activeTurn?.message.text ??
         chat.turns.at(-1)?.message.text ??
@@ -218,7 +232,11 @@ export class WorkspaceServer {
       totalTurns: chat.turns.length,
     };
   }
-  private async workspace(client: AxpClient): Promise<WorkspaceView> {
+  private async workspace(
+    client: AxpClient,
+    offset: number,
+    query: string,
+  ): Promise<WorkspaceView> {
     // A successful local HTTP request alone cannot establish contact with the host.
     try {
       await client.ahp.request("ping", { channel: ROOT });
@@ -226,14 +244,38 @@ export class WorkspaceServer {
       await client.close();
       throw error;
     }
-    this.catalog ??= client.ahp.request("listSessions", { channel: ROOT });
+    if (this.catalogDirty && Date.now() - this.catalogAt >= 1000)
+      this.catalog = null;
+    if (!this.catalog) {
+      this.catalogDirty = false;
+      this.catalogAt = Date.now();
+      const catalog = client.ahp.request("listSessions", { channel: ROOT });
+      this.catalog = catalog;
+      void catalog.catch(() => {
+        if (this.catalog === catalog) this.catalog = null;
+      });
+    }
     const { items } = await this.catalog;
-    // Fetch sequentially to bound work and subscription churn on a large host.
+    const matched = query
+      ? items.filter((item) =>
+          `${item.title} ${item.resource}`
+            .toLocaleLowerCase()
+            .includes(query.toLocaleLowerCase()),
+        )
+      : items;
+    const page = matched.slice(offset, offset + 40);
+    // Four sessions at a time bound cold-load work while avoiding 40 serial network round trips.
     const contributions: Contribution[] = [];
-    for (const item of items.slice(0, 40)) {
-      const session = id.parse(item.resource.slice("ahp-session:/".length));
+    for (let index = 0; index < page.length; index += 4) {
       contributions.push(
-        (await this.contribution(client, session)).contribution,
+        ...(await Promise.all(
+          page.slice(index, index + 4).map(async (item) => {
+            const session = id.parse(
+              item.resource.slice("ahp-session:/".length),
+            );
+            return (await this.contribution(client, session)).contribution;
+          }),
+        )),
       );
     }
     const registry = await this.snapshot<ExecutorRegistry>(
@@ -248,6 +290,8 @@ export class WorkspaceServer {
         "Your repository",
       contributions,
       total: items.length,
+      matched: matched.length,
+      offset,
       executors: Object.values(registry.entries),
       canSign:
         !!this.options.signingKey &&
@@ -255,141 +299,6 @@ export class WorkspaceServer {
           client.principalRole === "contributor"),
       receivedAt: Date.now(),
     };
-  }
-  private async command(client: AxpClient, raw: unknown): Promise<unknown> {
-    const input = commandSchema.parse(raw);
-    const { action, operationId } = input;
-    const c = channels(input.session);
-    if (action.kind === "create") {
-      // The browser assigns a stable random session ID before the first attempt.
-      const list = await client.ahp.request("listSessions", { channel: ROOT });
-      if (!list.items.some((item) => item.resource === c.session))
-        await client.ahp.request("createSession", {
-          channel: c.session,
-          provider: "axp",
-          config: { title: action.title, task: action.task },
-        });
-      return { session: input.session };
-    }
-    if (action.kind === "comment")
-      return client.call("_axp/comment", {
-        channel: c.exchange,
-        operationId,
-        body: action.body,
-        checkpoint: action.checkpoint,
-        path: action.path,
-      });
-    if (action.kind === "submit") {
-      requireThat(
-        this.options.signingKey,
-        Codes.invalid,
-        "Start axp ui with --key to submit an artifact",
-      );
-      const state = await this.snapshot<ExchangeState>(client, c.exchange);
-      requireThat(
-        state.checkpoint?.headCommit === action.checkpoint,
-        Codes.conflict,
-        "Checkpoint changed; inspect the current changes before submitting",
-      );
-      const manifest = await reviewManifest(client, state, action.model);
-      return client.call("_axp/review", {
-        channel: c.exchange,
-        operationId,
-        manifest,
-        contributor: signObject(manifest, this.options.signingKey),
-      });
-    }
-    if (action.kind === "accept") {
-      requireThat(
-        this.options.signingKey,
-        Codes.invalid,
-        "Start axp ui with --key to approve an artifact",
-      );
-      const state = await this.snapshot<ExchangeState>(client, c.exchange);
-      requireThat(
-        state.review &&
-          state.checkpoint?.headCommit === action.checkpoint &&
-          hashObject(state.review.manifest) === action.manifestDigest,
-        Codes.conflict,
-        "Artifact changed; inspect the current review before approving",
-      );
-      return client.call("_axp/approveReview", {
-        channel: c.exchange,
-        operationId,
-        signature: signObject(state.review.manifest, this.options.signingKey),
-      });
-    }
-    if (action.kind === "prompt") {
-      const message = { text: action.text, origin: { kind: MessageKind.User } };
-      await client.dispatch(
-        c.chat,
-        action.mode === "start"
-          ? {
-              type: ActionType.ChatTurnStarted,
-              turnId: operationId,
-              startedAt: input.startedAt,
-              message,
-            }
-          : {
-              type: ActionType.ChatPendingMessageSet,
-              kind:
-                action.mode === "steer"
-                  ? PendingMessageKind.Steering
-                  : PendingMessageKind.Queued,
-              id: operationId,
-              message,
-            },
-        operationId,
-      );
-    } else if (action.kind === "cancel") {
-      await client.dispatch(
-        c.chat,
-        {
-          type: ActionType.ChatTurnCancelled,
-          turnId: action.turnId,
-          duration: 0,
-        },
-        operationId,
-      );
-    } else {
-      const chat = await this.snapshot<ChatState>(client, c.chat);
-      const part = chat.activeTurn?.responseParts.find(
-        (p) => p.kind === "toolCall" && p.toolCall.toolCallId === action.toolId,
-      );
-      requireThat(
-        chat.activeTurn?.id === action.turnId &&
-          part?.kind === "toolCall" &&
-          part.toolCall.status === "pending-confirmation",
-        Codes.conflict,
-        "This permission is no longer pending",
-      );
-      const choice = part.toolCall.options?.find(
-        (o) => o.id === action.optionId,
-      );
-      requireThat(choice, Codes.invalid, "Choose an offered permission option");
-      const base = {
-        type: ActionType.ChatToolCallConfirmed,
-        turnId: action.turnId,
-        toolCallId: action.toolId,
-        selectedOptionId: action.optionId,
-      } as const;
-      await client.dispatch(
-        c.chat,
-        choice.kind === "approve"
-          ? {
-              ...base,
-              approved: true,
-              confirmed: ToolCallConfirmationReason.UserAction,
-            }
-          : {
-              ...base,
-              approved: false,
-              reason: ToolCallCancellationReason.Denied,
-            },
-        operationId,
-      );
-    }
-    return null;
   }
   private async body(request: IncomingMessage): Promise<unknown> {
     requireThat(
@@ -472,7 +381,18 @@ export class WorkspaceServer {
         }
         const client = await this.connection();
         if (url.pathname === "/api/workspace" && request.method === "GET") {
-          json(200, await this.workspace(client));
+          const offset = z.coerce
+            .number()
+            .int()
+            .min(0)
+            .max(Number.MAX_SAFE_INTEGER)
+            .parse(url.searchParams.get("offset") ?? 0);
+          const query = z
+            .string()
+            .trim()
+            .max(256)
+            .parse(url.searchParams.get("query") ?? "");
+          json(200, await this.workspace(client, offset, query));
           return;
         }
         if (url.pathname === "/api/contribution" && request.method === "GET") {
@@ -483,6 +403,36 @@ export class WorkspaceServer {
               id.parse(url.searchParams.get("session")),
             ),
           );
+          return;
+        }
+        if (
+          ["/api/content", "/api/download"].includes(url.pathname) &&
+          request.method === "GET"
+        ) {
+          const session = id.parse(url.searchParams.get("session"));
+          const sha256 = digest.parse(url.searchParams.get("digest"));
+          const blob = await client.call("_axp/blobGet", {
+            channel: channels(session).exchange,
+            digest: sha256,
+          });
+          const bytes = Buffer.from(blob.data, "base64");
+          if (url.pathname === "/api/download") {
+            response.writeHead(200, {
+              "content-type": "application/octet-stream",
+              "content-disposition": `attachment; filename="axp-${sha256}.bin"`,
+              "content-length": bytes.length,
+            });
+            response.end(bytes);
+          } else {
+            const isText =
+              blob.mediaType.startsWith("text/") ||
+              ["application/json", "application/xml"].includes(blob.mediaType);
+            json(200, {
+              text: isText ? bytes.subarray(0, 64_000).toString("utf8") : null,
+              bytes: bytes.length,
+              truncated: isText && bytes.length > 64_000,
+            });
+          }
           return;
         }
         if (url.pathname === "/api/patch" && request.method === "GET") {
@@ -516,7 +466,10 @@ export class WorkspaceServer {
           return;
         }
         if (url.pathname === "/api/command" && request.method === "POST") {
-          json(200, await this.command(client, await this.body(request)));
+          json(
+            200,
+            await this.commands.execute(client, await this.body(request)),
+          );
           return;
         }
         json(404, { error: "Unknown workspace operation" });
@@ -538,6 +491,11 @@ export class WorkspaceServer {
       const root =
         this.options.assets ?? fileURLToPath(new URL("./ui/", import.meta.url));
       const content = await readFile(join(root, file));
+      if (file.startsWith("assets/"))
+        response.setHeader(
+          "cache-control",
+          "private, max-age=31536000, immutable",
+        );
       const mime: Record<string, string> = {
         ".html": "text/html",
         ".js": "text/javascript",
@@ -572,19 +530,26 @@ export class WorkspaceServer {
                 : code === Codes.limit
                   ? 413
                   : 503;
-      const message =
-        error instanceof z.ZodError
+      const missingFile =
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "ENOENT";
+      const message = missingFile
+        ? "Not found"
+        : error instanceof z.ZodError
           ? "Invalid workspace request"
           : error instanceof Error
             ? error.message
             : "Workspace unavailable";
-      json(status, { error: message });
+      json(missingFile ? 404 : status, { error: message });
     }
   }
   close(): Promise<void> {
     this.closing ??= (async () => {
       this.abort.abort();
       clearInterval(this.heartbeat);
+      clearTimeout(this.changedTimer);
       for (const stream of this.streams) stream.end();
       this.streams.clear();
       await this.connecting?.catch(() => {});

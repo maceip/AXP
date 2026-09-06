@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
+import { basename } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   ClientClosedError,
@@ -206,7 +207,7 @@ export class Satellite extends EventEmitter<{
     await this.client.call("_axp/register", {
       channel: "ahp-root://",
       executorId: this.executorId,
-      name: this.options.agent.command,
+      name: basename(this.options.agent.command).slice(0, 128),
       placement: "satellite",
       capabilities: [
         "acp/v1",

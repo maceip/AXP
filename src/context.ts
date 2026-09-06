@@ -18,7 +18,7 @@ function textPart(part: ResponsePart): string {
   if (part.kind === "contentRef") return `[Output: ${part.uri}]`;
   if (part.kind === "toolCall") {
     const tool = part.toolCall;
-    return `[Tool ${tool.displayName}: ${tool.status}]${"result" in tool ? ` ${JSON.stringify(tool.result)}` : ""}`;
+    return `[Tool ${tool.displayName}: ${tool.status}]${"content" in tool ? ` ${JSON.stringify(tool.content)}` : ""}`;
   }
   // Reasoning and runtime metadata stay out of the portable prompt. The
   // original, provider-visible record remains available in the audit export.

@@ -168,10 +168,11 @@ export class Sessions {
       "Session already exists",
     );
     requireThat(
-      !this.store.list("axp-session:/").some((c) => {
-        const s = this.state(c);
-        return s.task === task && s.status !== "closed";
-      }),
+      !this.store.db
+        .prepare(
+          "SELECT 1 FROM channels WHERE resource GLOB 'axp-session:/*' AND json_extract(state,'$.status') != 'closed' AND json_extract(state,'$.task')=? LIMIT 1",
+        )
+        .get(task),
       Codes.conflict,
       "An open session already owns this task",
     );
@@ -545,10 +546,17 @@ export class Sessions {
           executor: { ...executor, online: false },
         });
     }
-    for (const resource of this.store.list("axp-session:/")) {
-      const state = this.state(resource);
-      if (state.lease && state.lease.expiresAt <= this.now())
-        this.orphan(tx, state, "Executor lease expired");
+    const expired = this.store.db
+      .prepare(
+        "SELECT resource FROM channels WHERE resource GLOB 'axp-session:/*' AND json_extract(state,'$.lease.expiresAt') <= ?",
+      )
+      .all(this.now());
+    for (const row of expired) {
+      this.orphan(
+        tx,
+        this.state(String(row.resource)),
+        "Executor lease expired",
+      );
     }
   }
   tool(chat: ChatState, id: string): ToolCallState | undefined {

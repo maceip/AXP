@@ -1,5 +1,25 @@
 # Design
 
+## Implementation map
+
+The project is TypeScript on Node.js 24.15+, with a React/Vite browser client
+and one SQLite database per repository host. There is no second application
+backend hidden behind the UI.
+
+| Boundary                                        | Owns                                                                   |
+| ----------------------------------------------- | ---------------------------------------------------------------------- |
+| `hub.ts`, `store.ts`                            | Authentication, RPC routing, transactional state, receipts and fanout  |
+| `sessions.ts`, `knowledge.ts`, `artifacts.ts`   | Leases/budgets, context/memory, signed Git artifacts                   |
+| `channel-state.ts`, `protocol/`                 | Shared pure reduction and extension contracts                          |
+| `satellite.ts`, `satellite-runner.ts`, `acp.ts` | Connection recovery, one leased runner, provider process lifecycle     |
+| `workspace.ts`, `workspace-commands.ts`         | Personal read cache and finite browser command translation             |
+| `ui/src/`                                       | Navigation, contribution interaction, transcript, diffs and discussion |
+| `aamp.ts`, `aamp/`                              | Mail admission, durable delivery reconciliation and transport          |
+
+These boundaries are worth keeping. Split responsibilities when their lifetime
+or authority differs; avoid a service framework or separate database for each
+feature. The browser and mailbox adapter both use the existing host contracts.
+
 ## The contribution experience
 
 A contributor parks an ACP-speaking agent at a repository. The maintainer
@@ -50,7 +70,8 @@ recovery. Lost mutation responses are reconciled through durable receipts.
 Recovery does not resubmit an interrupted prompt or carry over tool approvals.
 
 SQLite transactions commit the action log, current state and retry receipts
-together before broadcasting. Reconnect returns replay or snapshots. Slow
+together before broadcasting. Database metadata binds even an empty store to
+one repository identity; a configuration typo cannot relabel historical work. Reconnect returns replay or snapshots. Slow
 consumers are disconnected and resynchronize rather than silently losing events.
 Session export preserves the observed transcript; it cannot expose hidden model
 reasoning that a provider does not supply.
@@ -92,3 +113,20 @@ Signed manifests bind code, prompt and trace digests to contributor and
 maintainer signatures. Signatures establish who attested, not whether a test
 ran. Independent verification records name the exact tested commit and remain
 distinct from contributor claims. Consumer TEE is deferred.
+
+## Performance envelope
+
+Lease expiry and open-task lookup use SQLite expression indexes. Action
+validation selects the upstream schemas for that action type, retaining all
+variants with the same discriminator. Satellites reconcile on control changes,
+not on their own streamed text. The workspace applies ordered deltas locally
+and bounds active subscriptions. None of these changes weaken validation or
+replace durable writes with an asynchronous queue.
+
+SQLite is still a synchronous single writer. Each action persists a current
+channel JSON snapshot, and audit/receipt history is retained without automatic
+collection. Long transcripts, full catalog scans and audit exports therefore
+remain important capacity limits. UI pagination does not make the underlying
+wire catalog or audit paginated. Measure realistic concurrent contributors and
+long histories before making a large public deployment claim; add bounded
+protocol reads and storage projections when that evidence warrants them.
