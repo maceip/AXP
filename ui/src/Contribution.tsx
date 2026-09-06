@@ -38,6 +38,16 @@ import {
 import { TabGroup } from "./vendor/huabu/TabGroup.js";
 import { useCommand, useDraft } from "./api.js";
 import { Transcript } from "./Transcript.js";
+import {
+  PencilCase,
+  StampLayer,
+  stampBody,
+  stampOf,
+  useReviewTools,
+} from "./review/PencilCase.js";
+import type { Landed } from "./review/PencilCase.js";
+import { thunk } from "./review/sound.js";
+import { QuotedProse } from "./review/QuotedProse.js";
 
 const DiffPanel = lazy(() => import("./DiffPanel.js"));
 
@@ -137,6 +147,77 @@ export function ContributionPage({
   const writable = workspace.principal.role !== "observer";
   const disabled = offline || command.busy;
   const checkpoint = exchange.checkpoint;
+  const review = useReviewTools();
+  const [quote, setQuote] = useState<{
+    text: string;
+    author: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [landed, setLanded] = useState<Landed[]>([]);
+  useEffect(() => setQuote(null), [tab, review.tool]);
+  /** Highlighter: a drag over prose paints a mark and offers to quote it. */
+  const paintSelection = (panel: HTMLElement) => {
+    if (review.tool !== "highlighter") return;
+    const selection = document.getSelection();
+    if (!selection || selection.isCollapsed || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    const element = node instanceof Element ? node : node.parentElement;
+    const prose = element?.closest(".prose");
+    if (!prose || !panel.contains(prose)) return;
+    const text = selection.toString().trim();
+    if (!text) return;
+    const author = prose.closest(".turn-response")
+      ? "the agent"
+      : prose.closest(".turn-prompt")
+        ? "the maintainer"
+        : (prose.closest(".comment")?.querySelector("strong")?.textContent ??
+          "the discussion");
+    const rect = range.getBoundingClientRect();
+    const box = panel.getBoundingClientRect();
+    review.mark(range);
+    selection.removeAllRanges();
+    setQuote({
+      text,
+      author,
+      x: rect.left - box.left + rect.width / 2,
+      y: rect.bottom - box.top + 8,
+    });
+  };
+  /** Stamp: lands where you click and posts the verdict. */
+  const dropStamp = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (review.tool !== "stamp" || disabled) return;
+    if (
+      (event.target as HTMLElement).closest(
+        "button, a, input, textarea, select",
+      )
+    )
+      return;
+    const box = event.currentTarget.getBoundingClientRect();
+    setLanded((all) => [
+      ...all,
+      {
+        id: crypto.randomUUID(),
+        stamp: review.stamp,
+        where: tab,
+        x: event.clientX - box.left,
+        y: event.clientY - box.top,
+        rot: -12 + Math.random() * 10,
+      },
+    ]);
+    thunk();
+    const onChanges = tab === "changes" && checkpoint;
+    void command.send(contribution.id, {
+      kind: "comment",
+      body: stampBody(
+        review.stamp,
+        onChanges ? `on ${checkpoint.headCommit.slice(0, 7)}` : undefined,
+      ),
+      checkpoint: onChanges ? checkpoint.headCommit : null,
+      path: null,
+    });
+  };
   const reviewKey = `${checkpoint?.headCommit ?? ""}:${exchange.review?.contributor.signature ?? ""}`;
   const manifest = loadedReview?.key === reviewKey ? loadedReview.digest : null;
   const ready = useCallback(
@@ -149,7 +230,12 @@ export function ContributionPage({
     setTab("discussion");
   };
   return (
-    <section className="contribution-page">
+    <section
+      className={`contribution-page ${review.tool ? `tool-${review.tool}` : ""}`}
+    >
+      {writable && !offline && exchange.status !== "closed" && (
+        <PencilCase review={review} />
+      )}
       <button className="back-button" onClick={back}>
         <ArrowLeft size={15} /> All contributions
       </button>
@@ -199,7 +285,36 @@ export function ContributionPage({
                   ? "Changes"
                   : "Discussion"
             }
+            onPointerUp={(event) => paintSelection(event.currentTarget)}
+            onClick={dropStamp}
           >
+            <StampLayer
+              stamps={landed.filter((stamp) => stamp.where === tab)}
+            />
+            {quote && (
+              <button
+                type="button"
+                className="pc-quote-chip"
+                style={{
+                  left: quote.x,
+                  top: quote.y,
+                  transform: "translateX(-50%)",
+                }}
+                onClick={() => {
+                  const quoted = quote.text
+                    .split("\n")
+                    .map((line) => `> ${line}`)
+                    .join("\n");
+                  setComment(
+                    `${comment.trim() ? `${comment.trim()}\n\n` : ""}${quoted}\n\n— quoting ${quote.author}`,
+                  );
+                  setQuote(null);
+                  setTab("discussion");
+                }}
+              >
+                <MessageCircle size={13} /> Quote in discussion
+              </button>
+            )}
             {tab === "conversation" && (
               <>
                 <Transcript
@@ -326,6 +441,18 @@ export function ContributionPage({
                     checkpoint={checkpoint.headCommit}
                     discuss={discuss}
                     ready={ready}
+                    review={{
+                      tool: review.tool,
+                      ink: review.ink,
+                      onNote: (text, path, reference) => {
+                        void command.send(contribution.id, {
+                          kind: "comment",
+                          body: `${text}\n\n\`${reference}\``,
+                          checkpoint: checkpoint.headCommit,
+                          path,
+                        });
+                      },
+                    }}
                   />
                 </Suspense>
               ) : (
@@ -335,7 +462,7 @@ export function ContributionPage({
                 </Empty>
               ))}
             {tab === "discussion" && (
-              <div className="discussion">
+              <div className="discussion is-paper">
                 <div className="discussion-intro">
                   <MessageCircle size={19} />
                   <div>
@@ -369,7 +496,31 @@ export function ContributionPage({
                           )}
                         </div>
                       )}
-                      <Prose text={item.body} />
+                      {(() => {
+                        const stamp = stampOf(item.body);
+                        if (stamp) {
+                          const rest = item.body
+                            .trim()
+                            .slice(stamp.label.length + 4)
+                            .replace(/^\s*—\s*/, "");
+                          return (
+                            <>
+                              <span
+                                className="pc-stamp-inline"
+                                style={{ ["--stamp-ink" as string]: stamp.ink }}
+                              >
+                                {stamp.label}
+                              </span>
+                              {rest && <p className="muted">{rest}</p>}
+                            </>
+                          );
+                        }
+                        return item.body.trimStart().startsWith("> ") ? (
+                          <QuotedProse text={item.body} />
+                        ) : (
+                          <Prose text={item.body} />
+                        );
+                      })()}
                     </div>
                   </article>
                 ))}

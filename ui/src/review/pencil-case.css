@@ -1,0 +1,459 @@
+/* The pencil case: review tools with the physicality of highlighte.rs.
+ *
+ * A capsule tray floats at the bottom of the contribution page. Tools stand in
+ * it with their tips showing; hover lifts one 6px, selecting lifts it 24px, and
+ * a soft outline travels between them on a spring. Ink colour crossfades.
+ * Everything eases with the same quint curve (0.2, 0, 0, 1) and respects
+ * prefers-reduced-motion. */
+
+:root {
+  --pc-paper: #fbfbf9;
+  --pc-ink: #3a4a3e;
+  --pc-ink-rgb: 58, 74, 62;
+  --pc-ease: cubic-bezier(0.2, 0, 0, 1);
+  --pc-spring: linear(
+    0,
+    0.2178 2.1%,
+    1.1052 8.7%,
+    1.2103 11.4%,
+    1.2181 13.2%,
+    1.1729 15.6%,
+    1.0282 21.4%,
+    0.9575 25.3%,
+    0.9327 29.4%,
+    0.9463 33.6%,
+    1.0143 43.5%,
+    1.0091 49.4%,
+    0.9963 59.3%,
+    0.9977 69.3%,
+    1.0011 82.4%,
+    1
+  );
+  --pc-tray-h: 76px;
+  --sidebar-w: 236px;
+}
+
+/* ---------------------------------------------------------------- tray */
+.pencil-case {
+  position: fixed;
+  left: calc(50% + var(--sidebar-w) / 2);
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  height: var(--pc-tray-h);
+  padding: 0 18px 0 22px;
+  border-radius: 999px;
+  background: var(--pc-paper);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 10px 30px -10px rgba(var(--pc-ink-rgb), 0.35),
+    0 2px 6px rgba(var(--pc-ink-rgb), 0.08);
+  animation: pc-enter 0.85s var(--pc-spring) both;
+}
+@keyframes pc-enter {
+  from {
+    transform: translateX(-50%) translateY(120px) scale(0.98);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+.pencil-case .pc-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+}
+.pencil-case .pc-divider {
+  width: 1px;
+  height: 28px;
+  align-self: center;
+  background: rgba(var(--pc-ink-rgb), 0.12);
+}
+
+/* ---------------------------------------------------------------- tools */
+.pc-tools {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 100%;
+  position: relative;
+}
+.pc-tool {
+  position: relative;
+  width: 40px;
+  height: var(--pc-tray-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  /* only the tip and shoulder are hit-testable; the tray hides the body */
+  clip-path: inset(6px 4px 0 4px);
+}
+.pc-tool svg {
+  position: absolute;
+  left: 0;
+  top: 22px; /* rest: tip peeks out of the tray */
+  transition:
+    top 0.32s var(--pc-ease),
+    filter 0.32s var(--pc-ease);
+  filter: drop-shadow(0 2px 2px rgba(var(--pc-ink-rgb), 0.18));
+}
+.pc-tool:hover svg {
+  top: 16px;
+}
+.pc-tool[aria-pressed="true"] svg {
+  top: -2px; /* lifted out of the tray */
+  filter: drop-shadow(0 6px 6px rgba(var(--pc-ink-rgb), 0.22));
+}
+.pc-tool:focus-visible {
+  outline: none;
+}
+/* travelling outline: one element, moved with a spring */
+.pc-outline {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  width: 40px;
+  height: 54px;
+  border-radius: 14px;
+  border: 2px solid rgba(var(--pc-ink-rgb), 0.55);
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    transform 0.5s var(--pc-spring),
+    opacity 0.16s ease;
+}
+.pc-tools:has(.pc-tool:focus-visible) .pc-outline {
+  opacity: 1;
+}
+.pc-tool-label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, 4px);
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--pc-ink);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease,
+    transform 0.2s var(--pc-ease);
+}
+.pc-tool:hover .pc-tool-label,
+.pc-tool:focus-visible .pc-tool-label {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------------------------------------------------------------- swatches */
+.pc-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 2px rgba(var(--pc-ink-rgb), 0.2);
+  transition:
+    transform 0.25s var(--pc-ease),
+    box-shadow 0.25s var(--pc-ease);
+}
+.pc-swatch:hover {
+  transform: translateY(-2px);
+}
+.pc-swatch[aria-checked="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 0 0 2px var(--pc-paper),
+    0 0 0 4px rgba(var(--pc-ink-rgb), 0.55);
+}
+.pc-swatch:focus-visible {
+  outline: 2px solid var(--pc-ink);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- stamp picker & misc buttons */
+.pc-chip {
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid rgba(var(--pc-ink-rgb), 0.15);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--pc-ink);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+.pc-chip:hover {
+  background: #f1f3ee;
+}
+.pc-chip[aria-pressed="true"] {
+  background: var(--pc-ink);
+  color: #fff;
+  border-color: var(--pc-ink);
+}
+.pc-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 0;
+  background: #f1f3ee;
+  color: var(--pc-ink);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+.pc-icon:hover {
+  background: #e6eae2;
+}
+.pc-icon[aria-pressed="true"] {
+  background: var(--pc-ink);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------- cursor while a tool is held */
+.contribution-page.tool-highlighter .prose {
+  cursor: text;
+}
+.contribution-page.tool-stamp #contribution-panel {
+  cursor: crosshair;
+}
+
+/* ---------------------------------------------------------------- quote chip near a mark */
+.pc-quote-chip {
+  position: absolute;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--pc-ink);
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -8px rgba(var(--pc-ink-rgb), 0.5);
+  animation: pc-pop 0.45s var(--pc-spring) both;
+}
+@keyframes pc-pop {
+  from {
+    transform: translateY(6px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- stamps */
+.pc-stamp-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+}
+.pc-stamp {
+  position: absolute;
+  transform: translate(-50%, -50%) rotate(var(--rot, -6deg));
+  padding: 6px 14px;
+  border: 3px double currentColor;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stamp-ink, #b23a2f);
+  filter: url(#stamp-ink);
+  opacity: 0.86;
+  mix-blend-mode: multiply;
+  white-space: nowrap;
+  animation: pc-land 0.55s var(--pc-spring) both;
+}
+@keyframes pc-land {
+  from {
+    transform: translate(-50%, -50%) rotate(calc(var(--rot, -6deg) - 10deg))
+      scale(1.7);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(var(--rot, -6deg)) scale(1);
+    opacity: 0.86;
+  }
+}
+/* inline stamp shown on a discussion comment */
+.pc-stamp-inline {
+  display: inline-block;
+  transform: rotate(-4deg);
+  margin: 2px 0 6px;
+  padding: 3px 9px;
+  border: 2.5px double currentColor;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stamp-ink, #b23a2f);
+  filter: url(#stamp-ink);
+  opacity: 0.9;
+}
+
+/* ---------------------------------------------------------------- sticky notes (diff annotations) */
+.pc-note {
+  margin: 6px 12px 10px 64px;
+  max-width: 420px;
+  padding: 12px 14px 10px;
+  background: #fff6b3;
+  border-radius: 3px 3px 14px 3px;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.06),
+    0 10px 22px -10px rgba(80, 60, 0, 0.45);
+  transform: rotate(-0.6deg);
+  font-family:
+    "Patrick Hand", "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #4a3d12;
+  animation: pc-pop 0.4s var(--pc-spring) both;
+}
+.pc-note::before {
+  /* tape */
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 54px;
+  height: 16px;
+  transform: translateX(-50%) rotate(-2deg);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.pc-note {
+  position: relative;
+}
+.pc-note-ref {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: #7a6a2a;
+  margin-bottom: 6px;
+}
+.pc-note textarea {
+  width: 100%;
+  min-height: 56px;
+  border: 0;
+  background: transparent;
+  resize: vertical;
+  font: inherit;
+  color: inherit;
+  outline: none;
+  line-height: 1.5;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 20px,
+    rgba(120, 100, 20, 0.18) 20px,
+    rgba(120, 100, 20, 0.18) 21px
+  );
+}
+.pc-note-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+  font-family: "AXP Runde", "DM Sans Variable", system-ui, sans-serif;
+}
+.pc-note-actions button {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  background: rgba(74, 61, 18, 0.1);
+  color: #4a3d12;
+}
+.pc-note-actions button.primary {
+  background: #4a3d12;
+  color: #fff6b3;
+}
+
+/* ---------------------------------------------------------------- ruled paper for the discussion */
+.discussion.is-paper {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 23px,
+    rgba(var(--pc-ink-rgb), 0.06) 23px,
+    rgba(var(--pc-ink-rgb), 0.06) 24px
+  );
+  background-position: 0 14px;
+}
+.comment blockquote.is-quote {
+  border-left: 0;
+  padding-left: 0;
+  margin: 8px 0;
+  font-style: normal;
+}
+
+/* ---------------------------------------------------------------- layout breakpoints */
+@media (max-width: 1250px) {
+  :root {
+    --sidebar-w: 210px;
+  }
+}
+@media (max-width: 780px) {
+  :root {
+    --sidebar-w: 68px;
+  }
+  .pencil-case {
+    gap: 10px;
+    padding: 0 12px 0 14px;
+  }
+  .pc-group.pc-secondary {
+    display: none;
+  }
+}
+@media (max-width: 570px) {
+  :root {
+    --sidebar-w: 60px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pencil-case,
+  .pc-quote-chip,
+  .pc-stamp,
+  .pc-note {
+    animation: none;
+  }
+  .pc-tool svg,
+  .pc-outline,
+  .pc-swatch {
+    transition: none;
+  }
+}

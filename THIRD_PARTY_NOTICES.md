@@ -17,6 +17,10 @@
 - Lucide, Lucide contributors, ISC: https://github.com/lucide-icons/lucide
 - React Markdown and remark-gfm, unified contributors, MIT:
   https://github.com/remarkjs/react-markdown and https://github.com/remarkjs/remark-gfm
+- Highlighters (`@highlighters/core`), Jace Attard, MIT:
+  https://github.com/JaceThings/highlighters. The pencil-case dock in
+  `ui/src/review` is our own; its interaction language is modelled on
+  highlighte.rs.
 - DM Sans and IBM Plex Mono font packages, SIL Open Font License 1.1:
   https://fontsource.org/fonts/dm-sans and https://fontsource.org/fonts/ibm-plex-mono
 
