@@ -95,7 +95,11 @@ export function Transcript({
             </div>
             {turn.responseParts.map((part, index) =>
               part.kind === "markdown" ? (
-                <Prose key={index} text={part.content} />
+                <Prose
+                  key={index}
+                  text={part.content}
+                  settled={turn.id !== chat.activeTurn?.id}
+                />
               ) : part.kind === "toolCall" ? (
                 <Tool
                   key={index}

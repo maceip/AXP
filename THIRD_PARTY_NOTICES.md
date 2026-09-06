@@ -17,6 +17,7 @@
 - Lucide, Lucide contributors, ISC: https://github.com/lucide-icons/lucide
 - React Markdown and remark-gfm, unified contributors, MIT:
   https://github.com/remarkjs/react-markdown and https://github.com/remarkjs/remark-gfm
+- Justif, Lyall Cooper, MIT: https://github.com/lyallcooper/justif
 - DM Sans and IBM Plex Mono font packages, SIL Open Font License 1.1:
   https://fontsource.org/fonts/dm-sans and https://fontsource.org/fonts/ibm-plex-mono
 
