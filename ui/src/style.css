@@ -2258,3 +2258,14 @@ dialog::backdrop {
   color: #305475;
   background: #eef5fc;
 }
+
+.grove-form {
+  display: grid;
+  gap: 4px;
+}
+.grove-form .grove-label {
+  margin-top: 14px;
+}
+.grove-form .grove-label:first-child {
+  margin-top: 0;
+}

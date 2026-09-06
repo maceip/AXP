@@ -8,7 +8,8 @@ import {
 } from "lucide-react";
 import type { Contribution } from "../../src/workspace-contract.js";
 import { useCommand } from "./api.js";
-import { Avatar, Dialog, Empty, Mark, relativeTime } from "./components.js";
+import { Avatar, Empty, Mark, relativeTime } from "./components.js";
+import { BlobDialog, Button, Input } from "./grove/Grove.js";
 
 export function Nav({
   icon,
@@ -89,24 +90,40 @@ export function Create({
   const [task, setTask] = useState("");
   const [session] = useState(() => crypto.randomUUID());
   const command = useCommand(refresh);
+  const submit = () => {
+    void command.send(session, { kind: "create", title, task }).then((sent) => {
+      if (sent) created(session);
+    });
+  };
   return (
-    <Dialog title="Start a contribution" close={close}>
+    <BlobDialog
+      title="Start a contribution"
+      description="Describe the work. Contributors can connect an agent to this session."
+      close={close}
+      actions={
+        <>
+          <Button onClick={close}>Cancel</Button>
+          <Button
+            variant="primary"
+            onClick={submit}
+            disabled={command.busy || !title.trim() || !task.trim()}
+          >
+            Create contribution <ArrowRight size={15} />
+          </Button>
+        </>
+      }
+    >
       <form
-        className="dialog-body"
+        className="grove-form"
         onSubmit={(event) => {
           event.preventDefault();
-          void command
-            .send(session, { kind: "create", title, task })
-            .then((sent) => {
-              if (sent) created(session);
-            });
+          submit();
         }}
       >
-        <p>
-          Describe the work. Contributors can connect an agent to this session.
-        </p>
-        <label htmlFor="contribution-title">What do you want to work on?</label>
-        <input
+        <label className="grove-label" htmlFor="contribution-title">
+          What do you want to work on?
+        </label>
+        <Input
           id="contribution-title"
           autoFocus
           value={title}
@@ -115,8 +132,10 @@ export function Create({
           maxLength={256}
           required
         />
-        <label htmlFor="contribution-task">Task or issue reference</label>
-        <input
+        <label className="grove-label" htmlFor="contribution-task">
+          Task or issue reference
+        </label>
+        <Input
           id="contribution-task"
           value={task}
           onChange={(event) => setTask(event.target.value)}
@@ -124,24 +143,17 @@ export function Create({
           maxLength={512}
           required
         />
+        <p className="grove-hint">
+          The reference becomes the session's task ID, so keep it unique.
+        </p>
         {command.error && (
           <div className="notice error" role="alert">
             {command.error}
           </div>
         )}
-        <div className="dialog-actions">
-          <button type="button" className="button" onClick={close}>
-            Cancel
-          </button>
-          <button
-            className="button primary"
-            disabled={command.busy || !title.trim() || !task.trim()}
-          >
-            Create contribution <ArrowRight size={15} />
-          </button>
-        </div>
+        <button type="submit" hidden />
       </form>
-    </Dialog>
+    </BlobDialog>
   );
 }
 export function Activity({

@@ -24,6 +24,7 @@ import {
   people,
 } from "./components.js";
 import { ContributionPage } from "./Contribution.js";
+import { GroveDefs } from "./grove/Grove.js";
 
 type Page = "overview" | "contributions" | "people" | "activity";
 function currentPage(): Page {
@@ -113,6 +114,7 @@ export default function App() {
   };
   return (
     <div className="app-shell">
+      <GroveDefs />
       <a className="skip-link" href="#main">
         Skip to workspace
       </a>
