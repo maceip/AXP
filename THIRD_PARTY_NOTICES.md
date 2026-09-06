@@ -22,6 +22,9 @@
   its license sits beside the source. It depends on ELK (Eclipse Layout
   Kernel, EPL-2.0: https://github.com/kieler/elkjs) and entities (BSD-2-Clause),
   whose texts the UI build collects.
+- Pretext (`@chenglou/pretext`), Pretext contributors, MIT:
+  https://github.com/chenglou/pretext. Measures diagram labels with the real
+  font and wraps long ones into balanced lines.
 - DM Sans and IBM Plex Mono font packages, SIL Open Font License 1.1:
   https://fontsource.org/fonts/dm-sans and https://fontsource.org/fonts/ibm-plex-mono
 

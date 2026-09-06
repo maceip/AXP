@@ -172,7 +172,23 @@ export function getCharWidth(char: string): number {
  * @param fontWeight - Font weight (affects width slightly)
  * @returns Estimated width in pixels
  */
+/** AXP: an optional exact measurer (e.g. canvas-backed via Pretext in the
+ * browser). Returns null to fall back to the estimate for a given string. */
+export type TextMeasurer = (text: string, fontSize: number, fontWeight: number) => number | null
+let exactMeasurer: TextMeasurer | null = null
+export function setTextMeasurer(measurer: TextMeasurer | null): void {
+  exactMeasurer = measurer
+}
+
 export function measureTextWidth(text: string, fontSize: number, fontWeight: number): number {
+  if (exactMeasurer) {
+    const exact = exactMeasurer(text, fontSize, fontWeight)
+    if (exact !== null) return exact
+  }
+  return estimateTextWidthFromTable(text, fontSize, fontWeight)
+}
+
+function estimateTextWidthFromTable(text: string, fontSize: number, fontWeight: number): number {
   // Base ratio calibrated for Inter font family
   // Heavier weights are slightly wider
   // Added +0.02 buffer to prevent edge truncation of characters like 's' at line ends

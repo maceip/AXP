@@ -14,6 +14,7 @@ const roots = [
   "@fontsource/ibm-plex-mono",
   "elkjs",
   "entities",
+  "@chenglou/pretext",
 ];
 const packages = new Map();
 async function visit(name, parent = process.cwd()) {

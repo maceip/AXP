@@ -28,6 +28,7 @@ export type { AsciiRenderOptions } from './ascii/index.ts'
 
 import { decodeXML } from 'entities'
 import { parseMermaid } from './parser.ts'
+import { FONT_SIZES, FONT_WEIGHTS } from './styles.ts'
 import { layoutGraphSync } from './layout.ts'
 import { renderSvg } from './renderer.ts'
 import type { RenderOptions } from './types.ts'
@@ -108,6 +109,17 @@ function buildColors(options: RenderOptions): DiagramColors {
  * })
  * ```
  */
+/** AXP: optional label wrapper, installed by the host environment. Returns the
+ * label with '\n' line breaks so it fits `maxWidth` in balanced lines. */
+export type LabelWrapper = (text: string, fontSize: number, fontWeight: number, maxWidth: number) => string
+let labelWrapper: LabelWrapper | null = null
+export function setLabelWrapper(wrapper: LabelWrapper | null): void {
+  labelWrapper = wrapper
+}
+export { setTextMeasurer } from './text-metrics.ts'
+export type { TextMeasurer } from './text-metrics.ts'
+const MAX_LABEL_WIDTH = { node: 190, edge: 140 } as const
+
 export function renderMermaidSVG(
   text: string,
   options: RenderOptions = {}
@@ -147,6 +159,17 @@ export function renderMermaidSVG(
     case 'flowchart':
     default: {
       const graph = parseMermaid(text)
+      // AXP: wrap long labels into balanced lines before layout, so node sizing
+      // and rendering both see the wrapped text. A no-op unless a wrapper is
+      // installed (Diagram.tsx installs a Pretext-backed one in the browser).
+      if (labelWrapper) {
+        for (const node of graph.nodes.values()) {
+          if (!node.label.includes('\n')) node.label = labelWrapper(node.label, FONT_SIZES.nodeLabel, FONT_WEIGHTS.nodeLabel, MAX_LABEL_WIDTH.node)
+        }
+        for (const edge of graph.edges) {
+          if (edge.label && !edge.label.includes('\n')) edge.label = labelWrapper(edge.label, FONT_SIZES.edgeLabel, FONT_WEIGHTS.edgeLabel, MAX_LABEL_WIDTH.edge)
+        }
+      }
       const positioned = layoutGraphSync(graph, options)
       return renderSvg(positioned, colors, font, transparent)
     }

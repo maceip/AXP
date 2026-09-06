@@ -57,6 +57,27 @@ Colours come from `ui/src/diagram-theme.ts` and mirror the workspace tokens
   without rewriting upstream's (which fails only `noUnusedLocals`).
 - `scripts/design/render-diagrams.mts` regenerates the sample SVGs.
 
+## Real text metrics (Pretext)
+
+beautiful-mermaid sizes nodes from a per-character width table calibrated
+for Inter and cannot wrap a long label, so a wordy node became a very wide
+box. [Pretext](https://github.com/chenglou/pretext) (MIT) measures text with
+the page's real font through canvas, off the DOM, and lays out lines itself.
+Two hooks were added to the vendored renderer, both no-ops outside a browser:
+
+- `setTextMeasurer`: exact single-line widths, so boxes fit AXP Runde rather
+  than an estimate of Inter.
+- `setLabelWrapper`: before layout, any node label wider than 190px (edge
+  label: 140px) is broken into lines; a binary search then narrows the width
+  until one more line would be needed, so the lines come out balanced
+  ("Checkpoint saved with / the bundle and patch") instead of one long and one
+  short.
+
+`ui/src/diagram-text.ts` implements both with Pretext and installs them from
+`Diagram.tsx`. The Node-side sample renderer keeps the estimates. Evaluated
+and kept for this one job; it was not adopted for prose (Justif already sets
+paragraphs in the DOM) or for the family photo (no text layout there).
+
 ## Not done yet
 
 - Sequence, class and ER diagrams render through their own sub-renderers and

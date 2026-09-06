@@ -24,4 +24,19 @@ declare module "beautiful-mermaid-axp" {
     text: string,
     options?: RenderOptions,
   ): string;
+  /** AXP hook: exact single-line width, or null to use the built-in estimate. */
+  export type TextMeasurer = (
+    text: string,
+    fontSize: number,
+    fontWeight: number,
+  ) => number | null;
+  export function setTextMeasurer(measurer: TextMeasurer | null): void;
+  /** AXP hook: break a long label into newline-separated lines within maxWidth. */
+  export type LabelWrapper = (
+    text: string,
+    fontSize: number,
+    fontWeight: number,
+    maxWidth: number,
+  ) => string;
+  export function setLabelWrapper(wrapper: LabelWrapper | null): void;
 }

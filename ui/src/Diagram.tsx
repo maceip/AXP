@@ -1,6 +1,15 @@
 import { useMemo } from "react";
-import { renderMermaidSVG } from "beautiful-mermaid-axp";
+import {
+  renderMermaidSVG,
+  setLabelWrapper,
+  setTextMeasurer,
+} from "beautiful-mermaid-axp";
 import { AXP_DIAGRAM_COLORS } from "./diagram-theme.js";
+import { measure, wrap } from "./diagram-text.js";
+
+// Real font metrics and balanced label wrapping, from Pretext (see diagram-text.ts).
+setTextMeasurer(measure);
+setLabelWrapper(wrap);
 
 /* Renders a ```mermaid block as an inline SVG using the vendored
  * beautiful-mermaid renderer with the AXP kawaii treatment. Rendering is

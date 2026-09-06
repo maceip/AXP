@@ -1,6 +1,6 @@
 graph LR
   subgraph Contributor
-    A[Agent edits worktree] --> B[Checkpoint bundle]
+    A[Agent edits the worktree and runs the repository tests before saving] --> B[Checkpoint bundle]
     B --> C>Sign manifest]
   end
   subgraph Maintainer
