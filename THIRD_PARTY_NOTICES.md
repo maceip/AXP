@@ -17,8 +17,14 @@
 - Lucide, Lucide contributors, ISC: https://github.com/lucide-icons/lucide
 - React Markdown and remark-gfm, unified contributors, MIT:
   https://github.com/remarkjs/react-markdown and https://github.com/remarkjs/remark-gfm
-- DM Sans and IBM Plex Mono font packages, SIL Open Font License 1.1:
-  https://fontsource.org/fonts/dm-sans and https://fontsource.org/fonts/ibm-plex-mono
+- Open Runde by Laurids Kern, a rounded Inter (The Inter Project Authors),
+  SIL Open Font License 1.1: https://github.com/lauridskern/open-runde.
+  The UI ships "AXP Runde", Open Runde with one added glyph (a hooked
+  lowercase l under `cv05`/`ss01`); the build script is
+  `scripts/fonts/build-axp-runde.py` and the license is in `ui/src/fonts`
+  and the built UI license directory.
+- IBM Plex Mono font package, SIL Open Font License 1.1:
+  https://fontsource.org/fonts/ibm-plex-mono
 
 The UI build collects the full license texts of its bundled dependencies and
 their runtime dependency graph into `dist/ui/licenses/bundled.txt`.

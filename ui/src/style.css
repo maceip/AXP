@@ -9,13 +9,21 @@ body {
   margin: 0;
   color: var(--fg-default);
   font-family:
-    "DM Sans Variable",
+    "AXP Runde",
     -apple-system,
     BlinkMacSystemFont,
     sans-serif;
+  /* Re-list the always-on features next to cv05, the hooked l that is our signature glyph. */
+  font-feature-settings:
+    "kern" 1,
+    "liga" 1,
+    "calt" 1,
+    "cv05" 1;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 button,
 input,
@@ -160,7 +168,7 @@ code {
   font-size: 10px;
   letter-spacing: 1.3px;
   color: #596054;
-  font-weight: 650;
+  font-weight: 700;
   margin: 0 13px 11px;
 }
 .sidebar nav {
@@ -184,9 +192,10 @@ code {
 .nav-item.active {
   color: #324a37;
   background: #e3e9db;
-  font-weight: 650;
+  font-weight: 700;
 }
 .nav-count {
+  font-variant-numeric: tabular-nums;
   margin-left: auto;
   min-width: 20px;
   padding: 1px 5px;
@@ -216,7 +225,7 @@ code {
 }
 .bring-agent h3 {
   font-size: 15px;
-  font-weight: 550;
+  font-weight: 600;
   line-height: 1.35;
   letter-spacing: -0.35px;
 }
@@ -385,7 +394,7 @@ h1 {
   justify-content: center;
   gap: 8px;
   font-size: 11px;
-  font-weight: 550;
+  font-weight: 600;
   white-space: nowrap;
   transition:
     background 0.15s,
@@ -467,7 +476,7 @@ h1 {
   padding: 0;
   color: #405735;
   font-size: 11px;
-  font-weight: 550;
+  font-weight: 600;
 }
 .text-button:hover {
   text-decoration: underline;
@@ -751,7 +760,7 @@ h1 {
 }
 .contribution-card h3 {
   font-size: 16px;
-  font-weight: 550;
+  font-weight: 600;
   letter-spacing: -0.4px;
   line-height: 1.35;
   margin-bottom: 8px;
@@ -891,7 +900,7 @@ h1 {
 }
 .person strong {
   font-size: 11px;
-  font-weight: 550;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -933,7 +942,7 @@ h1 {
 }
 .online-agent strong {
   font-size: 10px;
-  font-weight: 550;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -950,7 +959,7 @@ h1 {
 }
 .community-note > span {
   font-size: 24px;
-  font-weight: 300;
+  font-weight: 400;
 }
 .community-note p {
   font-size: 11px;
@@ -1081,9 +1090,10 @@ h1 {
   color: var(--fg-subtle);
 }
 .person-stats strong {
+  font-variant-numeric: tabular-nums;
   color: var(--fg-default);
   margin-right: 6px;
-  font-weight: 550;
+  font-weight: 600;
 }
 .fine-print {
   color: var(--fg-subtle);
@@ -1118,7 +1128,7 @@ h1 {
 }
 .activity-title strong {
   color: var(--fg-default);
-  font-weight: 550;
+  font-weight: 600;
 }
 .activity-title time {
   float: right;
@@ -1131,7 +1141,7 @@ h1 {
   align-items: center;
   padding: 5px 0;
   font-size: 12px;
-  font-weight: 550;
+  font-weight: 600;
   color: #4c653f;
   text-align: left;
 }
@@ -1265,6 +1275,7 @@ h1 {
   font-size: 11px;
 }
 .message-author time {
+  font-variant-numeric: tabular-nums;
   color: #5b6154;
   font-size: 10px;
   margin-left: auto;
@@ -1670,7 +1681,7 @@ textarea::placeholder {
 }
 .comment-form label {
   font-size: 11px;
-  font-weight: 550;
+  font-weight: 600;
   display: block;
   margin-bottom: 10px;
 }
@@ -1821,7 +1832,7 @@ dialog::backdrop {
 }
 .onboarding-step h3 {
   font-size: 14px;
-  font-weight: 550;
+  font-weight: 600;
   margin: 2px 0 6px;
 }
 .onboarding-step p {

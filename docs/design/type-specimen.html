@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AXP type specimen</title>
+    <!--
+      Review artifact, not part of the product bundle. Open this file directly in a browser.
+      The candidates below load from Google Fonts so they can be compared side by side; the
+      app itself only ever ships the self-hosted AXP Runde files under ui/src/fonts.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400..800&family=Zen+Maru+Gothic:wght@400;500;700&family=M+PLUS+Rounded+1c:wght@400;500;700&family=Quicksand:wght@400..700&family=Fredoka:wght@400..600&family=Figtree:wght@400..700&family=Plus+Jakarta+Sans:wght@400..700&family=Lexend:wght@400..700&family=Recursive:CASL,MONO,wght@0,0,400..700;1,0,400..700;0,1,400..700;1,1,400..700&family=Atkinson+Hyperlegible+Next:wght@400..700&family=Varela+Round&family=JetBrains+Mono:wght@400;600&family=Victor+Mono:wght@400;600&family=Caveat:wght@400;600&family=Patrick+Hand&display=swap"
+    />
+    <style>
+      @font-face {
+        font-family: "AXP Runde";
+        font-weight: 400;
+        src: url("../../ui/src/fonts/axp-runde/AXPRunde-Regular.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "AXP Runde";
+        font-weight: 500;
+        src: url("../../ui/src/fonts/axp-runde/AXPRunde-Medium.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "AXP Runde";
+        font-weight: 600;
+        src: url("../../ui/src/fonts/axp-runde/AXPRunde-Semibold.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "AXP Runde";
+        font-weight: 700;
+        src: url("../../ui/src/fonts/axp-runde/AXPRunde-Bold.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "Open Runde";
+        font-weight: 400;
+        src: url("../../ui/src/fonts/open-runde/OpenRunde-Regular.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "Open Runde";
+        font-weight: 700;
+        src: url("../../ui/src/fonts/open-runde/OpenRunde-Bold.woff2")
+          format("woff2");
+      }
+
+      :root {
+        --paper: #f6f7f4;
+        --ink: #252c28;
+        --muted: #626b65;
+        --edge: #e3e7e0;
+        --leaf: #397452;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 48px clamp(20px, 5vw, 72px) 96px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "AXP Runde", system-ui, sans-serif;
+        font-feature-settings:
+          "kern" 1,
+          "liga" 1,
+          "calt" 1,
+          "cv05" 1;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 40px;
+        font-weight: 600;
+        letter-spacing: -1.2px;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 56px 0 18px;
+      }
+      .lede {
+        color: var(--muted);
+        max-width: 62ch;
+        margin: 0 0 8px;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 28px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--edge);
+        border-radius: 14px;
+        padding: 22px 24px;
+      }
+      .card h3 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .card .meta {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      .big {
+        font-size: 64px;
+        line-height: 1.05;
+        letter-spacing: -2px;
+        font-weight: 500;
+        margin: 6px 0 14px;
+      }
+      .plain {
+        font-feature-settings:
+          "kern" 1,
+          "liga" 1,
+          "calt" 1,
+          "cv05" 0;
+      }
+      .sample {
+        font-size: 14px;
+        letter-spacing: -0.1px;
+        max-width: 60ch;
+      }
+      .sample b {
+        font-weight: 600;
+      }
+      .ui {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 14px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #eaf3e9;
+        color: var(--leaf);
+      }
+      .btn {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 9px 14px;
+        border-radius: 9px;
+        background: #354b3b;
+        color: #fff;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+        gap: 16px;
+      }
+      .cand {
+        background: #fff;
+        border: 1px solid var(--edge);
+        border-radius: 14px;
+        padding: 18px 20px;
+      }
+      .cand .name {
+        font-family: "AXP Runde";
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .cand .name b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .cand .show {
+        font-size: 28px;
+        line-height: 1.15;
+        letter-spacing: -0.6px;
+        margin: 10px 0 8px;
+        font-weight: 500;
+      }
+      .cand .text {
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+      .cand .note {
+        font-family: "AXP Runde";
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 12px;
+        border-top: 1px solid var(--edge);
+        padding-top: 10px;
+      }
+      .mono .show {
+        font-size: 20px;
+        letter-spacing: 0;
+      }
+      .mono .text {
+        font-size: 12.5px;
+        white-space: pre;
+        overflow: auto;
+      }
+      .hand .show {
+        font-size: 30px;
+      }
+      footer {
+        margin-top: 64px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>AXP type specimen</h1>
+    <p class="lede">
+      The UI face and its signature glyph, then ten open-licensed alternatives
+      for comparison, then the monospace and handwriting shortlist. Everything
+      here is SIL OFL or similar.
+    </p>
+
+    <div class="hero">
+      <div class="card">
+        <h3>AXP Runde · cv05 on</h3>
+        <div class="meta">
+          Open Runde (rounded Inter) plus a hooked lowercase l. This is what the
+          app ships.
+        </div>
+        <div class="big">Illinois lily<br />all the little tools</div>
+        <p class="sample">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish.
+          <b>1lI 0O — All contributions · Illegal fallback</b>
+        </p>
+        <div class="ui">
+          <span class="pill">Checkpoint ready</span
+          ><span class="btn">New contribution</span
+          ><span class="pill">Needs your input</span>
+        </div>
+      </div>
+      <div class="card plain">
+        <h3>Open Runde · as published</h3>
+        <div class="meta">
+          Same outlines with the feature off. Note how l and I collide in
+          “Illinois”.
+        </div>
+        <div class="big">Illinois lily<br />all the little tools</div>
+        <p class="sample">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish.
+          <b>1lI 0O — All contributions · Illegal fallback</b>
+        </p>
+        <div class="ui">
+          <span class="pill">Checkpoint ready</span
+          ><span class="btn">New contribution</span
+          ><span class="pill">Needs your input</span>
+        </div>
+      </div>
+    </div>
+
+    <h2>Ten alternatives (sans, for UI text)</h2>
+    <div class="grid">
+      <div class="cand" style="font-family: &quot;Nunito&quot;">
+        <div class="name">
+          <b>Nunito</b><span>OFL · variable 200–1000</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          The Animal Crossing library’s pick. Fully rounded terminals, very
+          warm, slightly wide. The l has no tail.
+        </div>
+      </div>
+      <div class="cand" style="font-family: &quot;Zen Maru Gothic&quot;">
+        <div class="name">
+          <b>Zen Maru Gothic</b><span>OFL · 5 weights</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Japanese rounded gothic with a charming Latin. The most “kawaii”
+          option; covers JP if the project ever needs it.
+        </div>
+      </div>
+      <div class="cand" style="font-family: &quot;M PLUS Rounded 1c&quot;">
+        <div class="name">
+          <b>M PLUS Rounded 1c</b><span>OFL · 7 weights</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Rounder and softer than Zen Maru; a bit toy-like at large sizes, fine
+          at 12–14px.
+        </div>
+      </div>
+      <div class="cand" style="font-family: &quot;Quicksand&quot;">
+        <div class="name">
+          <b>Quicksand</b><span>OFL · variable 300–700</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Geometric rounded. Light and airy; small sizes get thin and the l/I
+          problem is worse.
+        </div>
+      </div>
+      <div class="cand" style="font-family: &quot;Fredoka&quot;">
+        <div class="name">
+          <b>Fredoka</b><span>OFL · variable 300–700</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Chunky and playful. Good for stamps and big labels, tiring as body
+          text.
+        </div>
+      </div>
+      <div class="cand" style="font-family: &quot;Figtree&quot;">
+        <div class="name">
+          <b>Figtree</b><span>OFL · variable 300–900</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Friendly geometric with soft joins, not rounded terminals. Excellent
+          UI text; less personality.
+        </div>
+      </div>
+      <div class="cand" style="font-family: &quot;Plus Jakarta Sans&quot;">
+        <div class="name">
+          <b>Plus Jakarta Sans</b><span>OFL · variable 200–800</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Modern, slightly quirky grotesque. Reads “startup”, not “outdoors”.
+        </div>
+      </div>
+      <div class="cand" style="font-family: &quot;Lexend&quot;">
+        <div class="name"><b>Lexend</b><span>OFL · variable 100–900</span></div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Readability-first, wide set. Distinctive but takes a lot of horizontal
+          room in dense UI.
+        </div>
+      </div>
+      <div
+        class="cand"
+        style="
+          font-family: &quot;Recursive&quot;;
+          font-variation-settings:
+            &quot;CASL&quot; 0.8,
+            &quot;MONO&quot; 0;
+        "
+      >
+        <div class="name">
+          <b>Recursive (Casual)</b><span>OFL · variable, CASL + MONO axes</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          One family that slides from sans to mono and from linear to casual.
+          Real personality (the a, g, l). Strongest identity candidate if we
+          want a single family for UI + code.
+        </div>
+      </div>
+      <div
+        class="cand"
+        style="font-family: &quot;Atkinson Hyperlegible Next&quot;"
+      >
+        <div class="name">
+          <b>Atkinson Hyperlegible Next</b><span>OFL · variable 200–800</span>
+        </div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Disambiguation is the whole design: tailed l, serifed I, slashed 0.
+          Proof the “signature glyph” idea has legs; a bit clinical for our
+          mood.
+        </div>
+      </div>
+      <div class="cand" style="font-family: &quot;Varela Round&quot;">
+        <div class="name"><b>Varela Round</b><span>OFL · one weight</span></div>
+        <div class="show">Illinois lily, all the little tools</div>
+        <div class="text">
+          The little agent left a checkpoint. Pull the parser fix locally, then
+          let the tool finish. 1lI 0O
+        </div>
+        <div class="note">
+          Lovely rounded shapes but a single weight rules it out for UI
+          hierarchy.
+        </div>
+      </div>
+    </div>
+
+    <h2>Monospace shortlist (code, diffs, IDs)</h2>
+    <div class="grid">
+      <div class="cand mono" style="font-family: &quot;JetBrains Mono&quot;">
+        <div class="name">
+          <b>JetBrains Mono</b><span>OFL · Google Fonts</span>
+        </div>
+        <div class="show">if (!input.trim()) {</div>
+        <div class="text">
+          throw new Error('Add a value before parsing.'); const l = 1; // l vs 1
+          vs I vs |
+        </div>
+        <div class="note">
+          Safe, tall x-height, ligatures optional. Little personality.
+        </div>
+      </div>
+      <div class="cand mono" style="font-family: &quot;Victor Mono&quot;">
+        <div class="name">
+          <b>Victor Mono</b><span>OFL · Google Fonts</span>
+        </div>
+        <div class="show">if (!input.trim()) {</div>
+        <div class="text">
+          throw new Error('Add a value before parsing.');
+          <i>const l = 1; // cursive italics</i>
+        </div>
+        <div class="note">
+          Narrow, with cursive italics that suit comments and hand-written
+          margin notes.
+        </div>
+      </div>
+      <div
+        class="cand mono"
+        style="
+          font-family: &quot;Recursive&quot;;
+          font-variation-settings:
+            &quot;CASL&quot; 1,
+            &quot;MONO&quot; 1;
+        "
+      >
+        <div class="name">
+          <b>Recursive Mono Casual</b><span>OFL · Google Fonts</span>
+        </div>
+        <div class="show">if (!input.trim()) {</div>
+        <div class="text">
+          throw new Error('Add a value before parsing.'); const l = 1; // casual
+          axis at 1
+        </div>
+        <div class="note">
+          Hand-drawn feel while staying strictly monospaced. Pairs naturally
+          with the sans above.
+        </div>
+      </div>
+      <div class="cand mono">
+        <div class="name">
+          <b>Maple Mono</b><span>OFL · github.com/subframe7536/maple-font</span>
+        </div>
+        <div class="show">(not loaded here)</div>
+        <div class="text">
+          The l with the curl is the reference you mentioned. Ligatures,
+          italics, and a build service to tweak features; a strong option once
+          we decide whether code should carry the same hook as the UI face.
+        </div>
+        <div class="note">
+          Also worth a look: Monaspace Radon (OFL, handwriting mono with texture
+          healing), Fantasque Sans Mono, Commit Mono, 0xProto, Iosevka
+          (buildable curly variants).
+        </div>
+      </div>
+    </div>
+
+    <h2>Handwriting accent (margin notes, stamps, the discussion voice)</h2>
+    <div class="grid">
+      <div class="cand hand" style="font-family: &quot;Caveat&quot;">
+        <div class="name"><b>Caveat</b><span>OFL · Google Fonts</span></div>
+        <div class="show">
+          Kept the return type intact — second pair of eyes?
+        </div>
+        <div class="note">
+          Loose, quick, legible at 18px+. Good for reviewer scribbles beside a
+          diff.
+        </div>
+      </div>
+      <div class="cand hand" style="font-family: &quot;Patrick Hand&quot;">
+        <div class="name">
+          <b>Patrick Hand</b><span>OFL · Google Fonts</span>
+        </div>
+        <div class="show">
+          Kept the return type intact — second pair of eyes?
+        </div>
+        <div class="note">
+          Neater print hand; works smaller than Caveat. The closest free
+          analogue to highlighte.rs’s “Letters Home”.
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Sample sentence chosen for its l/I/1 collisions. Google Fonts is used on
+      this page for comparison only; the product ships self-hosted files.
+    </footer>
+  </body>
+</html>

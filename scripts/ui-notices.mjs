@@ -10,7 +10,6 @@ const roots = [
   "@pierre/trees",
   "react-markdown",
   "remark-gfm",
-  "@fontsource-variable/dm-sans",
   "@fontsource/ibm-plex-mono",
 ];
 const packages = new Map();
