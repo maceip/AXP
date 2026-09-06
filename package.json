@@ -32,6 +32,8 @@
     "dist",
     "schema",
     "docs",
+    "deploy",
+    "scripts/ops.mjs",
     "README.md",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md"
@@ -55,6 +57,7 @@
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run build && npm run test:coverage",
     "demo": "tsx examples/demo.ts",
     "test:package": "node scripts/package-smoke.mjs",
+    "test:ops": "node --test scripts/ops.test.mjs",
     "test:ui": "playwright test --config ui/playwright.config.ts",
     "demo:ui": "tsx examples/workspace-demo.ts"
   },

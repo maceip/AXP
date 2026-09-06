@@ -1,0 +1,15 @@
+*
+!package.json
+!package-lock.json
+!dist/
+!dist/**
+!schema/
+!schema/**
+!deploy/
+!deploy/**
+!scripts/
+!scripts/ops.mjs
+!scripts/linux-smoke.mjs
+!test/
+!test/fixtures/
+!test/fixtures/linux.Dockerfile

@@ -1,0 +1,39 @@
+[Unit]
+Description=AXP repository host
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=exec
+User=axp
+Group=axp
+WorkingDirectory=/var/lib/axp
+StateDirectory=axp
+StateDirectoryMode=0700
+ExecStart=/usr/bin/node /opt/axp/current/dist/cli.js serve --config /etc/axp/hub.json
+ExecStartPost=/usr/bin/node /opt/axp/current/scripts/ops.mjs health http://127.0.0.1:7331/healthz 30
+Restart=on-failure
+RestartSec=10s
+TimeoutStartSec=120s
+TimeoutStopSec=30s
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+LockPersonality=yes
+LimitNOFILE=16384
+TasksMax=128
+MemoryHigh=768M
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target

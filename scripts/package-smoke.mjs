@@ -1,4 +1,4 @@
-import { access, mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -41,6 +41,15 @@ try {
     packaged.version,
     manifest.version,
     "Install the current release, even if older tarballs are present",
+  );
+  const packageRoot = join(directory, "node_modules", "@maceip", "axp");
+  await access(join(packageRoot, "deploy/linux/axp-host.service"));
+  await access(join(packageRoot, "scripts/ops.mjs"));
+  assert.ok(
+    !(await readdir(join(packageRoot, "docs"))).some((name) =>
+      name.startsWith("DOMAIN-DEPLOYMENT-HANDOFF-"),
+    ),
+    "Private deployment coordination must not enter the published package",
   );
   const cli = join(
     directory,

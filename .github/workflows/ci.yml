@@ -20,6 +20,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - run: npm run test:ops
       - run: npm run schema
       - run: git diff --exit-code -- schema
       - run: npm run demo
@@ -39,6 +40,16 @@ jobs:
       - run: npx tsx --test test/satellite.test.ts
         env:
           AXP_TEST_CONTAINER: axp-fixture
+      - run: npm run build
+      - run: docker build -f test/fixtures/linux.Dockerfile -t axp-linux .
+      - run: docker run --detach --name axp-linux-proof --privileged --cgroupns=private --tmpfs /run --tmpfs /run/lock axp-linux
+      - run: docker exec axp-linux-proof node scripts/linux-smoke.mjs
+      - run: docker restart axp-linux-proof
+      - run: docker exec axp-linux-proof node scripts/ops.mjs health http://127.0.0.1:7331/healthz 10
+      - if: failure()
+        run: docker exec axp-linux-proof journalctl --no-pager -n 150
+      - if: always()
+        run: docker rm -f axp-linux-proof
   browser:
     timeout-minutes: 10
     runs-on: ubuntu-latest

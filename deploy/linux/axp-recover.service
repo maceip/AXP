@@ -1,0 +1,12 @@
+[Unit]
+Description=Restart an unresponsive AXP host
+
+[Service]
+Type=oneshot
+# try-restart does not resurrect a service an operator has stopped.
+ExecStart=/usr/bin/systemctl try-restart axp-host.service
+TimeoutStartSec=180s
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes

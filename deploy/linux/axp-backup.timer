@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily AXP recovery snapshot
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 UTC
+RandomizedDelaySec=15min
+Persistent=yes
+
+[Install]
+WantedBy=timers.target

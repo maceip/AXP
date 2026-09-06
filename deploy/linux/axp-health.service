@@ -1,0 +1,20 @@
+[Unit]
+Description=Check AXP host responsiveness
+After=axp-host.service
+OnFailure=axp-recover.service
+
+[Service]
+Type=oneshot
+User=axp
+Group=axp
+# A deliberate stop must stay stopped. A failed condition skips OnFailure.
+ExecCondition=/usr/bin/systemctl is-active --quiet axp-host.service
+ExecStart=/usr/bin/node /opt/axp/current/scripts/ops.mjs health http://127.0.0.1:7331/healthz 3
+TimeoutStartSec=20s
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

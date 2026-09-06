@@ -1,0 +1,30 @@
+# Import this site fragment from the existing Caddyfile; retain its other sites.
+axp.computer {
+	tls {
+		issuer acme {
+			dir https://acme-v02.api.letsencrypt.org/directory
+		}
+	}
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+	@host path /axp /healthz
+	handle @host {
+		reverse_proxy 127.0.0.1:7331
+	}
+	handle {
+		root * /var/www/axp.computer
+		file_server
+	}
+}
+
+www.axp.computer {
+	tls {
+		issuer acme {
+			dir https://acme-v02.api.letsencrypt.org/directory
+		}
+	}
+	redir https://axp.computer{uri} 308
+}

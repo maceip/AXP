@@ -4,6 +4,10 @@ Run `axp init --repo owner/project` inside a Git repository, then `axp serve`.
 The default endpoint is `ws://127.0.0.1:7331/axp`; `/healthz` provides liveness.
 The host runs no agent tools or provider calls.
 
+For a persistent Linux deployment, use the [systemd services and recovery
+runbook](linux-hosting.md). They keep the host behind Caddy, supervise crashes
+and stalled health checks, and snapshot SQLite without copying a live WAL.
+
 `.axp/hub.json` contains the database path and credentials. Profiles contain
 the endpoint and one credential. Files are created with mode 0600 and `init`
 never overwrites them. `init` and worktree creation exclude `/.axp/` in the

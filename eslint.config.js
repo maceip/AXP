@@ -13,6 +13,7 @@ export default ts.config(
         fetch: "readonly",
         URL: "readonly",
         URLSearchParams: "readonly",
+        AbortSignal: "readonly",
       },
     },
   },

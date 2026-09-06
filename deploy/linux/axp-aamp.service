@@ -1,0 +1,37 @@
+[Unit]
+Description=AXP AAMP mailbox adapter
+Wants=network-online.target axp-host.service
+After=network-online.target axp-host.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=exec
+User=axp
+Group=axp
+WorkingDirectory=/var/lib/axp
+StateDirectory=axp
+StateDirectoryMode=0700
+EnvironmentFile=/etc/axp/aamp.env
+ExecStart=/usr/bin/node /opt/axp/current/dist/cli.js aamp --config /etc/axp/aamp.json --profile /etc/axp/aamp-profile.json
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=30s
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+LockPersonality=yes
+TasksMax=128
+MemoryHigh=384M
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
