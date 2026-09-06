@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Render a city map poster in AXP's palette.
+#   tools/poster/axp-poster "Portland" "USA" [outdoor|indoor] [distance_m]
+# Needs uv (https://docs.astral.sh/uv/) and network access to OpenStreetMap.
+set -euo pipefail
+cd "$(dirname "$0")"
+city="${1:?city}"; country="${2:?country}"; scene="${3:-outdoor}"; distance="${4:-12000}"
+# Output lands in tools/poster/posters/ (upstream's convention).
+exec uv run --quiet create_map_poster.py \
+  --city "$city" --country "$country" \
+  --theme "axp_${scene}" --distance "$distance" "${@:5}"

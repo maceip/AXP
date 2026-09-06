@@ -15,3 +15,7 @@ playwright-report/
 .DS_Store
 # Original conversation stays on its owner's machine; decisions are in docs/.
 TODO.md
+tools/poster/posters/
+tools/poster/fonts/*.otf
+tools/poster/fonts/*.ttf
+tools/poster/.venv/

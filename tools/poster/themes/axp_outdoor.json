@@ -1,0 +1,15 @@
+{
+  "name": "AXP Outdoor",
+  "description": "AXP's daytime palette: paper, sage roads, leaf-green parks, warm charcoal ink. A placeholder until the design language is locked.",
+  "bg": "#F6F7F4",
+  "text": "#252C28",
+  "gradient_color": "#F6F7F4",
+  "water": "#C9DFD8",
+  "parks": "#DCEBD3",
+  "road_motorway": "#3D7A52",
+  "road_primary": "#58AA72",
+  "road_secondary": "#7DC395",
+  "road_tertiary": "#A6CFAE",
+  "road_residential": "#C8DDC4",
+  "road_default": "#A6CFAE"
+}
