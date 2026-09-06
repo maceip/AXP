@@ -60,6 +60,7 @@ Native execution uses your user permissions; select it explicitly.
 Container execution requires Docker and an image with its tools/dependencies.
 Pass provider environment explicitly: --agent-env ANTHROPIC_API_KEY,FOO.
 Select an advertised ACP login only when needed: --auth-method METHOD.
+Parking reconnects automatically with the same donation; --no-reconnect disables it.
 Remote connections require wss://; access tokens stay in headers.
 `;
 
@@ -141,6 +142,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         stringOptions.map((k) => [k, { type: "string" as const }]),
       ),
       native: { type: "boolean" },
+      "no-reconnect": { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -273,13 +275,18 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       },
       allowance: limits,
       perTurn,
+      ...(values["no-reconnect"] ? { reconnect: false as const } : {}),
     });
     satellite.on("status", print);
-    satellite.on("fault", (error) =>
-      process.stderr.write(`${stripVTControlCharacters(error.message)}\n`),
+    satellite.on("fault", (error) => {
+      process.stderr.write(`${stripVTControlCharacters(error.message)}\n`);
+      process.exitCode = 1;
+    });
+    await waitForStop(
+      () => satellite.stop(),
+      satellite.closed,
+      () => satellite.start(),
     );
-    await satellite.start();
-    await Promise.race([waitForStop(() => satellite.stop()), satellite.closed]);
     return;
   }
   const client = await AxpClient.connect(profile.url, profile.token);
@@ -521,16 +528,34 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
   }
 }
 
-async function waitForStop(stop: () => Promise<void>): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    const done = () => {
-      process.off("SIGINT", done);
-      process.off("SIGTERM", done);
-      void stop().then(resolve, reject);
-    };
-    process.once("SIGINT", done);
-    process.once("SIGTERM", done);
-  });
+async function waitForStop(
+  stop: () => Promise<void>,
+  closed?: Promise<void>,
+  start: () => Promise<void> = async () => {},
+): Promise<void> {
+  const stopped = Promise.withResolvers<void>();
+  let signalled = false;
+  const remove = () => {
+    process.off("SIGINT", done);
+    process.off("SIGTERM", done);
+  };
+  const done = () => {
+    signalled = true;
+    remove();
+    void stop().then(stopped.resolve, stopped.reject);
+  };
+  process.once("SIGINT", done);
+  process.once("SIGTERM", done);
+  try {
+    await Promise.race([
+      start().then(() => closed ?? stopped.promise),
+      stopped.promise,
+    ]);
+  } catch (error) {
+    if (!signalled) throw error;
+  } finally {
+    remove();
+  }
 }
 
 if (

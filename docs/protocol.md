@@ -1,6 +1,6 @@
 # Protocol and interoperability
 
-AXP **0.1.0** is negotiated alongside **AHP 0.9.0**. Published AHP and ACP
+AXP **0.2.0** is negotiated alongside **AHP 0.9.0**. Published AHP and ACP
 packages are pinned. The AXP client is Node-only; other clients can use the
 wire schemas and ordinary AHP clients can render the baseline experience.
 
@@ -73,9 +73,28 @@ Leases last 3–300 seconds, with heartbeats every third of that duration. Every
 executor mutation checks owner, epoch, expiry and grant. Token output is not
 a heartbeat, so quiet compiles can remain live. New claims advance the epoch.
 Host restart interrupts work and clears old leases. A disconnected satellite
-cancels its agent and retains its worktree; restart `park` to restore an
-uploaded checkpoint under a new lease. Unuploaded local commits remain on the
-original machine and cannot be recovered remotely.
+cancels its agent and reconnects with the same donation and local worktree.
+An uncertain turn is settled conservatively and is not automatically replayed.
+A new ACP process hydrates from the shared context when a maintainer sends the
+next prompt. Unuploaded local edits survive on the original machine; only
+uploaded checkpoints are recoverable on another machine.
+
+`_axp/claim` accepts `resumeEpoch` for automatic recovery. In one transaction,
+the host checks that the epoch has not advanced and any remaining lease belongs
+to the same principal, executor and grant, interrupts uncertain work, and issues
+the next epoch. An intervening owner causes rejection even if it has already
+released its lease. Retrying an uncertain claim uses its original operation ID;
+the returned receipt does not authorize execution under an expired epoch.
+
+The satellite retries transient transport errors with jittered exponential
+backoff, capped at 30 seconds by default. Authentication, protocol, ownership,
+budget and local agent failures stop it. Reconnecting never resets spending,
+widens a donor's updated limit or reverses revocation. `--no-reconnect` disables
+automatic retry. A new invocation of `park` is a new donation, restoring the
+host's latest checkpoint into a new worktree and preserving older local trees.
+
+Upgrade the host and satellites together from 0.1: AXP version negotiation is
+exact. The SQLite state format and ordinary AHP channels are unchanged.
 
 Reconnect returns ordered replay within the replay budget, otherwise fresh
 snapshots. Future cursors and another principal's client ID are rejected.

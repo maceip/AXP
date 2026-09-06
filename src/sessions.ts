@@ -293,9 +293,29 @@ export class Sessions {
     executorId: string,
     grantId: string,
     leaseMs: number,
+    resumeEpoch?: number,
   ): Lease {
     this.contribute(principal);
     requireThat(state.status !== "closed", Codes.conflict, "Session is closed");
+    if (resumeEpoch !== undefined) {
+      requireThat(
+        state.epoch === resumeEpoch &&
+          (!state.lease ||
+            (state.lease.owner === principal.id &&
+              state.lease.executorId === executorId &&
+              state.lease.grantId === grantId)),
+        Codes.stale,
+        "Session ownership changed while disconnected; park again to join its current state",
+      );
+      if (state.lease) {
+        this.orphan(
+          tx,
+          state,
+          "Executor disconnected; interrupted work was not replayed",
+        );
+        state = this.state(state.resource);
+      }
+    }
     if (state.lease && state.lease.expiresAt <= this.now()) {
       this.orphan(tx, state, "Executor lease expired");
       state = this.state(state.resource);

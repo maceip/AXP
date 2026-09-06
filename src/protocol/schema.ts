@@ -80,6 +80,7 @@ export const methods = {
     executorId: id,
     grantId: id,
     leaseMs: z.number().int().min(3000).max(300_000),
+    resumeEpoch: count.optional(),
   }),
   "_axp/renew": z.strictObject(fenced),
   "_axp/release": z.strictObject(fenced),

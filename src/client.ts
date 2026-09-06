@@ -21,6 +21,13 @@ import type {
 import { CAPABILITY, AXP_VERSION, ROOT } from "./protocol/types.js";
 import { Codes, requireThat } from "./protocol/errors.js";
 
+export interface ConnectOptions {
+  /** Cancels socket establishment and initialize; not subsequent requests. */
+  signal?: AbortSignal;
+  /** Passed to the upstream AHP client; defaults to 30000 ms. */
+  requestTimeoutMs?: number;
+}
+
 export interface CommandResults {
   "_axp/register": ExecutorInfo;
   "_axp/grant": Grant;
@@ -73,9 +80,10 @@ export class AxpClient extends EventEmitter<{
   private constructor(
     readonly transport: SocketTransport,
     readonly clientId: string,
+    options: ConnectOptions,
   ) {
     super();
-    this.ahp = new AhpClient(transport);
+    this.ahp = new AhpClient(transport, options);
     transport.onClose = () => this.emit("close");
     transport.onMessage = (value) => {
       if (!value || typeof value !== "object") return;
@@ -95,12 +103,17 @@ export class AxpClient extends EventEmitter<{
     url: string,
     token: string,
     clientId: string = randomUUID(),
+    options: ConnectOptions = {},
   ): Promise<AxpClient> {
     const client = new AxpClient(
-      await SocketTransport.connect(url, token),
+      await SocketTransport.connect(url, token, options.signal),
       clientId,
+      options,
     );
+    const abort = () => client.transport.socket.terminate();
+    options.signal?.addEventListener("abort", abort, { once: true });
     try {
+      options.signal?.throwIfAborted();
       const result = await client.ahp.initialize({
         clientId,
         protocolVersions: [PROTOCOL_VERSION],
@@ -119,6 +132,8 @@ export class AxpClient extends EventEmitter<{
     } catch (error) {
       await client.close();
       throw error;
+    } finally {
+      options.signal?.removeEventListener("abort", abort);
     }
   }
   /** Durable operationId is supplied by applications when retries must survive

@@ -35,6 +35,13 @@ Behavioral evidence includes:
   lease through independent heartbeat renewal.
 - Missing executables and oversized unterminated ACP frames fail without
   stranding their process. An unread socket disconnects on queue overflow.
+- A real WebSocket proxy drops committed grant/claim replies, severs connections
+  and stalls traffic without closing TCP. Recovery preserves one donation and
+  unuploaded edits, cancels the old ACP process, and does not replay its prompt.
+  Host restart resumes the same parked contributor. Revocation, exhausted
+  allowances and intervening owners stop automatic recovery. Cancellation also
+  interrupts HTTP upgrade and AHP initialization; an unresponsive peer cannot
+  hold socket shutdown open indefinitely.
 - Real Git edits and repository tests. Planning-only and changed-code bundles
   restore the exact commit. Dual signatures gate a real push to a local bare
   fork. The original checkout and unrelated work are preserved.

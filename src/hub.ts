@@ -619,6 +619,7 @@ export class Hub {
           q.executorId,
           q.grantId,
           q.leaseMs,
+          q.resumeEpoch,
         );
       }
       case "_axp/renew": {

@@ -99,6 +99,14 @@ history. `queue` waits for the current turn. `cancel` stops it. Ctrl-C undocks
 the executor, retaining its worktree and history under `.axp/`.
 `close` archives a completed session and releases its task identity.
 
+Keep `park` running through network interruptions: it reconnects automatically
+with the same donation and worktree. The interrupted turn stays in the audit;
+send a new prompt to continue after the executor reports `Parked` again.
+Recovery stops if the donation is revoked, its allowance is exhausted or another
+executor takes ownership. `--no-reconnect` opts out. Starting a new `park` process
+creates a new donation and restores the latest uploaded checkpoint into a new
+worktree; older local work is retained for inspection.
+
 The host stores state in `.axp/hub.db`. Local profiles contain secrets and must
 stay out of Git. `init` provides separate roles for trying the workflow; give
 each real contributor a unique principal and token in the host configuration.

@@ -1,10 +1,10 @@
 export * from "./protocol/index.js";
 export { AxpClient } from "./client.js";
-export type { CommandResults } from "./client.js";
+export type { CommandResults, ConnectOptions } from "./client.js";
 export { Hub } from "./hub.js";
 export type { HubOptions, Credential } from "./hub.js";
 export { Satellite } from "./satellite.js";
-export type { SatelliteOptions } from "./satellite.js";
+export type { SatelliteOptions, SatelliteState } from "./satellite.js";
 export { AcpDriver, launchAgent } from "./acp.js";
 export type { AgentLaunch, AgentCallbacks } from "./acp.js";
 export { Worktree } from "./git.js";

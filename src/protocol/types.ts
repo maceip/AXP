@@ -5,7 +5,7 @@ import type {
   StateAction,
 } from "@microsoft/agent-host-protocol";
 
-export const AXP_VERSION = "0.1.0";
+export const AXP_VERSION = "0.2.0";
 export const CAPABILITY = "org.axp.exchange";
 export const ROOT = "ahp-root://";
 

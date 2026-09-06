@@ -243,3 +243,60 @@ test("a scoped contributor cannot read another task through subscriptions, blobs
     epoch: lease.epoch,
   });
 });
+
+test("atomic resume claims fence the old epoch and cannot replace a different executor, donor or grant", async (t) => {
+  const f = await setup();
+  t.after(f.close);
+  const old = await dock(f.contributor, f.c.exchange);
+  const turn = prompt();
+  await f.maintainer.dispatch(f.c.chat, turn);
+  await f.contributor.call("_axp/reserve", {
+    channel: f.c.exchange,
+    epoch: old.epoch,
+    turnId: turn.turnId,
+    ceiling: { tokens: 99, costMicros: 100, turns: 1 },
+  });
+  const resume = {
+    channel: f.c.exchange,
+    executorId: old.executorId,
+    grantId: old.grantId,
+    resumeEpoch: old.epoch,
+    leaseMs: 30_000,
+  };
+  for (const params of [
+    { ...resume, executorId: "another-executor" },
+    { ...resume, grantId: "another-grant" },
+  ])
+    await assert.rejects(
+      f.contributor.call("_axp/claim", params),
+      /ownership changed/,
+    );
+  await assert.rejects(
+    f.maintainer.call("_axp/claim", resume),
+    /ownership changed/,
+  );
+  const prior = await f.maintainer.snapshot<ExchangeState>(f.c.exchange);
+  assert.equal(prior.reservation?.turnId, turn.turnId);
+  assert.equal(
+    prior.usage.length,
+    0,
+    "rejected resume must roll back any settlement",
+  );
+  const lease = await f.contributor.call("_axp/claim", resume);
+  assert.equal(lease.epoch, old.epoch + 1);
+  await assert.rejects(
+    f.contributor.call("_axp/renew", {
+      channel: f.c.exchange,
+      epoch: old.epoch,
+    }),
+    /stale/,
+  );
+  const after = await f.maintainer.snapshot<ExchangeState>(f.c.exchange);
+  assert.equal(after.reservation, null);
+  assert.equal(after.usage.length, 1);
+  assert.equal(after.grants[old.grantId]?.spent.tokens, 99);
+  assert.equal(
+    (await f.maintainer.snapshot<ChatState>(f.c.chat)).activeTurn,
+    undefined,
+  );
+});

@@ -41,6 +41,14 @@ Heartbeats are independent of token output so a long compile stays alive.
 Disconnects cancel local execution, and expiry makes a session claimable again.
 The timer emits an explicit state transition: reducers never read a clock.
 
+The satellite supervises connections separately from a runner that owns one
+lease and ACP process. Before reconnecting, it waits for the old runner's
+process, requests and Git operations to finish. It keeps one donation identity
+and one local worktree for that parking lifetime. An atomic resume claim checks
+the previous epoch; another contributor's intervening claim ends automatic
+recovery. Lost mutation responses are reconciled through durable receipts.
+Recovery does not resubmit an interrupted prompt or carry over tool approvals.
+
 SQLite transactions commit the action log, current state and retry receipts
 together before broadcasting. Reconnect returns replay or snapshots. Slow
 consumers are disconnected and resynchronize rather than silently losing events.

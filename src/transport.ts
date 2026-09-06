@@ -1,10 +1,18 @@
 import { WebSocket } from "ws";
+import type { IncomingMessage } from "node:http";
 import type {
   AhpTransport,
   JsonRpcMessage,
   TransportFrame,
 } from "@microsoft/agent-host-protocol/client";
 import { TransportError } from "@microsoft/agent-host-protocol/client";
+
+export class UpgradeError extends Error {
+  constructor(readonly status: number) {
+    super(`Host rejected the WebSocket connection (HTTP ${status})`);
+    this.name = "UpgradeError";
+  }
+}
 
 /** Bounded, lossless receive queue. Overflow closes the connection so replay
  * can repair it; no oldest-event dropping and no unbounded socket buffers. */
@@ -19,8 +27,12 @@ export class SocketTransport implements AhpTransport {
   private error: Error | null = null;
   onMessage: ((value: unknown) => void) | null = null;
   onClose: (() => void) | null = null;
+  get failure(): Error | null {
+    return this.error;
+  }
   private constructor(readonly socket: WebSocket) {
     socket.on("message", (data, binary) => {
+      if (this.ended) return;
       if (binary) {
         this.fail(new TransportError("protocol", "Expected a JSON text frame"));
         return;
@@ -50,14 +62,14 @@ export class SocketTransport implements AhpTransport {
       }
     });
     socket.on("error", (error) => this.fail(error));
-    socket.on("close", () => {
-      this.ended = true;
-      this.waiter?.resolve(null);
-      this.waiter = null;
-      this.onClose?.();
-    });
+    socket.on("close", () => this.finish());
   }
-  static async connect(url: string, token: string): Promise<SocketTransport> {
+  static async connect(
+    url: string,
+    token: string,
+    signal?: AbortSignal,
+  ): Promise<SocketTransport> {
+    signal?.throwIfAborted();
     const target = new URL(url);
     if (
       !["wss:", "ws:"].includes(target.protocol) ||
@@ -81,16 +93,49 @@ export class SocketTransport implements AhpTransport {
     });
     const transport = new SocketTransport(socket);
     await new Promise<void>((resolve, reject) => {
-      socket.once("open", resolve);
-      socket.once("error", reject);
+      const clean = () => {
+        socket.off("open", opened);
+        socket.off("error", failed);
+        socket.off("unexpected-response", rejected);
+        signal?.removeEventListener("abort", aborted);
+      };
+      const opened = () => {
+        clean();
+        resolve();
+      };
+      const failed = (error: Error) => {
+        clean();
+        reject(error);
+      };
+      const aborted = () => {
+        failed(signal!.reason as Error);
+        socket.terminate();
+      };
+      const rejected = (_request: unknown, response: IncomingMessage) => {
+        failed(new UpgradeError(response.statusCode ?? 0));
+        response.destroy();
+        socket.terminate();
+      };
+      socket.once("open", opened);
+      socket.once("error", failed);
+      socket.once("unexpected-response", rejected);
+      signal?.addEventListener("abort", aborted, { once: true });
     });
     return transport;
   }
   private fail(error: Error): void {
+    if (this.ended) return;
     this.error = error;
     this.waiter?.reject(error);
     this.waiter = null;
     this.socket.terminate();
+  }
+  private finish(): void {
+    if (this.ended) return;
+    this.ended = true;
+    this.waiter?.resolve(null);
+    this.waiter = null;
+    this.onClose?.();
   }
   send(message: JsonRpcMessage | string): Promise<void> {
     if (this.ended || this.socket.readyState !== WebSocket.OPEN)
@@ -120,6 +165,15 @@ export class SocketTransport implements AhpTransport {
     });
   }
   close(): void {
+    if (this.ended) return;
+    this.finish();
+    this.queue.length = 0;
+    this.bytes = 0;
     this.socket.close();
+    // A dead peer cannot acknowledge a close frame. End the local receive
+    // loop immediately and bound the remaining socket handshake separately.
+    const timer = setTimeout(() => this.socket.terminate(), 1000);
+    timer.unref();
+    this.socket.once("close", () => clearTimeout(timer));
   }
 }

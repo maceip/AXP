@@ -17,6 +17,7 @@ import type {
   ToolResultContent,
 } from "@microsoft/agent-host-protocol";
 import type { BlobRef, Usage } from "./protocol/types.js";
+import { AXP_VERSION } from "./protocol/types.js";
 import { Codes, requireThat } from "./protocol/errors.js";
 
 export interface AgentLaunch {
@@ -236,7 +237,7 @@ export class AcpDriver {
         failed,
         this.connection.agent.request(acp.methods.agent.initialize, {
           protocolVersion: acp.PROTOCOL_VERSION,
-          clientInfo: { name: "axp", version: "0.1.0" },
+          clientInfo: { name: "axp", version: AXP_VERSION },
           clientCapabilities: {
             fs: { readTextFile: false, writeTextFile: false },
             terminal: false,

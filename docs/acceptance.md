@@ -16,6 +16,9 @@ not by the number of tests or SDK languages.
   receipts and state, and crash recovery does not invent completed turns.
 - Donor revocation, budget exhaustion, long compiles, disconnected approvals,
   replay gaps, malformed traffic and slow subscribers have observable outcomes.
+- Parked contributors reconnect after transient network failures or host restart
+  with one donation and their retained local work. Lost replies cannot duplicate
+  spending or model execution. Ownership transfer and revocation stop recovery.
 - Git worktrees leave the contributor's checkout intact. A checkpoint bundle
   restores on another checkout, with validated provenance and exact-commit
   verification. Publication requires explicit maintainer review authorization.
