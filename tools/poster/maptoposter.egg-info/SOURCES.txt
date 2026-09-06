@@ -1,0 +1,8 @@
+LICENSE
+create_map_poster.py
+pyproject.toml
+maptoposter.egg-info/PKG-INFO
+maptoposter.egg-info/SOURCES.txt
+maptoposter.egg-info/dependency_links.txt
+maptoposter.egg-info/requires.txt
+maptoposter.egg-info/top_level.txt
