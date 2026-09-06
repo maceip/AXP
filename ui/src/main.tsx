@@ -1,7 +1,7 @@
 import { StrictMode, Component } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import "@fontsource-variable/dm-sans";
+import "./fonts/axp-runde.css";
 import "@fontsource/ibm-plex-mono/latin-400.css";
 import "./vendor/huabu/tokens.css";
 import "./style.css";

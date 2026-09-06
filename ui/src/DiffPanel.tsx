@@ -114,7 +114,7 @@ function Patch({
       if (path && paths.includes(path)) setSelected(path);
     },
     unsafeCSS:
-      ":host { --trees-font-family: 'DM Sans Variable', sans-serif; --trees-font-size: 12px; --trees-fg-override: #34433a; --trees-fg-muted-override: #4f5d4c; }",
+      ":host { --trees-font-family: 'AXP Runde', sans-serif; --trees-font-size: 12px; --trees-fg-override: #34433a; --trees-fg-muted-override: #4f5d4c; }",
   });
   const file =
     parsed.files.find((file) => file.name === selected) ?? parsed.files[0];

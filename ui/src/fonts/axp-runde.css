@@ -1,0 +1,31 @@
+/* AXP Runde: Open Runde (a rounded Inter, SIL OFL 1.1) plus one signature glyph,
+ * a hooked lowercase l behind `cv05`/`ss01`. Built by scripts/fonts/build-axp-runde.py.
+ * Four static weights; the browser picks the nearest for anything in between. */
+@font-face {
+  font-family: "AXP Runde";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./axp-runde/AXPRunde-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "AXP Runde";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./axp-runde/AXPRunde-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "AXP Runde";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./axp-runde/AXPRunde-Semibold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "AXP Runde";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./axp-runde/AXPRunde-Bold.woff2") format("woff2");
+}
