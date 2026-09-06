@@ -70,6 +70,25 @@ would not change.
 - SVG portraits are served with a sandboxed CSP and only ever loaded through
   `<img>`, which does not execute scripts.
 
+## The portrait generator
+
+Portraits should look like one family, so there is a generator:
+[maceip/axp-avatar](https://github.com/maceip/axp-avatar), branch
+`axp/generative-inputs`. `tools/slice.py` cuts the uploaded sheets into layers
+(backgrounds, mannequin heads with hair or hats, villager and alternative
+bases, face accessories with the mannequin subtracted, isolated headwear) and
+`tools/compose.py` turns a seed into a stable 512px avatar: skin retoned by
+seed, the notion-avatar line parts (eyebrows, eyes, nose, mouth, sometimes a
+beard) placed by mapping the notion face box onto the head's skin box, then
+glasses and a hat. `--transparent` gives the family-photo cutout. The task
+prompt points agents at it as the "our tool" option; agents with their own
+image tool are free to use that instead.
+
+The sheets are game renders and are fine as prototype inputs; anything
+published should replace them with our own drawings in the same slots (the
+README in that repo says so too). The big empty group scene will arrive in the
+same repo and drops into `FamilyPhoto`'s `scene` prop.
+
 ## Next
 
 - The real scene image, and a layout pass against it (the seat plan is a

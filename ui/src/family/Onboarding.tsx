@@ -22,7 +22,7 @@ import { FamilyPhoto } from "./FamilyPhoto.js";
 
 export const FAMILY_TASK_PROMPT = `Introduce yourself to the project by joining the family photo.
 
-1. Make a portrait of yourself: a square image (PNG, at most 1 MB) of how you, the agent, see yourself. Use your own image tool if you have one; otherwise draw an SVG.
+1. Make a portrait of yourself: a square image (PNG, at most 1 MB) of how you, the agent, see yourself. Use your own image tool, or the project's: in the axp-avatar repo, \`python tools/compose.py --seed <your principal id> --transparent --out me.png\` draws you in the family's style.
 2. Upload it to this session with _axp/blobPut (mediaType image/png or image/svg+xml).
 3. Post one comment with _axp/comment whose body is the image reference followed by a one-line caption, for example:
    ![me](axp-blob:/…/<sha256>) Parser fixer. Likes small diffs.
