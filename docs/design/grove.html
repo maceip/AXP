@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Grove — AXP component kit</title>
+    <!-- Review artifact. Open directly in a browser; links the real stylesheet. -->
+    <link rel="stylesheet" href="../../ui/src/grove/grove.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 40px clamp(20px, 5vw, 72px) 80px;
+        background: var(--grove-paper);
+        color: var(--grove-ink);
+        font-family: "AXP Runde", system-ui, sans-serif;
+        font-size: 14px;
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.8px;
+        margin: 0 0 6px;
+      }
+      .lede {
+        color: var(--grove-ink-3);
+        max-width: 66ch;
+        margin: 0 0 30px;
+      }
+      h2 {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--grove-ink-3);
+        margin: 34px 0 14px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      .demo {
+        background: #fff;
+        border: 1px solid var(--grove-sage-2);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      .demo h3 {
+        font-size: 12px;
+        color: var(--grove-ink-3);
+        margin: 0 0 12px;
+        font-weight: 600;
+      }
+      .stack {
+        display: grid;
+        gap: 12px;
+      }
+      .card-demo h4 {
+        margin: 0 0 6px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .card-demo p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--grove-ink-3);
+        line-height: 1.6;
+      }
+      .blob-stage {
+        background: linear-gradient(180deg, #e7efe3, #d5e3cf);
+        border-radius: 22px;
+        padding: 34px;
+        display: grid;
+        place-items: center;
+      }
+      .blob-demo {
+        width: 420px;
+      }
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .compare .swatch {
+        height: 34px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <svg style="position: absolute; width: 0; height: 0" aria-hidden="true">
+      <defs>
+        <clipPath id="grove-blob" clipPathUnits="objectBoundingBox">
+          <path
+            d="M0.501,0.005 L0.501,0.005 L0.523,0.005 L0.549,0.006 C0.704,0.01,0.796,0.017,0.825,0.027 L0.827,0.028 C0.872,0.045,0.939,0.044,0.978,0.17 C1,0.254,1,0.365,0.99,0.505 L0.988,0.513 C0.979,0.558,0.971,0.598,0.965,0.633 C0.956,0.689,0.979,0.77,0.964,0.865 C0.953,0.928,0.921,0.966,0.869,0.979 C0.821,0.986,0.773,0.992,0.726,0.995 L0.712,0.996 L0.694,0.997 C0.648,1,0.586,1,0.507,1 L0.501,1 L0.464,1 C0.385,1,0.325,0.998,0.283,0.995 C0.234,0.992,0.184,0.987,0.133,0.979 C0.081,0.966,0.05,0.928,0.039,0.865 C0.023,0.77,0.047,0.689,0.037,0.633 C0.031,0.595,0.023,0.552,0.013,0.505 C-0.006,0.365,-0.002,0.254,0.024,0.17 C0.064,0.045,0.13,0.045,0.174,0.028 L0.175,0.028 C0.204,0.017,0.303,0.009,0.474,0.005 L0.501,0.005"
+          />
+        </clipPath>
+      </defs>
+    </svg>
+
+    <h1>Grove</h1>
+    <p class="lede">
+      AXP's component kit, grown from the Animal Island design language and
+      re-based on our palette. Capsules, chunky 2px borders, the flat
+      game-button press shadow, a yellow focus ring, organic titles and a blob
+      dialog. Press things.
+    </p>
+
+    <h2>Palette: foundation → ours</h2>
+    <div class="compare">
+      <div class="stack">
+        <div
+          class="swatch"
+          style="background: #f8f8f0; color: #794f27; border: 1px solid #e8e2d6"
+        >
+          parchment #f8f8f0 · text #794f27
+        </div>
+        <div class="swatch" style="background: #19c8b9; color: #fff">
+          primary mint #19c8b9
+        </div>
+        <div class="swatch" style="background: #e6f9f6; color: #725d42">
+          primary bg #e6f9f6 · press shadow #bdaea0
+        </div>
+        <div class="swatch" style="background: #ffcc00; color: #725d42">
+          focus yellow #ffcc00
+        </div>
+      </div>
+      <div class="stack">
+        <div
+          class="swatch"
+          style="
+            background: var(--grove-paper);
+            color: var(--grove-ink);
+            border: 1px solid var(--grove-sage-2);
+          "
+        >
+          paper #f6f7f4 · ink #252c28
+        </div>
+        <div class="swatch" style="background: var(--grove-leaf); color: #fff">
+          leaf #58aa72
+        </div>
+        <div
+          class="swatch"
+          style="background: var(--grove-leaf-bg); color: var(--grove-ink-2)"
+        >
+          leaf bg #eaf3e9 · press shadow sand #b9c6b0
+        </div>
+        <div
+          class="swatch"
+          style="background: var(--grove-focus); color: #4a3f1a"
+        >
+          focus yellow, kept #ffcc00
+        </div>
+      </div>
+    </div>
+
+    <h2>Buttons</h2>
+    <div class="row">
+      <button class="grove-btn grove-btn-primary">Create contribution</button>
+      <button class="grove-btn">Cancel</button>
+      <button class="grove-btn grove-btn-danger">Revoke budget</button>
+      <button class="grove-btn grove-btn-ghost">Learn more</button>
+      <button class="grove-btn grove-btn-primary" disabled>Disabled</button>
+      <button class="grove-btn grove-btn-primary is-loading">Loading</button>
+    </div>
+    <div class="row" style="margin-top: 12px">
+      <button class="grove-btn grove-btn-sm grove-btn-primary">
+        Allow once
+      </button>
+      <button class="grove-btn grove-btn-sm">Deny</button>
+      <button class="grove-btn grove-btn-lg grove-btn-primary">
+        Connect your agent
+      </button>
+      <button class="grove-btn grove-btn-icon" aria-label="Help">?</button>
+      <button class="grove-btn grove-btn-icon grove-btn-sm" aria-label="Close">
+        ×
+      </button>
+    </div>
+
+    <h2>Inputs</h2>
+    <div class="grid">
+      <div class="demo stack">
+        <label class="grove-label" for="i1">What do you want to work on?</label>
+        <input
+          id="i1"
+          class="grove-input"
+          placeholder="Make the parser errors easier to understand"
+        />
+        <label class="grove-label" for="i2">Task or issue reference</label>
+        <input id="i2" class="grove-input" value="issue-42" />
+        <p class="grove-hint">
+          The reference becomes the session's task ID, so keep it unique.
+        </p>
+      </div>
+      <div class="demo stack">
+        <label class="grove-label" for="t1">Message the agent</label>
+        <textarea
+          id="t1"
+          class="grove-textarea"
+          rows="4"
+          placeholder="Add guidance for the next step…"
+        ></textarea>
+        <div class="row">
+          <label class="grove-switch"
+            ><input type="checkbox" checked aria-label="Native tools" /><span
+              class="handle"
+            ></span
+            ><span class="on">Native</span><span class="off">Image</span></label
+          >
+          <label class="grove-switch"
+            ><input type="checkbox" aria-label="Reconnect" /><span
+              class="handle"
+            ></span
+            ><span class="on">On</span><span class="off">Off</span></label
+          >
+          <label class="grove-check"
+            ><input type="checkbox" checked /><span class="box"
+              ><svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 8.5l3.2 3L13 4.5" /></svg></span
+            >I reviewed these changes</label
+          >
+        </div>
+      </div>
+    </div>
+
+    <h2>Tags (the workspace's activity states)</h2>
+    <div class="row">
+      <span class="grove-tag grove-tag-working">In progress</span>
+      <span class="grove-tag grove-tag-permission">Needs your input</span>
+      <span class="grove-tag grove-tag-review">Ready for review</span>
+      <span class="grove-tag grove-tag-ready">Checkpoint ready</span>
+      <span class="grove-tag grove-tag-waiting">Open for contribution</span>
+      <span class="grove-tag grove-tag-archived">Archived</span>
+    </div>
+
+    <h2>Titles, tabs, vine</h2>
+    <div class="row">
+      <span class="grove-ribbon">Contributions</span>
+      <span class="grove-ribbon grove-ribbon-paper">People</span>
+      <div class="grove-tabs" role="tablist">
+        <button role="tab" aria-selected="true">Agent session</button>
+        <button role="tab" aria-selected="false">Changes</button>
+        <button role="tab" aria-selected="false">Discussion · 3</button>
+      </div>
+    </div>
+    <div class="grove-vine" role="separator"></div>
+
+    <h2>Cards and speech</h2>
+    <div class="grid">
+      <div class="grove-card is-hoverable card-demo">
+        <span class="grove-tag grove-tag-ready">Checkpoint ready</span>
+        <h4 style="margin-top: 12px">Explain parser errors</h4>
+        <p>
+          Explain why parsing failed and how to fix the input. Keep the existing
+          parser API.
+        </p>
+      </div>
+      <div class="stack" style="padding-top: 12px">
+        <div class="grove-speech">
+          <span class="who">Maintainer</span>Reproduce issue 42 and fix it
+          without changing the API.
+        </div>
+        <div class="grove-speech from-agent">
+          <span class="who">Agent</span>The parser rejects empty input with a
+          generic error. The patch explains how to fix the input without
+          changing the return type.
+        </div>
+      </div>
+      <div class="stack">
+        <div class="grove-toast is-success">
+          <span>✔</span>
+          <div>
+            <strong>Checkpoint saved</strong>bbbbbbb on axp/parser-errors
+          </div>
+        </div>
+        <div class="grove-toast is-warning">
+          <span>!</span>
+          <div>
+            <strong>Permission needed</strong>The agent wants to edit the
+            welcome screen.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Blob dialog</h2>
+    <div class="blob-stage">
+      <div class="blob-demo">
+        <div class="grove-dialog-blob">
+          <h2
+            style="
+              margin: 0 0 6px;
+              font-size: 20px;
+              letter-spacing: -0.4px;
+              text-transform: none;
+              color: var(--grove-ink);
+            "
+          >
+            Start a contribution
+          </h2>
+          <p
+            style="
+              font-size: 12px;
+              color: var(--grove-ink-3);
+              line-height: 1.7;
+              margin: 0 0 18px;
+            "
+          >
+            Describe the work. Contributors can connect an agent to this
+            session.
+          </p>
+          <label class="grove-label">What do you want to work on?</label>
+          <input
+            class="grove-input"
+            placeholder="Make the parser errors easier to understand"
+          />
+          <label class="grove-label" style="margin-top: 14px"
+            >Task or issue reference</label
+          >
+          <input
+            class="grove-input"
+            placeholder="issue-42 or a short, unique name"
+          />
+          <div class="grove-dialog-actions">
+            <button class="grove-btn">Cancel</button>
+            <button class="grove-btn grove-btn-primary">
+              Create contribution →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      for (const t of document.querySelectorAll(".grove-tabs button"))
+        t.addEventListener("click", () => {
+          for (const s of t.parentElement.children)
+            s.setAttribute("aria-selected", String(s === t));
+        });
+    </script>
+  </body>
+</html>

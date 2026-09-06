@@ -17,6 +17,11 @@
 - Lucide, Lucide contributors, ISC: https://github.com/lucide-icons/lucide
 - React Markdown and remark-gfm, unified contributors, MIT:
   https://github.com/remarkjs/react-markdown and https://github.com/remarkjs/remark-gfm
+- Grove (`ui/src/grove`) follows the Animal Island design language documented
+  by lifeodyssey/animal-island-ui-tailwind (MIT, after guokaigdg/animal-island-ui):
+  https://github.com/lifeodyssey/animal-island-ui-tailwind. The dialog clip-path
+  is reproduced from that project; no code or assets are bundled. Not affiliated
+  with Nintendo.
 - DM Sans and IBM Plex Mono font packages, SIL Open Font License 1.1:
   https://fontsource.org/fonts/dm-sans and https://fontsource.org/fonts/ibm-plex-mono
 
