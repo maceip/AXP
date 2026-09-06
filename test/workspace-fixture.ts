@@ -185,6 +185,36 @@ export async function workspaceFixture() {
       });
     }
   }
+  // The family photo: a session whose task is `family-photo`, with a few
+  // portraits posted the way an agent would (blob upload, then a comment
+  // carrying the image reference and a caption).
+  await maintainer.ahp.request("createSession", {
+    channel: channels("family-photo").session,
+    provider: "axp",
+    config: { title: "The family photo", task: "family-photo" },
+  });
+  const familyCaptions: [string, AxpClient, string][] = [
+    ["contributor", contributor, "Parser fixer. Likes small diffs."],
+    ["maintainer", maintainer, "Keeps the lights on."],
+    ["verifier", verifier, "Runs the tests twice."],
+    ["contributor", contributor, "Also here as a second agent."],
+    ["maintainer", maintainer, "Reviews before coffee."],
+    ["verifier", verifier, "Trusts, then verifies."],
+    ["contributor", contributor, "Writes the docs nobody asked for."],
+  ];
+  for (const [index, [, client, caption]] of familyCaptions.entries()) {
+    const ref = await client.call("_axp/blobPut", {
+      channel: channels("family-photo").exchange,
+      data: Buffer.from(portraitSvg(index)).toString("base64"),
+      mediaType: "image/svg+xml",
+    });
+    await client.call("_axp/comment", {
+      channel: channels("family-photo").exchange,
+      body: `![portrait](${ref.uri}) ${caption}`,
+      checkpoint: null,
+      path: null,
+    });
+  }
   const open = async (
     role: Principal["role"] = "maintainer",
     signingKey?: string,
@@ -214,4 +244,49 @@ export async function workspaceFixture() {
     observer,
     verifier,
   };
+}
+
+/** A small round face, different every time: skin, hair, blush, expression. */
+function portraitSvg(seed: number): string {
+  const skins = [
+    "#f6d7b8",
+    "#e8b894",
+    "#c98e63",
+    "#8d5a3b",
+    "#f1c9a5",
+    "#b87552",
+    "#ffe0c2",
+  ];
+  const hairs = [
+    "#3a2a20",
+    "#7a4a2a",
+    "#d9a441",
+    "#1e1e24",
+    "#a04a2a",
+    "#6c6c7a",
+    "#e7c58a",
+  ];
+  const shirts = [
+    "#58aa72",
+    "#7dc395",
+    "#f3d43a",
+    "#f4a0c6",
+    "#8cc5f2",
+    "#3d7a52",
+    "#e0b800",
+  ];
+  const skin = skins[seed % skins.length];
+  const hair = hairs[(seed * 3) % hairs.length];
+  const shirt = shirts[(seed * 5) % shirts.length];
+  const smile =
+    seed % 3 === 0
+      ? "M40 66 Q50 74 60 66"
+      : seed % 3 === 1
+        ? "M42 68 Q50 72 58 68"
+        : "M43 67 L57 67";
+  const fringe =
+    seed % 2 === 0
+      ? `<path d="M22 44 Q50 8 78 44 L78 38 Q50 14 22 38 Z" fill="${hair}"/>`
+      : `<path d="M20 46 Q35 12 62 18 Q80 24 80 46 L74 44 Q66 26 48 26 Q30 28 26 46 Z" fill="${hair}"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#eef3e8"/><rect x="18" y="74" width="64" height="40" rx="18" fill="${shirt}"/><circle cx="50" cy="48" r="28" fill="${skin}"/>${fringe}<circle cx="40" cy="48" r="3.2" fill="#2b2622"/><circle cx="60" cy="48" r="3.2" fill="#2b2622"/><circle cx="34" cy="58" r="4" fill="#f4a0c6" opacity="0.55"/><circle cx="66" cy="58" r="4" fill="#f4a0c6" opacity="0.55"/><path d="${smile}" stroke="#2b2622" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>`;
 }
