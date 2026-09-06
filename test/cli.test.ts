@@ -69,7 +69,7 @@ test(
       if (interrupt) {
         await eventually(
           () => output,
-          (s) => s.includes("reconnecting"),
+          (s) => s.includes("Reconnecting"),
         );
         if (process.platform === "win32") child.send("interrupt");
         else child.kill("SIGINT");
@@ -188,7 +188,7 @@ test("an explicit CLI profile overrides ambient credentials and a partial enviro
       ],
       { ...process.env, AXP_URL: f.url, AXP_TOKEN: f.credentials[0]!.token },
     ),
-    /Maintainer authority required/,
+    /Only maintainers can do this/,
   );
   const env: NodeJS.ProcessEnv = { ...process.env, AXP_URL: f.url };
   delete env.AXP_TOKEN;

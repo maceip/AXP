@@ -34,7 +34,7 @@ export class LeaseRunner extends EventEmitter<{
   private readonly disconnected = () =>
     this.end(
       this.client.transport.failure ??
-        new TransportError("closed", "Contributor connection lost"),
+        new TransportError("closed", "Connection to the host was lost"),
     );
   private readonly changed = (event: Envelope) => {
     // Output is already committed by this runner. Only control transitions can
@@ -131,7 +131,7 @@ export class LeaseRunner extends EventEmitter<{
         requireThat(
           false,
           Codes.stale,
-          "Session ownership changed or donation revoked",
+          "Another agent took over this session, or the budget was revoked",
         );
       }
       if (this.turnId && chat.activeTurn?.id !== this.turnId)

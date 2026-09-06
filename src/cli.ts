@@ -27,7 +27,7 @@ import { reviewManifest } from "./review.js";
 import { verifyCheckpoint } from "./verification.js";
 import { excludeLocalState, Worktree } from "./git.js";
 
-const HELP = `AXP — park an agent, share the session.
+const HELP = `AXP — shared repository sessions for coding agents
 
   axp init --repo owner/project             Create local access profiles
   axp serve                                Start the repository host
@@ -36,35 +36,36 @@ const HELP = `AXP — park an agent, share the session.
   axp park SESSION --native -- COMMAND ...  Run a local ACP agent
   axp park SESSION --image IMAGE -- CMD ... Run an offline container agent
   axp prompt SESSION "Fix the parser"       Start a turn
-  axp steer SESSION "Keep the API stable"   Cancel and continue with guidance
+  axp steer SESSION "Keep the API stable"   Interrupt and send new instructions
   axp queue SESSION "Then add an example"   Queue the next turn
-  axp watch SESSION                        Follow the shared action stream
-  axp inspect SESSION                      Print synchronized session state
-  axp approve SESSION --tool ID --option ID Answer a pending permission
+  axp watch SESSION                        Stream session events as they happen
+  axp inspect SESSION                      Show the current session state
+  axp approve SESSION --tool ID --option ID Approve or deny a pending tool request
   axp cancel SESSION                       Cancel the active turn
-  axp close SESSION                        Close the task and retain its history
-  axp export SESSION --out history.json     Retain the complete audit record
+  axp close SESSION                        Close the session; its history is kept
+  axp export SESSION --out history.json     Save the full session history to a file
   axp keygen --out signing-key.pem          Create an Ed25519 signing key
   axp submit SESSION --key KEY --model NAME Sign a checkpoint manifest
-  axp accept SESSION --key KEY              Countersign a reviewed artifact
+  axp accept SESSION --key KEY              Sign maintainer approval
   axp publish SESSION --remote FORK         Restore and push the reviewed commit
-  axp verify SESSION --native -- COMMAND    Test an exact checkpoint as verifier
-  axp executors                            Show parked executor capabilities
+  axp verify SESSION --native -- COMMAND    Restore and test as a verifier
+  axp executors                            List agent status and capabilities
   axp aamp --config .axp/aamp.json          Bridge an AAMP mailbox to assigned sessions
   axp ui [--port 4318] [--key KEY]          Open your contribution workspace
-  axp memory "query"                       Retrieve approved repository lessons
-  axp rpc METHOD --params request.json      Call a typed AXP extension
+  axp memory "query"                       Search approved repository memory
+  axp rpc METHOD --params request.json      Call an AXP method with JSON params
 
-Connection: explicit --profile takes priority over AXP_URL + AXP_TOKEN.
+Connection: --profile takes priority over AXP_URL + AXP_TOKEN.
 Default profiles: contributor for park/submit, verifier for verify, maintainer otherwise.
 Use --directory /path/to/repo to select its default .axp configuration and profiles.
 Limits: --tokens 100000 --cost-micros 1000000 --turns 10
         --turn-tokens 10000 --turn-cost-micros 100000
-Native execution uses your user permissions; select it explicitly.
+--native runs the agent's tools as your user. Include it to allow local execution.
 Container execution requires Docker and an image with its tools/dependencies.
-Pass provider environment explicitly: --agent-env ANTHROPIC_API_KEY,FOO.
-Select an advertised ACP login only when needed: --auth-method METHOD.
-Parking reconnects automatically with the same donation; --no-reconnect disables it.
+Pass API keys or other environment variables by name:
+  --agent-env ANTHROPIC_API_KEY,FOO
+If the adapter needs a login step, pick one of its methods: --auth-method METHOD.
+park reconnects automatically after a network drop; --no-reconnect disables it.
 Remote connections require wss://; access tokens stay in headers.
 `;
 
@@ -251,7 +252,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       throw error;
     }
     print(
-      `Created private profiles in ${path}. Run axp serve. Share only the intended contributor profile.`,
+      `Created profiles in ${path}. Next, run axp serve. Share only the profile for the role you want to grant; keep the others private.`,
     );
     return;
   }
@@ -286,7 +287,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     values.profile ||
       Boolean(process.env.AXP_URL) === Boolean(process.env.AXP_TOKEN),
     Codes.invalid,
-    "Set both AXP_URL and AXP_TOKEN, or use an explicit --profile",
+    "Set both AXP_URL and AXP_TOKEN, or use --profile",
   );
   const profile = values.profile
     ? profileSchema.parse(await jsonFile(option("profile")))
@@ -372,7 +373,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     );
     const controller = new AbortController();
     print(
-      `AAMP adapter for ${config.email}; ${config.routes.length} local admission rule(s).`,
+      `AAMP adapter for ${config.email}; ${config.routes.length} route(s).`,
     );
     try {
       await waitForStop(
@@ -398,7 +399,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     requireThat(
       !!values.native !== !!values.image,
       Codes.invalid,
-      "Select exactly one of --native or --image",
+      "Use either --native or --image, not both",
     );
     const limits = allowance.parse({
       tokens: Number(option("tokens", "100000")),
@@ -516,7 +517,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         state.review?.maintainer &&
           state.checkpoint?.headCommit === state.review.manifest.headCommit,
         Codes.conflict,
-        "A current countersigned review is required",
+        "This checkpoint hasn't been approved by a maintainer yet",
       );
       const blob = await client.call("_axp/blobGet", {
         channel: c.exchange,
@@ -530,7 +531,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       );
       await worktree.publish(option("remote"), state.review);
       print(
-        `Published ${state.checkpoint.headCommit} to ${option("remote")}:${worktree.branch}. Retained ${worktree.path}`,
+        `Published ${state.checkpoint.headCommit} to ${option("remote")}:${worktree.branch}. Worktree kept at ${worktree.path}`,
       );
       return;
     }
@@ -538,7 +539,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       requireThat(
         values.native,
         Codes.invalid,
-        "Verification runs repository code; select --native on an isolated verifier host",
+        "Verification runs the repository's own code. Use an isolated machine and add --native to allow execution.",
       );
       print(await verifyCheckpoint(client, c.exchange, directory, commandArgs));
       return;
@@ -578,7 +579,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     }
     if (["prompt", "steer", "queue"].includes(command)) {
       const text = rest.join(" ");
-      requireThat(text.trim(), Codes.invalid, "Provide a message");
+      requireThat(text.trim(), Codes.invalid, "Enter a message");
       const message = { text, origin: { kind: MessageKind.User } };
       if (command === "prompt")
         await client.dispatch(c.chat, {
@@ -619,13 +620,13 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         part?.kind === "toolCall" &&
           part.toolCall.status === "pending-confirmation",
         Codes.conflict,
-        "Tool is not waiting",
+        "That tool call isn't waiting for approval",
       );
       const selected = part.toolCall.options?.find((o) => o.id === optionId);
       requireThat(
         selected,
         Codes.invalid,
-        "Select an offered option ID from axp inspect",
+        "Unknown option. Run axp inspect SESSION to see the available choices",
       );
       const base = {
         type: ActionType.ChatToolCallConfirmed,

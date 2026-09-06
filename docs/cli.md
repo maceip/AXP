@@ -6,7 +6,7 @@ The [first-look demo](getting-started.md) does not require global CLI installati
 
 ## Choose the connection
 
-An explicit `--profile FILE` wins over environment variables. Otherwise,
+`--profile FILE` takes priority over environment variables. Otherwise,
 `AXP_URL` and `AXP_TOKEN` must either both be present or both be absent.
 A partial pair is an error. With neither, AXP reads the command's default profile:
 
@@ -19,7 +19,7 @@ A partial pair is an error. With neither, AXP reads the command's default profil
 `--directory PATH` selects the Git checkout and the location of default `.axp`
 profiles/configuration. Explicit file paths such as `--profile`, `--config`,
 `--key` and `--out` are relative to your shell's current directory. Environment
-credentials apply to the host connection only; they never enter agent processes.
+credentials apply to the host connection only; they are never passed to agent processes.
 Remote hosts require `wss://`.
 
 ## Everyday commands
@@ -34,8 +34,8 @@ axp export SESSION --out history.json
 
 `ui` prints a private browser link and keeps running; `--port 0` chooses a free
 port. `watch` prints an initial snapshot and live actions. It exits with an
-explanation when the host disconnects; run it again to synchronize. `park`
-has its own automatic reconnection lifecycle and preserves the current donation.
+explanation when the host disconnects; run it again to reconnect. `park`
+reconnects automatically using the same budget grant.
 
 Maintainers create and guide sessions:
 
@@ -50,14 +50,14 @@ axp close parser-fix
 ```
 
 `steer` cancels and continues in a new turn. `queue` waits. `cancel` stops the
-active turn. `close` archives the session and releases its task identity while
-retaining history. Permission IDs come from `inspect` or `watch`.
+active turn. `close` archives the session and frees its task ID for reuse while
+keeping its history. Permission IDs come from `inspect` or `watch`.
 
 [Agent setup](agent-setup.md) explains `park`, isolation and spending limits.
 [Artifact review](artifacts.md) explains `keygen`, `submit`, `accept`, `verify`
-and explicit publication to a configured fork. [AAMP](aamp.md) documents the
-optional mailbox command. `rpc METHOD --params FILE` exposes typed AXP commands
-for integrations and operators; ordinary browser use does not need it.
+and publishing to a configured fork. [AAMP](aamp.md) documents the
+optional mailbox command. `rpc METHOD --params FILE` calls an AXP method using a JSON parameter file.
+It is useful for integrations and operators; browser users do not need it.
 
 ## Create a local host
 
@@ -72,5 +72,5 @@ is permanently associated with its repository identity. Changing the configured
 name requires a deliberate migration or a new database, not a restart with a
 new label.
 
-The bundled role profiles are for trying the workflow. Give each real person
-an independent, scoped identity as described in [Hosting](hosting.md).
+The bundled role profiles are for trying the workflow. Give each person
+their own identity with access limited to the sessions they need as described in [Hosting](hosting.md).

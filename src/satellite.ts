@@ -95,19 +95,19 @@ export class Satellite extends EventEmitter<{
     requireThat(
       !this.running && !this.controller.signal.aborted,
       Codes.conflict,
-      "A satellite can only be started once",
+      "This agent connection was already started or stopped",
     );
-    this.transition("connecting", "Connecting parked agent");
+    this.transition("connecting", "Connecting to the host…");
     this.running = this.supervise()
       .catch((error: unknown) => {
         if (!this.controller.signal.aborted) this.emit("fault", asError(error));
         this.ready.reject(error);
       })
       .finally(() => {
-        this.ready.reject(new Error("Satellite stopped before parking"));
+        this.ready.reject(new Error("Stopped before connecting"));
         this.transition(
           "stopped",
-          "Undocked; Git worktree and local history retained",
+          "Disconnected. Worktrees and local history are kept",
         );
         this.finished.resolve();
       });
@@ -167,7 +167,7 @@ export class Satellite extends EventEmitter<{
         else if (!this.runner.isStopped) {
           this.transition(
             "parked",
-            `Parked at ${state.session} in ${this.worktree.path} (epoch ${this.lease.epoch})`,
+            `Connected to ${state.session}. Worktree: ${this.worktree.path} (lease epoch ${this.lease.epoch})`,
           );
           this.ready.resolve();
         }
@@ -196,7 +196,7 @@ export class Satellite extends EventEmitter<{
       const wait = Math.floor(backoff * (0.5 + Math.random() * 0.5));
       this.transition(
         "reconnecting",
-        `${retry!.message}; reconnecting in ${wait} ms with the original donation`,
+        `${retry!.message}\nReconnecting in ${wait} ms…`,
       );
       await delay(wait, undefined, { signal }).catch(() => {});
       backoff = Math.min(backoff * 2, this.maxDelayMs);
@@ -224,7 +224,7 @@ export class Satellite extends EventEmitter<{
       requireThat(
         !this.grantEstablished,
         Codes.missing,
-        "The original donation is missing; automatic recovery stopped",
+        "The budget grant for this agent no longer exists, so it can't reconnect automatically",
       );
       await this.client.call("_axp/grant", {
         channel,
@@ -262,10 +262,10 @@ export class Satellite extends EventEmitter<{
       state.lease?.epoch === this.lease.epoch &&
         state.lease.executorId === this.executorId,
       Codes.stale,
-      "Session ownership changed while parking",
+      "Another agent took over this session while connecting",
     );
     const grant = state.grants[this.executorId];
-    requireThat(grant, Codes.budget, "Donation is missing");
+    requireThat(grant, Codes.budget, "No budget grant found for this agent");
     reserve(grant, this.options.perTurn);
     return state;
   }
@@ -283,7 +283,7 @@ export class Satellite extends EventEmitter<{
     if (!this.runner) this.client?.transport.socket.terminate();
     if (this.running) await this.running;
     else {
-      this.transition("stopped", "Undocked");
+      this.transition("stopped", "Disconnected");
       this.finished.resolve();
     }
   }

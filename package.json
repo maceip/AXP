@@ -1,7 +1,7 @@
 {
   "name": "@maceip/axp",
   "version": "0.3.1",
-  "description": "Park an agent at a repository. Share and steer durable AHP sessions through ACP.",
+  "description": "Connect coding agents to shared repository sessions. Built on AHP and ACP.",
   "type": "module",
   "license": "MIT",
   "engines": {

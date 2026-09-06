@@ -7,6 +7,25 @@ import type {
 import { Empty, Prose } from "./components.js";
 import { StoredContent } from "./StoredContent.js";
 
+const turnLabels: Record<ChatState["turns"][number]["state"], string> = {
+  complete: "Done",
+  error: "Failed",
+  cancelled: "Cancelled",
+};
+type ToolCall = Extract<
+  ChatState["turns"][number]["responseParts"][number],
+  { kind: "toolCall" }
+>["toolCall"];
+const toolLabels: Record<ToolCall["status"], string> = {
+  streaming: "Preparing",
+  "pending-confirmation": "Awaiting approval",
+  running: "Running",
+  "auth-required": "Login required",
+  "pending-result-confirmation": "Awaiting result approval",
+  completed: "Done",
+  cancelled: "Cancelled",
+};
+
 export function Transcript({
   detail,
   workspace,
@@ -30,9 +49,8 @@ export function Transcript({
         </p>
       )}
       {turns.length === 0 && (
-        <Empty title="Every contribution starts somewhere">
-          Share the context, describe a useful next step, and give a
-          contributor's agent a place to begin.
+        <Empty title="No turns yet">
+          A maintainer can send a prompt to start the session.
         </Empty>
       )}
       {turns.map((turn) => (
@@ -71,7 +89,7 @@ export function Transcript({
                 {turn.id === chat.activeTurn?.id
                   ? "Working"
                   : "state" in turn
-                    ? String(turn.state)
+                    ? turnLabels[turn.state]
                     : ""}
               </span>
             </div>
@@ -103,12 +121,13 @@ export function Transcript({
                 />
               ) : part.kind === "reasoning" ? (
                 <details key={index} className="agent-context">
-                  <summary>Agent reasoning supplied by the provider</summary>
+                  <summary>Agent reasoning from the provider</summary>
                   <Prose text={part.content} />
                 </details>
               ) : (
                 <p className="muted" key={index}>
-                  Additional agent context is retained in the session export.
+                  Some agent output isn't shown here. It's included in the
+                  session export.
                 </p>
               ),
             )}
@@ -120,7 +139,7 @@ export function Transcript({
                 <span>
                   {exchange.lease
                     ? "Agent is working"
-                    : "Waiting for a parked agent"}
+                    : "Waiting for an agent to connect"}
                 </span>
               </div>
             )}
@@ -158,7 +177,11 @@ function Tool({
         <summary>
           <Terminal size={15} />
           <strong>{tool.displayName}</strong>
-          <span>{tool.status.replaceAll("-", " ")}</span>
+          <span>
+            {tool.status === "completed" && !tool.success
+              ? "Failed"
+              : toolLabels[tool.status]}
+          </span>
         </summary>
         <div className="tool-body">
           {"toolInput" in tool &&
@@ -179,7 +202,7 @@ function Tool({
                   ? typeof tool.invocationMessage === "string"
                     ? tool.invocationMessage
                     : tool.invocationMessage.markdown
-                  : "The agent has not supplied tool input."}
+                  : "No tool input provided."}
             </pre>
           )}
           {"content" in tool && tool.content && (

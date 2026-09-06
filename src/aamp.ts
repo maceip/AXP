@@ -184,7 +184,7 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
           this.finish(
             task,
             "rejected",
-            `AXP could not admit this task: ${asError(error).message}`,
+            `AXP rejected this task: ${asError(error).message}`,
           );
         } else {
           // A timeout need not close TCP. Retire the client so the next pass
@@ -234,7 +234,9 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
             : undefined
         : this.route(request);
     if (!route)
-      throw new Error("No unique sender/session/context admission rule");
+      throw new Error(
+        "No single route matches this sender, session key and context",
+      );
     if (
       !this.journal.admitMessage(
         hashObject({ from: request.from, messageId: request.messageId }),
@@ -254,7 +256,7 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
     if (request.intent === "card.query") {
       this.reply(task, "card", {
         intent: "card.response",
-        text: "AXP accepts text tasks into an explicitly assigned repository session. ACP agents execute under donor budgets. Results identify the exact session and checkpoint; completion does not imply maintainer approval or merge. Tool permissions are reviewed in AXP. AAMP streaming and attachment execution are not advertised.",
+        text: "This mailbox accepts plain-text tasks for configured AXP repository sessions. An ACP agent runs each task within its contributor's budget. Results include the session and any checkpoint produced; a finished task may still need review or merging. A maintainer approves tool permissions in AXP. Streaming and attachments aren't supported.",
       });
       return;
     }
@@ -263,7 +265,7 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
         intent: "pair.respond",
         status: "rejected",
         error: "Local configuration required",
-        text: "This adapter uses locally configured sender and session rules. Pair this mailbox through its AAMP service administrator.",
+        text: "Access is configured locally by the AXP operator. Ask them to add your address.",
       });
       return;
     }
@@ -286,13 +288,13 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
     const reject = mail.truncated
       ? "The task body was truncated by the mailbox service."
       : mail.attachments.length
-        ? "Attachment tasks are not supported by this adapter; provide repository context in the text."
+        ? "Attachments aren't supported. Put everything the agent needs in the message text."
         : Buffer.byteLength(request.text) > 48_000
           ? "Task text exceeds 48 KB."
           : !request.text.trim()
             ? "Task text is empty."
             : request.expiresAt && Date.parse(request.expiresAt) <= this.now()
-              ? "Task expired before admission."
+              ? "This task expired before it could start."
               : this.journal.active().length > 256
                 ? "The adapter task queue is full."
                 : null;
@@ -300,7 +302,7 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
     else
       this.reply(task, "ack", {
         intent: "task.ack",
-        text: `Task admitted to AXP session ${route.session}.`,
+        text: `Task accepted for session ${route.session}.`,
       });
   }
 
@@ -386,7 +388,7 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
       this.finish(
         task,
         "cancelled",
-        "Task cancelled, expired, or its local admission rule was removed.",
+        "This task was cancelled, expired, or its route was removed.",
       );
       return;
     }
@@ -406,7 +408,7 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
         const tool = part.toolCall;
         this.reply(task, `help-${hashObject(tool)}`, {
           intent: "task.help_needed",
-          text: `AXP needs maintainer approval for ${tool.displayName}.\n\nOpen session ${allowed!.session} in AXP to inspect and answer tool ${tool.toolCallId}. Mail replies do not grant tool permissions. Send task.cancel to withdraw the task.`,
+          text: `The agent is asking for permission to run ${tool.displayName}.\n\nA maintainer can approve or deny it in AXP (session ${allowed!.session}, tool call ${tool.toolCallId}). Replying to this email won't grant permission. Send task.cancel to withdraw the task.`,
         });
       }
       return;
@@ -416,7 +418,7 @@ export class AampBridge extends EventEmitter<{ warning: [Error] }> {
       this.finish(
         task,
         "rejected",
-        "The admitted AXP turn is no longer present; it will not be replayed.",
+        "The turn for this task is missing from the session. It won't be run again.",
       );
       return;
     }

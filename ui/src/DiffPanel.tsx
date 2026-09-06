@@ -70,8 +70,7 @@ export default function DiffPanel({
         {error}
       </div>
     );
-  if (patch === undefined)
-    return <Loading>Loading the exact checkpoint…</Loading>;
+  if (patch === undefined) return <Loading>Loading checkpoint…</Loading>;
   return <Patch patch={patch} discuss={discuss} />;
 }
 
@@ -92,7 +91,7 @@ function Patch({
       return {
         files: [],
         error:
-          "This patch could not be rendered. Export the checkpoint with the CLI to inspect it.",
+          "This patch couldn't be displayed. Use axp export SESSION to find the checkpoint's Git bundle and patch.",
       };
     }
   }, [patch]);
@@ -127,9 +126,9 @@ function Patch({
     );
   if (!file)
     return (
-      <Empty title="A checkpoint with no text changes">
-        The agent preserved the repository state. Binary changes and the
-        complete artifact remain in the Git bundle.
+      <Empty title="No text changes in this checkpoint">
+        There are no text changes to display. Download the Git bundle to inspect
+        the full checkpoint, including any binary files.
       </Empty>
     );
   return (

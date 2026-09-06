@@ -118,9 +118,7 @@ try {
     console.error(error.message);
   });
   await satellite.start();
-  console.log(
-    "2. Contributor parked a real ACP child process over an outbound WebSocket.",
-  );
+  console.log("2. Contributor's agent connected over an outbound WebSocket.");
   const turnId = randomUUID();
   await maintainer.dispatch(c.chat, {
     type: ActionType.ChatTurnStarted,
@@ -158,9 +156,7 @@ try {
         selectedOptionId: selected.id,
       });
       approved.add(tool.toolCall.toolCallId);
-      console.log(
-        "3. Maintainer approved the tool through the ordinary AHP confirmation flow.",
-      );
+      console.log("3. Maintainer approved the tool call.");
     }
     const state = await maintainer.snapshot<ExchangeState>(c.exchange);
     if (!chat.activeTurn && chat.turns.length && !state.checkpoint)
@@ -219,12 +215,12 @@ try {
       { mode: 0o600, flag: "wx" },
     );
   console.log(
-    `6. Contributor retained the same ${archive.actions.length} durable actions; ${approved.size} tool permission requests were approved.`,
+    `6. Contributor's copy of the session has all ${archive.actions.length} events. Tool approvals: ${approved.size}.`,
   );
   console.log(
     liveAgent
       ? "Live-agent integration passed using the configured ACP adapter."
-      : "Demo passed. This fixture demonstrates the protocol and real Git/test execution; it uses no model or API credits.",
+      : "Demo passed. A scripted agent made the edit and ran Git operations and tests without using model or API credits.",
   );
 } finally {
   await satellite?.stop();

@@ -137,10 +137,7 @@ export function ContributionCard({
       </div>
       <span className="card-task">{contribution.exchange.task}</span>
       <h3>{contribution.title}</h3>
-      <p>
-        {contribution.preview ||
-          "A new place to bring your agent, share context and move the project forward."}
-      </p>
+      <p>{contribution.preview || "No description yet."}</p>
       <div className="card-evidence">
         <span>
           <GitBranch size={13} />

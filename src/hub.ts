@@ -272,7 +272,7 @@ export class Hub {
       requireThat(
         peer.actor.sessions === "*",
         Codes.forbidden,
-        "Direct memory subscription requires repository-wide authority; use scoped search",
+        "Only repository-wide maintainers can subscribe to memory directly. Use search instead.",
       );
     }
     requireThat(this.store.has(resource), Codes.missing, "Unknown channel");
@@ -292,7 +292,7 @@ export class Hub {
       requireThat(
         text.length <= 65_536 || message.method === "_axp/blobPut",
         Codes.limit,
-        "Message too large; use a content reference",
+        "Message too large. Upload it as a blob and send a reference instead.",
       );
       const result = this.handle(peer, message.method, message.params);
       if (message.id !== undefined)
@@ -588,7 +588,7 @@ export class Hub {
     requireThat(
       "operationId" in p,
       Codes.invalid,
-      "Mutation requires an operation ID",
+      "This command needs an operationId",
     );
     return this.mutate(
       peer.actor.id,
@@ -632,12 +632,12 @@ export class Hub {
       requireThat(
         actor.role !== "observer",
         Codes.forbidden,
-        "Observers cannot post discussion",
+        "Observers can't post comments",
       );
       requireThat(
         (state.discussion?.length ?? 0) < 256,
         Codes.limit,
-        "Discussion limit reached; the full history remains available",
+        "This discussion has reached its comment limit. Older comments are still in the session export.",
       );
       requireThat(
         q.checkpoint === null || q.checkpoint === state.checkpoint?.headCommit,
@@ -794,7 +794,7 @@ export class Hub {
         return tx.putBlob(s.resource, data, q.mediaType);
       }
       default:
-        requireThat(false, Codes.method, "Unsupported mutation");
+        requireThat(false, Codes.method, "Unsupported command");
     }
     return null;
   }

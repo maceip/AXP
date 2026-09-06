@@ -171,13 +171,10 @@ export default function App() {
         <div className="sidebar-bottom">
           <div className="bring-agent">
             <span className="agent-symbol">✳</span>
-            <h3>
-              A little compute.
-              <br />A lot of possibility.
-            </h3>
-            <p>Bring your agent. Make a contribution that stays.</p>
+            <h3>Connect an agent</h3>
+            <p>You choose its budget. Maintainers direct the work.</p>
             <button onClick={() => setHelp(true)}>
-              Find your place <ArrowUpRight size={15} />
+              Agent setup <ArrowUpRight size={15} />
             </button>
           </div>
           <button className="help-link" onClick={() => setHelp(true)}>
@@ -227,15 +224,16 @@ export default function App() {
           <div className="connection-notice" role="alert">
             {error}{" "}
             {workspace &&
-              "Showing the last received state. Changes are paused."}
+              "Showing the last update we received. You can't make changes until the connection is back."}
             <button onClick={refresh}>Retry</button>
           </div>
         )}
         <main id="main" tabIndex={-1}>
           {session && detail && detailError && !error && (
             <div className="notice error" role="alert">
-              {detailError}. Showing the last received contribution; changes are
-              paused. <button onClick={refresh}>Retry contribution</button>
+              {detailError}. Showing the last update for this contribution.
+              Changes are paused until it reloads.{" "}
+              <button onClick={refresh}>Retry contribution</button>
             </div>
           )}
           {!workspace ? (
@@ -291,21 +289,21 @@ export default function App() {
                   </div>
                   <h1>
                     {page === "overview"
-                      ? "Good work adds up."
+                      ? "Project overview"
                       : page === "contributions"
                         ? "Contributions"
                         : page === "people"
-                          ? "The people behind it."
-                          : "A project, in motion."}
+                          ? "People"
+                          : "Activity"}
                   </h1>
                   <p>
                     {page === "overview"
-                      ? "A place for your agents, your ideas, and the people moving it all forward."
+                      ? "Contributions, agents and people working on this repository."
                       : page === "contributions"
-                        ? "Pick up a thread. Leave the project a little better."
+                        ? "Browse sessions to join, review or discuss."
                         : page === "people"
-                          ? "Compute, context, care. Every kind of contribution belongs here."
-                          : "The checkpoints and conversations that stay with the work."}
+                          ? "People participating in the sessions shown here."
+                          : "Recent checkpoints, verifications and comments."}
                   </p>
                 </div>
                 {workspace.principal.role === "maintainer" && (
@@ -322,18 +320,10 @@ export default function App() {
                 <section className="welcome-card">
                   <div>
                     <div className="welcome-kicker">
-                      <span className="small-orbit" /> OPEN SOURCE, TOGETHER
+                      <span className="small-orbit" /> WAYS TO CONTRIBUTE
                     </div>
-                    <h2>
-                      Bring what you know.
-                      <br />
-                      Build what comes next.
-                    </h2>
-                    <p>
-                      Your agent can do the heavy lifting.
-                      <br />
-                      Your judgment makes the difference.
-                    </p>
+                    <h2>Contribute to this project</h2>
+                    <p>Review changes, ask questions or connect an agent.</p>
                     <button
                       className="text-button"
                       onClick={() => {
@@ -341,7 +331,7 @@ export default function App() {
                         setFilter(needsHelp.length ? "attention" : "waiting");
                       }}
                     >
-                      Find a way to contribute <ArrowRight size={16} />
+                      View open contributions <ArrowRight size={16} />
                     </button>
                   </div>
                   <Constellation
@@ -356,7 +346,7 @@ export default function App() {
                     <div className="section-heading">
                       <h2>
                         {page === "overview"
-                          ? "On the workbench"
+                          ? "Contributions"
                           : "All contributions"}
                         <span>{workspace.total}</span>
                       </h2>
@@ -377,7 +367,7 @@ export default function App() {
                     <div className="filters" aria-label="Filter contributions">
                       {[
                         ["all", "All work"],
-                        ["attention", "Needs a hand"],
+                        ["attention", "Needs attention"],
                         ["working", "In progress"],
                         ["waiting", "Open to join"],
                         ["archived", "Archived"],
@@ -426,13 +416,13 @@ export default function App() {
                       <Empty
                         title={
                           contributions.length
-                            ? "A little quieter here."
-                            : "The first contribution is yours to shape."
+                            ? "No matches"
+                            : "No contributions yet"
                         }
                       >
                         {contributions.length
-                          ? "Try another filter, or start a new thread of work."
-                          : "Open a contribution, invite an agent, and let the work begin."}
+                          ? "Try another search or filter."
+                          : "A maintainer can create a contribution to get started."}
                       </Empty>
                     )}
                     {(offset > 0 ||
@@ -462,7 +452,7 @@ export default function App() {
                   <aside className="community-aside">
                     <section>
                       <div className="section-heading">
-                        <h2>Here, together</h2>
+                        <h2>People</h2>
                         <button
                           className="icon-button"
                           onClick={() => go("people")}
@@ -472,7 +462,7 @@ export default function App() {
                         </button>
                       </div>
                       <p className="aside-subtitle">
-                        The people making it happen.
+                        Participants in these sessions.
                       </p>
                       <div className="people-list">
                         {members.slice(0, 5).map((member) => (
@@ -496,7 +486,7 @@ export default function App() {
                     <section className="agent-presence">
                       <div className="section-heading">
                         <h2>
-                          <Zap size={16} /> Agent presence
+                          <Zap size={16} /> Connected agents
                         </h2>
                         <span>{online.length}</span>
                       </div>
@@ -512,11 +502,7 @@ export default function App() {
                           </div>
                         ))
                       ) : (
-                        <p>
-                          No agents connected yet.
-                          <br />
-                          There is room for yours.
-                        </p>
+                        <p>No agents connected yet.</p>
                       )}
                       <button
                         className="text-button"
@@ -527,11 +513,7 @@ export default function App() {
                     </section>
                     <div className="community-note">
                       <span>↗</span>
-                      <p>
-                        The code matters.
-                        <br />
-                        So do the people who stay.
-                      </p>
+                      <p>Contributing agent time is optional.</p>
                     </div>
                   </aside>
                 </div>
@@ -573,9 +555,8 @@ export default function App() {
                     ))}
                   </div>
                   <p className="fine-print">
-                    Participation reflects the {contributions.length}{" "}
-                    contributions in this view. Agent turns include
-                    conservatively accounted interrupted work.
+                    Counts cover the {contributions.length} contributions shown
+                    here. Interrupted turns count as used.
                   </p>
                 </>
               )}
@@ -584,7 +565,7 @@ export default function App() {
               )}
               <footer className="workspace-footer">
                 <span>
-                  <Mark small /> A little better, together.
+                  <Mark small /> Agent Exchange Protocol
                 </span>
                 <span>AHP · ACP · AAMP</span>
               </footer>
@@ -603,10 +584,7 @@ export default function App() {
         />
       )}
       {help && (
-        <Dialog
-          title="Find your place in the project"
-          close={() => setHelp(false)}
-        >
+        <Dialog title="Getting started" close={() => setHelp(false)}>
           <div className="dialog-body onboarding">
             <div className="onboarding-step">
               <span>01</span>
@@ -621,7 +599,7 @@ export default function App() {
             <div className="onboarding-step">
               <span>02</span>
               <div>
-                <h3>Bring your agent</h3>
+                <h3>Connect an agent (optional)</h3>
                 <p>
                   From your checkout, connect your ACP agent using your
                   contributor profile and a budget you choose.
@@ -639,10 +617,10 @@ export default function App() {
             <div className="onboarding-step">
               <span>03</span>
               <div>
-                <h3>Stay for the conversation</h3>
+                <h3>Review and discuss</h3>
                 <p>
-                  Review the changes, share context, and help the next person
-                  build on what you learned.
+                  Review changes, ask questions and record decisions in the
+                  discussion.
                 </p>
               </div>
             </div>

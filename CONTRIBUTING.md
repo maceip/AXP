@@ -19,45 +19,46 @@ Use Node.js 24.15+, npm and Git. After `npm ci`:
 | Host, agent or protocol behavior | `npx tsx --test test/NAME.test.ts`                                        |
 | SDK or CLI packaging             | `npm run build && npm pack && npm run test:package`                       |
 | Linux service tooling            | `npm run test:ops`; the disposable Linux systemd fixture runs in CI       |
-| Formatting                       | `npm run format` includes the UI and owned docs                           |
+| Formatting                       | `npm run format` includes the UI and project documentation                |
 
 Before proposing a change, run `npm run check` and `npm run demo`. For browser
 changes, also run `npx playwright install chromium` and `npm run test:ui`.
-Check the actual interaction with a keyboard and at a narrow viewport; an
+Check the interaction with a keyboard and at a narrow viewport; an
 accessibility scan alone does not prove usability. [Validation details](docs/validation.md)
-explain what each check establishes.
+explain what each check covers.
 
 ## Find the right boundary
 
-| Location                                        | Owns                                                           |
-| ----------------------------------------------- | -------------------------------------------------------------- |
-| `src/protocol/`                                 | Extension types, schemas and pure reducers                     |
-| `src/hub.ts`, `sessions.ts`, `store.ts`         | Transport authority, session transitions and SQLite durability |
-| `src/satellite*.ts`, `acp.ts`                   | Contributor connection supervision, turns and agent processes  |
-| `src/git.ts`, `artifacts.ts`, `verification.ts` | Checkpoints, signatures and exact-commit checks                |
-| `src/aamp/`, `aamp.ts`                          | Mail transport, local admission and durable reconciliation     |
-| `src/workspace*.ts`, `ui/src/`                  | Personal gateway, typed browser commands and user experience   |
-| `docs/`, `deploy/linux/`, `scripts/`            | Explanation, service setup and release verification            |
+| Location                                        | Owns                                                         |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| `src/protocol/`                                 | Extension types, schemas and pure reducers                   |
+| `src/hub.ts`, `sessions.ts`, `store.ts`         | Authentication, session transitions and SQLite storage       |
+| `src/satellite*.ts`, `acp.ts`                   | Agent connections, turns and process cleanup                 |
+| `src/git.ts`, `artifacts.ts`, `verification.ts` | Checkpoints, signatures and commit verification              |
+| `src/aamp/`, `aamp.ts`                          | Mail transport, task routing and delivery recovery           |
+| `src/workspace*.ts`, `ui/src/`                  | Personal gateway, typed browser commands and user experience |
+| `docs/`, `deploy/linux/`, `scripts/`            | Explanation, service setup and release verification          |
 
 Preserve the AHP/ACP boundary: reuse pinned upstream types and reducers;
-prefer additive capabilities. Public mutations need a runtime schema, typed
-result, authority check and durable transition. Keep I/O out of reducers and
-awaits out of database transactions. The browser must not acquire a separate
-execution or review authority. [Design rationale](docs/design.md)
+add optional capabilities without changing how other AHP clients display
+sessions. Commands that change shared state need a runtime schema, typed result,
+permission check and transaction that saves the change. Keep I/O out of reducers
+and awaits out of database transactions. The host must check permissions for
+browser requests just as it does for every other client. [Design rationale](docs/design.md)
 
-Tests should explain an externally meaningful contract or failure mode.
-Prioritize real sockets, process lifetime, recovery, spending and authorization
-over implementation-shape assertions. Keep the upstream fixture bytes and
-license intact. Change SDK pins and conformance evidence together. AXP's pure
-reducers retain 100% branch and line coverage; that is a floor, not a measure
-of overall product quality.
+Each test should cover a behavior users can observe or a way things can fail.
+Prioritize sockets, process cleanup, recovery, spending and authorization over
+tests that only check internal structure. Upstream fixtures prove conformance;
+do not modify them, and keep their license. When updating an SDK version, verify
+compatibility with its fixtures. Maintain 100% branch and line coverage for AXP's
+pure reducers, while judging overall quality by how well the product works.
 
 After command schema changes, run `npm run schema` and commit the generated
 files. CI checks drift. Describe public behavior changes in the changelog.
-For performance work, report the workload and before/after evidence; do not
-turn a local microbenchmark into a fleet-capacity claim.
+For performance work, report the workload and before/after measurements. A local microbenchmark
+does not measure how many concurrent contributors a deployment can support.
 
 Never commit credentials, profiles, databases, private transcripts or
 contributor histories. Use the private process in [SECURITY.md](SECURITY.md)
-for security reports. The official community onboarding change is explicitly
+for security reports. The official community onboarding change is
 [awaiting owner approval](docs/community-onboarding-proposal.md).

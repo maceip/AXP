@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Clarify workspace labels, CLI help, errors, email responses and documentation.
+- Show readable turn and tool statuses, including failed tool calls.
+
 ## 0.3.1
 
 - Fix uncertain browser permission/signature retries, reload-safe discussion
@@ -22,37 +27,37 @@
 
 ## 0.3.0
 
-- AAMP mailbox adapter with durable admission, delivery and retry journals.
+- AAMP mailbox adapter with saved tasks, delivery and retry journals.
 - Personal browser workspace for contributions, discussion, streamed sessions,
   Git diffs and independent signed artifact review.
-- Namespaced durable dispatch and attributed discussion commands.
-- Linux service wrappers, health supervision and verified SQLite backups.
+- Namespaced dispatch commands with saved receipts and attributed discussion.
+- Linux service wrappers, health checks and automatic restart and verified SQLite backups.
 
 ## 0.2.0
 
-- Automatic satellite reconnection with bounded backoff, one donation and a
-  retained local worktree. Interrupted prompts and permissions are not replayed.
-- Atomic resume claims reconcile lost responses and reject intervening ownership
-  changes. Revocation and exhausted allowances stop recovery.
+- Automatic agent reconnection with limited backoff, one budget grant and a
+  saved local worktree. Interrupted prompts and permissions are not replayed.
+- Reconnecting agents recover from lost replies and stop if another agent took
+  over in between. Revocation and exhausted allowances stop recovery.
 - Separate connection supervision and lease execution, with heartbeat deadlines,
   complete process cleanup and cancellation during connection setup.
 - `--no-reconnect`, observable satellite connection states and clean CLI signal
-  handling during startup, retries and natural termination.
+  handling during startup, retries and normal exit.
 - Real socket fault tests cover lost acknowledgements, half-open connections,
-  host restart, ownership transfer, revocation and spending continuity.
+  host restart, ownership transfer, revocation and spending carrying over correctly.
 - Upgrade host and satellite together: AXP negotiation is now 0.2.0. AHP 0.9.0,
   ACP v1 and the SQLite state format are unchanged.
 
 ## 0.1.0
 
-- AHP 0.9.0 host and Node client with durable state, replay and scoped access.
+- AHP 0.9.0 host and Node client with persistent state, replay and scoped access.
 - ACP v1 satellites with streaming, maintainer permissions, steering, local
-  worktrees and retained history.
-- Executor discovery, fenced claims, heartbeats and donor allowances.
+  worktrees and saved history.
+- Executor discovery, fenced claims, heartbeats and contributor budgets.
 - Content-addressed artifacts, Git bundle recovery, signed review and separate
   exact-commit verification.
 - Context compaction, reviewed repository memory, cache compatibility and an
   MTPLX HTTP/distillation adapter.
 - Upstream AHP conformance fixtures and behavioral integration tests.
-- Explicit local ACP authentication, provider-usage normalization and live
-  Codex ACP contribution evidence.
+- Local ACP authentication, provider-usage normalization and live
+  a recorded Codex ACP contribution run.

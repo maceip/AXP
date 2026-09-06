@@ -62,7 +62,7 @@ export function launchAgent(
   requireThat(
     !Object.keys(env).some((k) => k.startsWith("AXP_")),
     Codes.forbidden,
-    "AXP control credentials must not enter the agent environment",
+    "AXP_* variables can't be passed to the agent",
   );
   if (config.isolation === "container") {
     requireThat(

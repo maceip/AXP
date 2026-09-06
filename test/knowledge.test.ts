@@ -28,7 +28,7 @@ test("explicit compaction retains raw history; scoped lessons need review and co
       decisions: [],
       activeFiles: [],
     }),
-    /quiescent/,
+    /Wait for the current turn to finish/,
   );
   await f.contributor.call("_axp/settle", {
     channel: f.c.exchange,
@@ -70,7 +70,7 @@ test("explicit compaction retains raw history; scoped lessons need review and co
       channel: f.c.exchange,
       proposalId: proposal.id,
     }),
-    /Maintainer/,
+    /Only maintainers can do this/,
   );
   await f.maintainer.call("_axp/acceptCompaction", {
     channel: f.c.exchange,
@@ -221,7 +221,7 @@ test("artifact signatures bind to exact code and trace; verifier has separate au
       channel: f.c.exchange,
       signature: signObject(manifest, key()),
     }),
-    /Maintainer/,
+    /Only maintainers can do this/,
   );
   await f.maintainer.call("_axp/approveReview", {
     channel: f.c.exchange,

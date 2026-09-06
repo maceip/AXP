@@ -22,7 +22,7 @@ test("a contributor can inspect a host checkpoint, discuss a file and retain att
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(await f.open("contributor"));
     await expect(
-      page.getByRole("heading", { name: "Good work adds up." }),
+      page.getByRole("heading", { name: "Project overview" }),
     ).toBeVisible();
     await expect(page).not.toHaveURL(/access=/);
     await expect(
@@ -45,9 +45,7 @@ test("a contributor can inspect a host checkpoint, discuss a file and retain att
         })),
       })),
     ).toEqual([]);
-    await page
-      .getByRole("button", { name: /Make parser errors feel human/ })
-      .click();
+    await page.getByRole("button", { name: /Explain parser errors/ }).click();
     await expect(
       page.getByRole("tab", { name: "Changes", exact: true }),
     ).toHaveAttribute("aria-selected", "true");
@@ -284,7 +282,7 @@ test("maintainer creation, permission controls and reconnect converge with host 
       .getByRole("button", { name: "All contributions", exact: true })
       .click();
     await page
-      .getByRole("button", { name: /A warmer first five minutes/ })
+      .getByRole("button", { name: /Improve first-time setup/ })
       .click();
     await page.getByRole("button", { name: "Allow once", exact: true }).click();
     await expect(
@@ -292,7 +290,7 @@ test("maintainer creation, permission controls and reconnect converge with host 
     ).toHaveCount(0);
     await context.setOffline(true);
     await expect(page.getByRole("alert")).toContainText(
-      "Showing the last received state",
+      "Showing the last update we received",
     );
     await context.setOffline(false);
     await expect(page.getByRole("alert")).toHaveCount(0);
@@ -305,9 +303,7 @@ test("maintainer creation, permission controls and reconnect converge with host 
     ).toBeVisible();
     await page.getByRole("button", { name: "People", exact: true }).click();
     await page.reload();
-    await expect(
-      page.getByRole("heading", { name: "The people behind it." }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "People" })).toBeVisible();
     await page.goBack();
     await expect(
       page.getByRole("heading", { name: "Contributions", exact: true }),
@@ -346,7 +342,7 @@ test("a missing deep link leaves the workspace usable and an agent failure expla
       .getByRole("button", { name: "All contributions", exact: true })
       .click();
     await page
-      .getByRole("button", { name: /Bring asynchronous agents into the fold/ })
+      .getByRole("button", { name: /Handle email task retries/ })
       .click();
     const state = await f.contributor.snapshot<ExchangeState>(
       "axp-session:/mail-bridge",
@@ -376,9 +372,7 @@ test("a file discussion draft and its checkpoint reference survive reload withou
   const f = await workspaceFixture();
   try {
     await page.goto(await f.open("contributor"));
-    await page
-      .getByRole("button", { name: /Make parser errors feel human/ })
-      .click();
+    await page.getByRole("button", { name: /Explain parser errors/ }).click();
     await page.getByRole("button", { name: "Discuss this file" }).click();
     await page
       .getByLabel("Join the discussion")
@@ -492,7 +486,7 @@ test("stored agent content is inspectable and downloadable without executing its
     });
     await page.goto(await f.open("observer"));
     await page
-      .getByRole("button", { name: /Bring asynchronous agents into the fold/ })
+      .getByRole("button", { name: /Handle email task retries/ })
       .click();
     await page
       .getByRole("button", { name: "View content", exact: true })

@@ -71,7 +71,7 @@ test("donor revocation settles once, fences output and releases the task only on
   await assert.rejects(create(), /already owns/);
   await assert.rejects(
     f.contributor.call("_axp/close", { channel: f.c.exchange }),
-    /Maintainer/,
+    /Only maintainers can do this/,
   );
   await f.maintainer.call("_axp/close", { channel: f.c.exchange });
   const closed = await f.observer.snapshot<ChatState>(f.c.chat);
@@ -83,7 +83,10 @@ test("donor revocation settles once, fences output and releases the task only on
     (await f.observer.snapshot<ExchangeState>(f.c.exchange)).status,
     "closed",
   );
-  await assert.rejects(f.maintainer.dispatch(f.c.chat, prompt()), /open chat/);
+  await assert.rejects(
+    f.maintainer.dispatch(f.c.chat, prompt()),
+    /open session's chat/,
+  );
 });
 
 test("an executor cannot impersonate a registry owner or claim maintainer approval", async (t) => {
@@ -194,17 +197,20 @@ test("a scoped contributor cannot read another task through subscriptions, blobs
     1,
   );
   await limited.snapshot(f.c.chat);
-  await assert.rejects(limited.snapshot(hidden.chat), /scope/);
+  await assert.rejects(
+    limited.snapshot(hidden.chat),
+    /You don't have access to this channel/,
+  );
   await assert.rejects(
     limited.call("_axp/export", { channel: hidden.exchange }),
-    /scope/,
+    /You don't have access to this channel/,
   );
   await assert.rejects(
     limited.ahp.request("resourceRead", {
       channel: "ahp-root://",
       uri: blob.uri,
     }),
-    /scope/,
+    /You don't have access to this channel/,
   );
   await assert.rejects(
     limited.call("_axp/blobGet", {

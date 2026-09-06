@@ -426,7 +426,7 @@ test("durable AHP dispatch keeps maintainer authority and detects changed retrie
   const action = prompt();
   await assert.rejects(
     f.contributor.dispatch(f.c.chat, action, "attempt"),
-    /Maintainer/,
+    /Only maintainers can do this/,
   );
   await f.maintainer.dispatch(f.c.chat, action, "durable-action");
   const client = await AxpClient.connect(f.url, f.credentials[0]!.token);
@@ -479,7 +479,10 @@ test("AAMP help requests report pending permissions without granting email execu
     f.mailbox.sent.filter((r) => r.intent === "task.help_needed").length,
     1,
   );
-  assert.match(f.mailbox.sent.at(-1)!.text, /Mail replies do not grant/);
+  assert.match(
+    f.mailbox.sent.at(-1)!.text,
+    /Replying to this email won't grant permission/,
+  );
   const chat = await f.host.maintainer.snapshot<ChatState>(f.host.c.chat);
   const part = chat.activeTurn!.responseParts[0];
   assert.equal(

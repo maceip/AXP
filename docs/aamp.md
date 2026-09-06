@@ -1,10 +1,10 @@
 # AAMP mailbox adapter
 
-AXP accepts [AAMP 1.1](https://github.com/larksuite/aamp) text tasks into
-existing repository sessions. Mail is an asynchronous entry point; the AXP
-host still owns admission, history, execution leases, donor budgets, tool
-permissions and artifact review. ACP agents parked at those sessions perform
-the work. Consumer TEE attestation remains deferred.
+AXP can receive [AAMP 1.1](https://github.com/larksuite/aamp) text tasks by email
+and run them in existing repository sessions. The host decides which tasks to
+accept and manages history, execution leases, contributor budgets, tool
+permissions and artifact review. ACP agents connected to those sessions run
+the tasks.
 
 ## Connect a mailbox
 
@@ -13,8 +13,8 @@ Its service must authenticate senders and prevent forged `From` identities.
 A local address allowlist is not a cryptographic proof of who sent a message.
 The adapter neither registers accounts nor changes the service's pairing policy.
 
-Create the assigned session and park an agent using the normal
-[contribution workflow](../README.md#use-your-own-agent). Save this example as
+Create the assigned session and connect an agent using the normal
+[agent setup guide](agent-setup.md). Save this example as
 `.axp/aamp.json`, replacing the example mailbox, endpoints and sender:
 
 ```json
@@ -49,11 +49,11 @@ to AXP. Remote JMAP requires HTTPS; remote SMTP requires STARTTLS or implicit
 TLS (`smtpSecure: true`, normally port 465). Discovered JMAP endpoints must
 remain on the configured origin. Database paths are relative to the project.
 
-Each dispatch must match exactly one rule: sender, optional `Session-Key`,
+Each dispatch must match exactly one route: sender, optional `Session-Key`,
 and every configured `Dispatch-Context` value. Extra context keys do not grant
-access. Overlapping rules are rejected at admission. Mail cannot create or
-select arbitrary sessions. Remove or change a rule and restart the adapter
-to revoke that route; active work is cancelled and queued output is withheld.
+access. If more than one route matches, the task is rejected. Mail cannot create or
+select arbitrary sessions. Remove or change a route and restart the adapter
+to revoke that route; in-progress work is cancelled and pending replies are not sent.
 
 With the reference AAMP SDK, send a task using a new task ID:
 
@@ -76,18 +76,17 @@ await sender.sendTask({
 
 | AAMP message       | AXP behavior                                                                                                                                       |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `task.dispatch`    | Durably admit one text task, then acknowledge it. Queue behind existing work and start one AHP turn when the session is free.                      |
-| `task.ack`         | Admission receipt; an executor may still need to be parked.                                                                                        |
+| `task.dispatch`    | Save the task, then acknowledge it. Queue behind existing work and start one AHP turn when the session is free.                                    |
+| `task.ack`         | Confirms the task was received. An agent may still need to connect before it runs.                                                                 |
 | `task.help_needed` | Explain a pending tool permission and identify its AXP session/tool. A maintainer answers through AXP; mail does not approve tools.                |
 | `task.cancel`      | Cancel that sender's task, including a queued task. A cancellation received first leaves a tombstone preventing later dispatch.                    |
 | `task.result`      | Return completed/rejected status, response text and structured session/turn identifiers. Include the checkpoint produced during that turn, if any. |
 | `card.query`       | Return a brief capability description to a locally authorized sender.                                                                              |
-| `pair.request`     | Reject with instructions to configure access locally; never widen admission from mail.                                                             |
+| `pair.request`     | Reject with instructions to configure access locally; email cannot grant access.                                                                   |
 
 This adapter's profile maps **one task ID to one AHP turn**. Use a new task ID
-for the next turn and retain `Session-Key` for continuity. A repeated task ID
-cannot run twice or replace its original instructions/deadline. This profile
-does not accept clarification dispatches into an existing task. Cancellation
+for the next turn and keep `Session-Key` for continuity. A repeated task ID
+cannot run twice or replace its original instructions/deadline. You cannot send follow-up messages to a task that is already running. Cancellation
 needs only the original sender and task ID, without repeating routing context.
 
 Expired tasks cannot start after downtime; active expired tasks are cancelled
@@ -97,23 +96,23 @@ approved, independently verified or merged. Those remain separate AXP records.
 
 Plain-text tasks are limited to 48 KB. Truncated bodies, empty tasks and tasks
 with attachments receive a rejection; attachments are never silently omitted
-from execution. Results longer than 128,000 characters disclose shortening
-and retain the full transcript in AXP. The active queue holds up to 256 tasks.
-Unknown intents are inert. Malformed or unauthorized messages produce local
+from execution. Results longer than 128,000 characters are cut off with a note saying so.
+The full transcript is kept in AXP. The active queue holds up to 256 tasks.
+Unknown message types are ignored. Malformed or unauthorized messages produce local
 warnings rather than replying to an untrusted sender.
 
-## Durability and delivery
+## Storage and delivery
 
 The adapter polls every five seconds. It paginates the complete mailbox on
-first connection, so old unexpired tasks can be admitted; use expiry headers
+first connection, so old unexpired tasks can be accepted; use expiry headers
 or a dedicated mailbox when establishing the initial route. JMAP cursor
 advancement and inbox storage share a SQLite transaction. Expired JMAP state
 triggers a full paginated rescan. Mailbox changes during pagination restart
 the scan without skipping shifted messages.
 
 The journal deduplicates both mailbox IDs and sender/Message-ID pairs. Stable
-task IDs and the host's durable `_axp/dispatch` receipt prevent duplicate
-execution when a connection fails after commit. An outgoing journal retains
+task IDs and the host's saved `_axp/dispatch` receipt prevent duplicate
+execution when a connection fails after commit. An outgoing journal saves
 acknowledgements, help requests and results across restarts. SMTP delivery is
 **at least once**: if acceptance succeeds but its reply is lost, the adapter
 resends the exact payload with the same Message-ID. Receivers should deduplicate
@@ -130,19 +129,19 @@ the next successful receive; cancellation is checked before reconciliation.
 `@maceip/axp/aamp` exports `AampBridge`, `JmapSmtpMailbox` and their typed
 interfaces. Supply another `AampMailbox` implementation for a different mail
 transport; preserve cursor, sender-authentication and stable Message-ID
-semantics. `bridge.sync()` performs one bounded pass; `bridge.run(signal)`
+semantics. `bridge.sync()` performs one pass with limits on queued tasks; `bridge.run(signal)`
 supervises polling until cancellation. Listen for `warning` events for
-admission and transient transport failures.
+rejected tasks and temporary connection failures.
 
 The wire implementation follows the pinned
 [AAMP 1.1 specification](https://github.com/larksuite/aamp/blob/7fd750875f4da2417672b91aa39eb30d4d7c80d3/docs/AAMP_CORE_SPECIFICATION.md).
 Tests build requests and parse replies with the unmodified `aamp-sdk` 0.1.24
-wire helpers, exercise real loopback SMTP/JMAP, and drop real committed AHP
-replies. The SDK is a development dependency; the runtime uses a small
-explicit codec and Nodemailer 10. This avoids the reference client's automatic
+wire helpers, exercise loopback SMTP/JMAP, and drop AHP replies after the
+host has committed the request. The SDK is a development dependency; the runtime uses a small
+codec and Nodemailer 10. This avoids the reference client's automatic
 acknowledgement before application authorization and in-memory receive cursor.
 
-This is an AAMP ingress adapter, not an AAMP mail service or an outbound
-executor/delegation driver. Optional SSE streaming, attachment execution,
-dynamic pairing and discovery hosting are not advertised. No live external
+This adapter receives tasks. It is not a mail server and does not send tasks
+to other agents. SSE streaming, attachments, dynamic pairing and discovery
+hosting are not supported. No live external
 mailbox delivery has been verified; transport tests use local servers.

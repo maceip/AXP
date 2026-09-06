@@ -65,7 +65,7 @@ export class Sessions {
             {
               provider: "axp",
               displayName: "Parked ACP agent",
-              description: "Contributor-owned or hosted ACP execution",
+              description: "An ACP agent connected by a contributor",
               models: [],
             },
           ],
@@ -135,21 +135,21 @@ export class Sessions {
     requireThat(
       this.readable(principal, resource),
       Codes.forbidden,
-      "Channel is outside your assigned scope",
+      "You don't have access to this channel",
     );
   }
   maintain(principal: Principal): void {
     requireThat(
       principal.role === "maintainer",
       Codes.forbidden,
-      "Maintainer authority required",
+      "Only maintainers can do this",
     );
   }
   contribute(principal: Principal): void {
     requireThat(
       principal.role === "contributor" || principal.role === "maintainer",
       Codes.forbidden,
-      "Contributor authority required",
+      "Only contributors and maintainers can do this",
     );
   }
   create(
@@ -250,12 +250,12 @@ export class Sessions {
     requireThat(
       within(committed, limit),
       Codes.budget,
-      "Limit is below recorded spending",
+      "The new limit is lower than what has already been spent",
     );
     requireThat(
       !state.reservation || state.reservation.grantId !== id,
       Codes.conflict,
-      "Cannot change a grant during a reserved turn; revoke to stop",
+      "You can't change the budget while a turn is running. Revoke it to stop the agent.",
     );
     const grant: Grant = {
       id,
@@ -337,7 +337,7 @@ export class Sessions {
     requireThat(
       grant && grant.owner === principal.id && !grant.revoked,
       Codes.forbidden,
-      "An active donation owned by this principal is required",
+      "You need an active budget grant on this session first",
     );
     const epoch = state.epoch + 1;
     const lease: Lease = {
@@ -576,14 +576,14 @@ export class Sessions {
     requireThat(
       state.reservation?.epoch === epoch,
       Codes.budget,
-      "Reserve a turn before producing output",
+      "The agent must reserve the turn before it can send output",
     );
     for (const value of raw) {
       const action = actionFrom(value);
       requireThat(
         EXECUTOR_ACTIONS.has(action.type),
         Codes.forbidden,
-        "Executor cannot originate this AHP action",
+        "Agents can't send this kind of action",
       );
       const chat = this.store.get<ChatState>(state.chat);
       requireThat(
@@ -595,7 +595,7 @@ export class Sessions {
         requireThat(
           ["markdown", "reasoning", "contentRef"].includes(action.part.kind),
           Codes.forbidden,
-          "Use typed tool or error transitions",
+          "Tool calls and errors must use their own action types",
         );
         if ("id" in action.part) {
           const partId = action.part.id;
@@ -628,7 +628,7 @@ export class Sessions {
         requireThat(
           !("contributor" in action) && !("clientId" in action),
           Codes.forbidden,
-          "Tool authority is assigned by the host",
+          "Tool ownership is set by the host, not the agent",
         );
         const tool = this.tool(chat, action.toolCallId);
         if (action.type === ActionType.ChatToolCallStart)
@@ -688,7 +688,7 @@ export class Sessions {
     requireThat(
       resource === state.chat && state.status !== "closed",
       Codes.invalid,
-      "Dispatch to an open chat channel",
+      "This action must target an open session's chat",
     );
     const action = actionFrom(raw);
     const chat = this.store.get<ChatState>(state.chat);
@@ -697,7 +697,7 @@ export class Sessions {
         requireThat(
           !chat.activeTurn && !state.reservation,
           Codes.busy,
-          "A turn is already active; steer or queue a message",
+          "A turn is already running. Use steer or queue instead.",
         );
         requireThat(
           !chat.turns.some((t) => t.id === action.turnId),
@@ -778,7 +778,7 @@ export class Sessions {
           requireThat(
             option && (option.kind === "approve") === action.approved,
             Codes.invalid,
-            "Choose a matching offered permission option",
+            "Pick one of the options the agent offered",
           );
         }
         requireThat(
@@ -882,7 +882,7 @@ export class Sessions {
           typeof object.uri === "string" &&
             object.uri.startsWith(`axp-blob:/${encodeURIComponent(resource)}/`),
           Codes.forbidden,
-          "Executor content references must use session-owned blobs",
+          "Content references must point to blobs uploaded in this session",
         );
         const digest = object.uri.split("/").at(-1)!;
         requireThat(

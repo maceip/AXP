@@ -15,8 +15,8 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   override render() {
     return this.state.failed ? (
       <main className="fatal">
-        <h1>The workspace could not render.</h1>
-        <p>Your shared history remains on the repository host.</p>
+        <h1>Something went wrong displaying the workspace.</h1>
+        <p>Your session history is stored on the repository host.</p>
         <button className="button primary" onClick={() => location.reload()}>
           Reload workspace
         </button>

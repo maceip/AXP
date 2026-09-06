@@ -60,7 +60,7 @@ export class MtplxClient {
     requireThat(
       Number.isSafeInteger(maxTokens) && maxTokens > 0,
       Codes.invalid,
-      "Set an explicit output token ceiling",
+      "Set a maximum output token count",
     );
     const response = await fetch(new URL("/v1/chat/completions", this.base), {
       method: "POST",
@@ -150,7 +150,7 @@ export class MtplxDistiller implements Distiller {
     requireThat(
       transcript.length <= 128_000,
       Codes.limit,
-      "Distill a bounded session range",
+      "The transcript is too long to distill; pick a shorter range",
     );
     const result = await this.client.complete(
       this.session,

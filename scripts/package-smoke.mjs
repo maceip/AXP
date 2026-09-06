@@ -64,7 +64,7 @@ try {
     cwd: directory,
   });
   assert.equal(help.status, 0, help.stderr);
-  assert.match(help.stdout, /park an agent/);
+  assert.match(help.stdout, /shared repository sessions for coding agents/);
   assert.match(help.stdout, /--no-reconnect/);
   assert.match(help.stdout, /aamp --config/);
   const version = spawnSync(process.execPath, [cli, "--version"], {
@@ -132,7 +132,7 @@ try {
     await hub.close();
   }
   console.log(
-    "Packaged CLI, AAMP import, access profiles and authenticated workspace assets/API passed.",
+    "Package smoke test passed: CLI, AAMP import, profiles, and workspace assets/API.",
   );
 } finally {
   await rm(directory, { recursive: true, force: true });

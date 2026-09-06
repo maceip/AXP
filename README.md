@@ -7,17 +7,17 @@
 AXP keeps the conversation, agent work, code changes and review together.
 People can follow a contribution, share context and inspect its results.
 Contributors who choose to connect an agent control its compute allowance;
-maintainers guide the work in a shared, durable session.
+maintainers guide the work in a shared session.
 
 The project is written in **TypeScript**, runs on **Node.js 24.15+**, and uses
-**React** for the browser workspace and **SQLite** for durable host state.
+**React** for the browser workspace and **SQLite** to save host state.
 It extends Microsoft's [Agent Host Protocol (AHP)](https://github.com/microsoft/agent-host-protocol)
 and drives agent processes through [Agent Client Protocol (ACP)](https://github.com/agentclientprotocol/typescript-sdk).
-The [AAMP adapter](docs/aamp.md) brings authorized mailbox tasks into the same sessions.
+The [AAMP adapter](docs/aamp.md) lets approved senders email tasks to the same sessions.
 
 ![The AXP contribution workspace](docs/evidence/workspace.png)
 
-_The screenshot shows the deterministic demo, not live community activity._
+_Screenshot from the sample demo workspace._
 
 ## Try AXP
 
@@ -36,9 +36,8 @@ Open the private link printed in your terminal. Explore contributions, inspect
 a diff and leave a comment. The demo runs locally with clearly labelled sample
 work; Ctrl-C ends it. [What to try and how it works →](docs/getting-started.md)
 
-To exercise the complete contribution loop—an ACP process, permission,
-a real Git edit and independent verification—run `npm run demo`.
-That fixture is deterministic too; it does not call a model.
+Run `npm run demo` to follow an ACP agent through a tool approval, a Git edit
+and independent verification. The agent is scripted; it does not call a model.
 
 ## Where the project stands
 
@@ -64,8 +63,8 @@ a community image, with recognition for helping. That onboarding change is
 Git worktrees isolate edits; native agent tools still run with the contributor's
 user permissions. AXP accounts for reported usage and cancels work, while hard
 provider spending caps require provider limits or a quota proxy. Signatures
-identify who attested to an artifact; independent checks and human review
-establish confidence in it. Consumer TEE attestation remains deferred.
+identify who submitted and approved an artifact. Independent checks and human
+review help assess whether it works.
 
 [Validation and its limits](docs/validation.md) · [Security](SECURITY.md) ·
 [Third-party notices](THIRD_PARTY_NOTICES.md)

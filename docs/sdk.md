@@ -44,7 +44,7 @@ try {
 
 A snapshot subscribes that connection to its channel. Listen for `action`
 events if you need live updates, and unsubscribe channels you no longer use.
-The host bounds each connection to 256 subscriptions. Its AHP client and the
+The host limits each connection to 256 subscriptions. Its AHP client and the
 AXP reducers are the reference for applying ordered state changes.
 
 ## Make a mutation safely
@@ -67,7 +67,7 @@ const comment = await client.call("_axp/comment", input);
 ```
 
 If the reply is lost, reconnect and retry with **the same operation ID and
-input**. The durable receipt returns the original result. Changed input under
+input**. The saved receipt returns the original result. Changed input under
 that ID is a conflict. A new operation ID means new work; do not generate one
 for an uncertain retry. The same rule applies to
 `client.dispatch(channel, action, operationId)`.
@@ -86,8 +86,8 @@ retrying it. A stale lease is not permission to continue execution.
 
 The host has one owner process per database and binds that database to one
 repository name. `Hub.close`, `WorkspaceServer.close` and agent shutdown are
-safe to call repeatedly. A new satellite instance represents a new donation;
-its internal reconnection preserves the original donation and local worktree.
+safe to call repeatedly. A new satellite instance represents a new budget grant;
+reconnecting the same instance preserves its budget grant and local worktree.
 
-See [Protocol](protocol.md) for commands and authority, [Artifacts](artifacts.md)
+See [Protocol](protocol.md) for commands and permissions, [Artifacts](artifacts.md)
 for signing and verification, and [Memory](memory.md) for context integration.

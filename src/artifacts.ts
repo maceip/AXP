@@ -77,7 +77,7 @@ export class Artifacts {
     requireThat(
       !state.reservation,
       Codes.conflict,
-      "Finish the reserved turn before submitting review",
+      "Wait for the current turn to finish before submitting for review",
     );
     const manifest = params.manifest;
     requireThat(
@@ -174,12 +174,12 @@ export class Artifacts {
     requireThat(
       actor.role === "verifier",
       Codes.forbidden,
-      "A separate verifier identity is required",
+      "Only a verifier profile can record verification results",
     );
     requireThat(
       state.checkpoint?.headCommit === params.headCommit,
       Codes.conflict,
-      "Verification does not name the current checkpoint",
+      "This verification does not match the current checkpoint",
     );
     this.sessions.checkBlob(state.resource, params.output);
     tx.emit(state.resource, {

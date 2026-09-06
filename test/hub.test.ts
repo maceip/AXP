@@ -143,7 +143,10 @@ test("real sockets: one atomic claim, gated AHP streaming and idempotent spendin
     /already has/,
   );
   const action = prompt();
-  await assert.rejects(f.observer.dispatch(f.c.chat, action), /Maintainer/);
+  await assert.rejects(
+    f.observer.dispatch(f.c.chat, action),
+    /Only maintainers can do this/,
+  );
   await f.maintainer.dispatch(f.c.chat, action);
   await assert.rejects(
     f.contributor.call("_axp/emit", {
@@ -204,7 +207,10 @@ test("real sockets: one atomic claim, gated AHP streaming and idempotent spendin
     confirmed: ToolCallConfirmationReason.UserAction,
     selectedOptionId: "yes",
   } as const;
-  await assert.rejects(f.contributor.dispatch(f.c.chat, approve), /Maintainer/);
+  await assert.rejects(
+    f.contributor.dispatch(f.c.chat, approve),
+    /Only maintainers can do this/,
+  );
   await f.maintainer.dispatch(f.c.chat, approve);
   await f.contributor.call("_axp/emit", {
     channel: f.c.exchange,

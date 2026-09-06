@@ -162,7 +162,7 @@ export function ContributionPage({
             <span className="divider-dot">·</span>
             <span>
               {contribution.turnCount}{" "}
-              {contribution.turnCount === 1 ? "turn" : "turns"} together
+              {contribution.turnCount === 1 ? "turn" : "turns"}
             </span>
           </div>
         </div>
@@ -266,7 +266,7 @@ export function ContributionPage({
                         ) : exchange.lease ? (
                           "Your agent is connected"
                         ) : (
-                          "An agent can join when ready"
+                          "No agent connected yet"
                         )}
                       </span>
                       <div className="toolbar-actions">
@@ -300,7 +300,7 @@ export function ContributionPage({
                   <p className="read-only-note">
                     {exchange.status === "closed"
                       ? "This session is archived. Its work and discussion remain here."
-                      : "Maintainers guide the agent. You can participate in the discussion."}
+                      : "Only maintainers can send prompts. Other participants can follow the session and read the discussion."}
                   </p>
                 )}
                 {!!chat.queuedMessages?.length && (
@@ -329,9 +329,9 @@ export function ContributionPage({
                   />
                 </Suspense>
               ) : (
-                <Empty title="The next checkpoint will appear here">
-                  As the agent makes progress, its exact Git changes become a
-                  shared place to review and discuss.
+                <Empty title="No checkpoint yet">
+                  Once the agent saves a checkpoint, its changes will show up
+                  here for review.
                 </Empty>
               ))}
             {tab === "discussion" && (
@@ -339,11 +339,8 @@ export function ContributionPage({
                 <div className="discussion-intro">
                   <MessageCircle size={19} />
                   <div>
-                    <h3>Leave context for the next person.</h3>
-                    <p>
-                      Decisions, questions, and a little appreciation stay with
-                      the contribution.
-                    </p>
+                    <h3>Discussion</h3>
+                    <p>Comments stay with this contribution.</p>
                   </div>
                 </div>
                 {(exchange.discussion ?? []).map((item) => (
@@ -469,7 +466,7 @@ export function ContributionPage({
             </div>
           </section>
           <section className="aside-section">
-            <h3>From work to confidence</h3>
+            <h3>Review status</h3>
             <Evidence done={!!checkpoint} text="Checkpoint shared" />
             <Evidence done={!!exchange.review} text="Contributor signed" />
             <Evidence
@@ -517,10 +514,10 @@ export function ContributionPage({
                 </button>
                 <p className="aside-hint">
                   {!workspace.canSign
-                    ? "Start axp ui with --key to enable your signing identity."
+                    ? "Start axp ui with --key to sign approvals."
                     : tab !== "changes"
                       ? "Open Changes to inspect the artifact before approving."
-                      : "Approval signs this exact checkpoint. Publishing is a separate step."}
+                      : "Approving signs this checkpoint. It doesn't publish anything."}
                 </p>
               </>
             )}
@@ -551,8 +548,8 @@ export function ContributionPage({
           {!exchange.lease && exchange.status !== "closed" && (
             <section className="aside-section join-agent">
               <span className="agent-symbol">✳</span>
-              <h3>Bring your agent.</h3>
-              <p>Your compute, a shared contribution.</p>
+              <h3>Connect your agent</h3>
+              <p>Run this command to connect to the session.</p>
               <code>
                 axp park {contribution.id} --profile .axp/contributor.json
                 --native -- YOUR_ACP_AGENT
@@ -583,8 +580,8 @@ export function ContributionPage({
             }}
           >
             <p>
-              Sign this checkpoint and its shared history so a maintainer can
-              review the exact artifact.
+              Sign this checkpoint and its history so a maintainer can review
+              it.
             </p>
             <code className="commit-block">{submit}</code>
             <label htmlFor="artifact-model">Agent or model used</label>
@@ -623,8 +620,8 @@ export function ContributionPage({
         <Dialog title="Approve this artifact" close={() => setApprove(null)}>
           <div className="dialog-body">
             <p>
-              Your signature approves this exact checkpoint. It does not merge
-              or publish code.
+              Your signature approves this checkpoint. It doesn't merge or
+              publish code.
             </p>
             <code className="commit-block">{approve.checkpoint}</code>
             <label className="checkbox-label">

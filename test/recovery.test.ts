@@ -143,7 +143,10 @@ test("client identities and blob references cannot cross authorization scopes", 
     f.observer.call("_axp/blobGet", { channel: other, digest: blob.sha256 }),
     /not found/,
   );
-  await assert.rejects(f.observer.snapshot("axp-memory://"), /Maintainer/);
+  await assert.rejects(
+    f.observer.snapshot("axp-memory://"),
+    /Only maintainers can do this/,
+  );
   await assert.rejects(
     f.observer.call("_axp/blobPut", {
       channel: f.c.exchange,

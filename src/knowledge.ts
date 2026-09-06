@@ -27,7 +27,7 @@ export class Knowledge {
     requireThat(
       !chat.activeTurn && !state.reservation,
       Codes.context,
-      "Compaction requires a quiescent turn boundary",
+      "Wait for the current turn to finish before compacting",
     );
     requireThat(
       params.expectedRevision === state.context.revision,
@@ -38,7 +38,7 @@ export class Knowledge {
       params.throughTurn > state.context.throughTurn &&
         params.throughTurn <= chat.turns.length,
       Codes.context,
-      "Compaction range must advance through retained completed turns",
+      "throughTurn must be after the last compaction and no later than the last completed turn",
     );
     requireThat(
       params.summary.trim().length > 0,
@@ -140,7 +140,7 @@ export class Knowledge {
       !prior ||
         prior.evidence.every((e) => this.sessions.readable(actor, e.session)),
       Codes.forbidden,
-      "Consolidating this lesson requires access to all its evidence",
+      "You need access to every session this lesson cites",
     );
     const evidence = {
       session: state.session,
@@ -180,7 +180,7 @@ export class Knowledge {
     requireThat(
       prior.evidence.every((e) => this.sessions.readable(actor, e.session)),
       Codes.forbidden,
-      "Review requires access to all memory evidence",
+      "You need access to every session this lesson cites",
     );
     const memory = { ...prior, revision: revision + 1, status };
     tx.emit(MEMORY, { type: "_axp/memoryChanged", memory });
@@ -258,7 +258,7 @@ export async function distill(
   requireThat(
     lessons.length <= 3,
     Codes.limit,
-    "Distillation must return at most three lessons",
+    "A distiller can return at most three lessons",
   );
   return lessons;
 }

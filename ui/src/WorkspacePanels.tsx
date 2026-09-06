@@ -55,11 +55,11 @@ export function Constellation({
       </div>
       <div className="floating-note note-one">
         <GitBranch size={16} />
-        <span>One shared history</span>
+        <span>Session history</span>
       </div>
       <div className="floating-note note-two">
         <MessageCircle size={15} />
-        <span>Room for your ideas</span>
+        <span>Discussion</span>
       </div>
       <div className="orbit-person person-one">
         <Avatar name={names[0] ?? "You"} />
@@ -71,7 +71,7 @@ export function Constellation({
         <span className="connection-dot" />
         {online
           ? `${online} agent${online === 1 ? "" : "s"} connected`
-          : "Made for working together"}
+          : "No agents connected"}
       </div>
     </div>
   );
@@ -103,8 +103,7 @@ export function Create({
         }}
       >
         <p>
-          Give a useful piece of work a home. People and agents can pick it up
-          from here.
+          Describe the work. Contributors can connect an agent to this session.
         </p>
         <label htmlFor="contribution-title">What do you want to work on?</label>
         <input
@@ -214,9 +213,8 @@ export function Activity({
       ))}
     </div>
   ) : (
-    <Empty title="The story starts with a contribution.">
-      Shared checkpoints, independent checks and discussion will collect here as
-      the project grows.
+    <Empty title="No activity yet">
+      Checkpoints, verifications and comments will show up here.
     </Empty>
   );
 }

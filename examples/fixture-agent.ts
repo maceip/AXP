@@ -69,7 +69,7 @@ const app = acp
       sessionUpdate: "agent_message_chunk",
       content: {
         type: "text",
-        text: "I will fix addition and run the real tests.\n",
+        text: "Fixing the addition bug and running the tests.\n",
       },
     });
     const chunks = Number(

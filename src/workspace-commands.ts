@@ -125,7 +125,7 @@ export class WorkspaceCommands {
         requireThat(
           client.principalRole === "maintainer",
           Codes.forbidden,
-          "Maintainer authority required",
+          "Only maintainers can do this",
         );
         const list = await client.ahp.request("listSessions", {
           channel: ROOT,
@@ -248,7 +248,11 @@ export class WorkspaceCommands {
       const choice = part.toolCall.options?.find(
         (o) => o.id === action.optionId,
       );
-      requireThat(choice, Codes.invalid, "Choose an offered permission option");
+      requireThat(
+        choice,
+        Codes.invalid,
+        "Pick one of the options the agent offered",
+      );
       const base = {
         type: ActionType.ChatToolCallConfirmed,
         turnId: action.turnId,

@@ -612,7 +612,7 @@ test(
         assert.equal(faults.length, 1);
         assert.match(
           faults[0]!.message,
-          reason === "revocation" ? /active donation/ : /ownership changed/,
+          reason === "revocation" ? /active budget grant/ : /ownership changed/,
         );
         assert.equal(
           await readFile(join(tree.path, "retained.txt"), "utf8"),
@@ -748,7 +748,10 @@ test(
     await rejected.closed;
     assert.equal(rejected.state, "stopped");
     proxy.setAvailable(false);
-    const pending = assert.rejects(waiting.start(), /stopped before parking/);
+    const pending = assert.rejects(
+      waiting.start(),
+      /Stopped before connecting/,
+    );
     await eventually(
       () => waiting.state,
       (s) => s === "reconnecting",

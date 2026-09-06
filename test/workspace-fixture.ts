@@ -34,27 +34,27 @@ export async function workspaceFixture() {
   const specs = [
     [
       "parser-errors",
-      "Make parser errors feel human",
+      "Explain parser errors",
       "issue-42",
-      "A useful error should tell you what happened and how to make it right. Preserve the existing parser API.",
+      "Explain why parsing failed and how to fix the input. Keep the existing parser API.",
     ],
     [
       "first-run",
-      "A warmer first five minutes",
+      "Improve first-time setup",
       "issue-57",
-      "Help a first-time contributor connect their agent and see where they can make a difference.",
+      "Help a first-time contributor connect an agent and choose a task.",
     ],
     [
       "mail-bridge",
-      "Bring asynchronous agents into the fold",
+      "Handle email task retries",
       "issue-63",
-      "Keep task delivery durable across network interruptions, and make every result part of the shared history.",
+      "Save incoming email tasks so they survive network interruptions. Record each result in the session history.",
     ],
     [
       "contributor-guide",
-      "Leave a trail for the next contributor",
+      "Write a contributor guide",
       "issue-71",
-      "Collect the things we wish we knew on day one. Small examples, clear steps, fewer dead ends.",
+      "Write setup instructions and examples for new contributors.",
     ],
   ];
   for (const [id, title, task] of specs)
@@ -111,10 +111,10 @@ export async function workspaceFixture() {
             kind: ResponsePartKind.Markdown,
             content:
               i === 0
-                ? "The parser currently discards the source location. I can preserve it and add a clear suggestion without changing the return type.\n\nThe patch is ready for a careful look."
+                ? "The parser rejects empty input with a generic error. The patch explains how to fix the input without changing the return type.\n\nThe patch is ready for review."
                 : i === 1
                   ? "I found the first-run entry point. Before changing it, I need permission to edit the welcome screen."
-                  : "I’m checking restart behavior and duplicate delivery. The important part is that a retried message never starts duplicate work.",
+                  : "I am checking that tasks survive a restart and that retrying a message does not start the same task twice.",
           },
         },
       ],
@@ -173,13 +173,13 @@ export async function workspaceFixture() {
       });
       await contributor.call("_axp/comment", {
         channel: c.exchange,
-        body: "Kept the return type intact. I’d love a second pair of eyes on the wording before we call this ready.",
+        body: "The return type is unchanged. Please check the error message before approving.",
         checkpoint: "b".repeat(40),
         path: "src/parser.ts",
       });
       await maintainer.call("_axp/comment", {
         channel: c.exchange,
-        body: "This is the kind of detail that makes a project easier to join. Thanks for keeping the change focused.",
+        body: "Thanks. The error now explains how to fix the input.",
         checkpoint: null,
         path: null,
       });

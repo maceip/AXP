@@ -105,9 +105,7 @@ try {
   } finally {
     await recovered.close();
   }
-  console.log(
-    "Crash recovery retained authenticated session history through Caddy",
-  );
+  console.log("Session history survived the crash (checked through Caddy)");
   previous = pid();
   systemctl("kill", "--kill-who=main", "--signal=SIGSTOP", "axp-host.service");
   try {
@@ -126,7 +124,7 @@ try {
     "The health probe must run and fail before recovery",
   );
   await waitForRestart(previous);
-  console.log("Health supervision recovered a hung process");
+  console.log("Health check restarted a hung host");
   const journalProbe = (value) =>
     run("runuser", [
       "-u",
@@ -155,7 +153,7 @@ try {
   systemctl("start", "axp-host.service");
   await health("http://127.0.0.1:7331/healthz", 3);
   console.log(
-    "Online/offline backups preserve service-user access; deliberate stop stayed stopped",
+    "Online and offline backups passed access checks, and a manual stop stayed stopped",
   );
 } catch (error) {
   console.error(error.message);

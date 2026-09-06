@@ -79,7 +79,7 @@ export class Worktree {
     requireThat(
       (await realpath(top)) === repo,
       Codes.invalid,
-      "Pass the repository root",
+      "Use the repository root path",
     );
     const commit = (
       await git(repo, [
@@ -297,7 +297,7 @@ export class Worktree {
     requireThat(
       /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(remote),
       Codes.invalid,
-      "Use a configured contributor-fork remote name",
+      "Use a configured Git remote name starting with a letter or digit, followed by letters, digits, dots, underscores or hyphens",
     );
     await git(this.path, ["push", remote, `${head}:refs/heads/${this.branch}`]);
   }
@@ -305,7 +305,7 @@ export class Worktree {
     requireThat(
       !(await git(this.path, ["status", "--porcelain"])).trim(),
       Codes.conflict,
-      "Worktree has uncommitted changes; preserve it",
+      "The worktree has uncommitted changes, so it was left alone",
     );
     await git(this.repository, ["worktree", "remove", this.path]);
   }

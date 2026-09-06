@@ -60,7 +60,7 @@ export function workingContext(
   requireThat(
     text.length <= maxChars,
     Codes.context,
-    "Working context exceeds the limit; propose and accept compaction before resuming",
+    "The working context is too large. Compact the session before continuing.",
   );
   return text;
 }
