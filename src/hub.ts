@@ -583,6 +583,11 @@ export class Hub {
     raw: unknown,
   ): unknown {
     const p = methods[method].parse(raw);
+    if (method === "_axp/dispatch") {
+      const q = methods[method].parse(p);
+      this.sessions.dispatch(tx, actor, q.channel, q.action);
+      return null;
+    }
     if (method === "_axp/register")
       return this.sessions.register(tx, actor, methods[method].parse(p));
     if (method === "_axp/memoryReview") {

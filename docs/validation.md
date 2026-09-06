@@ -49,6 +49,12 @@ Behavioral evidence includes:
   evidence scope. Incompatible cache identities miss safely.
 - A local HTTP server exercises MTPLX headers, isolated session keys, returned
   usage and bounded lesson extraction.
+- AAMP reference SDK requests enter real AHP sessions. Loopback SMTP/JMAP
+  verifies threaded results, full backlog pagination and expired-cursor
+  recovery. Dropped committed dispatch replies and uncertain SMTP delivery
+  survive adapter restarts. Tests exercise sender/context authorization,
+  cancellation before dispatch, expiry during downtime, route revocation,
+  permission help and checkpoint attribution after later session changes.
 - A tarball installs into a fresh directory, loads its packaged schema,
   executes the CLI under symlinked paths and initializes private profiles.
 

@@ -44,20 +44,28 @@ and infers result types. Mutations require an `operationId`; callers can supply
 one for retries across process restarts. Reusing an ID with different input is
 a conflict. Read commands need no ID.
 
-| Commands                                                       | Purpose                                          |
-| -------------------------------------------------------------- | ------------------------------------------------ |
-| `_axp/register`                                                | Discover and refresh contributor-owned executors |
-| `_axp/grant`, `_axp/revoke`                                    | Donor-owned allowances and revocation            |
-| `_axp/claim`, `_axp/renew`, `_axp/release`                     | Atomic ownership and fencing                     |
-| `_axp/reserve`, `_axp/settle`, `_axp/emit`                     | Accounted, authorized execution                  |
-| `_axp/checkpoint`                                              | Git-bound changeset and portable artifact        |
-| `_axp/compact`, `_axp/acceptCompaction`                        | Proposed and reviewed context replacement        |
-| `_axp/memoryPropose`, `_axp/memoryReview`, `_axp/memorySearch` | Scoped lessons                                   |
-| `_axp/review`, `_axp/approveReview`, `_axp/verify`             | Artifact signatures and verification             |
-| `_axp/blobPut`, `_axp/blobGet`                                 | Session-scoped content                           |
-| `_axp/context`, `_axp/export`                                  | Working context or full audit history            |
+| Commands                                                       | Purpose                                                               |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `_axp/register`                                                | Discover and refresh contributor-owned executors                      |
+| `_axp/dispatch`                                                | Durable, maintainer-authorized AHP interaction across client restarts |
+| `_axp/grant`, `_axp/revoke`                                    | Donor-owned allowances and revocation                                 |
+| `_axp/claim`, `_axp/renew`, `_axp/release`                     | Atomic ownership and fencing                                          |
+| `_axp/reserve`, `_axp/settle`, `_axp/emit`                     | Accounted, authorized execution                                       |
+| `_axp/checkpoint`                                              | Git-bound changeset and portable artifact                             |
+| `_axp/compact`, `_axp/acceptCompaction`                        | Proposed and reviewed context replacement                             |
+| `_axp/memoryPropose`, `_axp/memoryReview`, `_axp/memorySearch` | Scoped lessons                                                        |
+| `_axp/review`, `_axp/approveReview`, `_axp/verify`             | Artifact signatures and verification                                  |
+| `_axp/blobPut`, `_axp/blobGet`                                 | Session-scoped content                                                |
+| `_axp/context`, `_axp/export`                                  | Working context or full audit history                                 |
 
 ## Ordering and recovery
+
+`AxpClient.dispatch(channel, action, operationId)` uses `_axp/dispatch` when
+an operation ID is supplied. It applies the same action validation, session
+scope and maintainer authority as AHP `dispatchAction`, with a durable retry
+receipt. This path does not invent a client-sequence origin. Without the third
+argument, dispatch retains the ordinary AHP client origin and behavior. The
+[AAMP adapter](aamp.md) uses this path for mail admission and cancellation.
 
 `_axp/close` is maintainer-only. It cancels outstanding work, clears pending
 messages, releases the task identity and archives the session without deleting

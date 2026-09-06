@@ -11,6 +11,10 @@
     "axp": "dist/cli.js"
   },
   "exports": {
+    "./aamp": {
+      "types": "./dist/aamp.d.ts",
+      "default": "./dist/aamp.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
@@ -56,18 +60,26 @@
     "@agentclientprotocol/sdk": "1.4.0",
     "@microsoft/agent-host-protocol": "0.9.0",
     "ajv": "^8.20.0",
+    "nodemailer": "10.0.0",
     "ws": "^8.21.0",
     "zod": "^4.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
     "@types/node": "^24.0.0",
+    "@types/nodemailer": "8.0.1",
     "@types/ws": "^8.18.0",
+    "aamp-sdk": "0.1.24",
     "c8": "^11.0.0",
     "eslint": "^10.0.0",
     "prettier": "^3.9.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.0",
     "typescript-eslint": "^8.65.0"
+  },
+  "overrides": {
+    "aamp-sdk": {
+      "nodemailer": "10.0.0"
+    }
   }
 }

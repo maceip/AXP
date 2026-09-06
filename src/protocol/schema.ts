@@ -60,6 +60,7 @@ export const manifest = z.strictObject({
 const base = { channel, operationId: id };
 const fenced = { ...base, epoch: count };
 export const methods = {
+  "_axp/dispatch": z.strictObject({ ...base, action: z.unknown() }),
   "_axp/register": z.strictObject({
     ...base,
     executorId: id,

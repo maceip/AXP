@@ -119,6 +119,7 @@ See [hosting and access](docs/hosting.md) for remote TLS and scoped identities.
 | Collaboration       | AHP root/session/chat/changeset state, streaming, confirmations, steering, queued turns and session export                       |
 | Participation       | Outbound connections, executor discovery, atomic claims, renewable leases and increasing fencing epochs                          |
 | Recovery            | SQLite transactions before broadcast, durable retry receipts, replay/snapshot fallback and interrupted-turn recovery             |
+| AAMP mail           | Locally authorized text tasks, durable JMAP ingestion, threaded SMTP acknowledgements, permissions, cancellation and results     |
 | Contributor control | Per-donor token, turn and USD-micro-unit allowances; pre-turn reservations, revocation and conservative unknown-usage accounting |
 | Artifacts           | Session-scoped SHA-256 blobs, local Git checkpoints, portable bundles, dual-signed manifests and separate verifier records       |
 | Context             | Revision-checked compaction that preserves the full transcript; portable text resumption and explicit cache compatibility        |
@@ -133,12 +134,14 @@ artifact confidence; contributor traces and signatures do not prove execution.
 
 ## Build on AXP
 
-The package has three entry points: `@maceip/axp/protocol` for types, schemas and
-pure reducers; `@maceip/axp/client` for the Node client; and `@maceip/axp` for the
-host, satellite, Git and model integration APIs. Install from a built tarball
+The package has four entry points: `@maceip/axp/protocol` for types, schemas and
+pure reducers; `@maceip/axp/client` for the Node client; `@maceip/axp/aamp` for
+the mailbox adapter; and `@maceip/axp` for the host, satellite, Git and model
+integration APIs. Install from a built tarball
 with `npm pack`; npm registry publication is not required to use the checkout.
 
 - [Protocol and interoperability](docs/protocol.md)
+- [AAMP mailbox setup and supported profile](docs/aamp.md)
 - [Context, memory and MTPLX](docs/memory.md)
 - [Hosting and access](docs/hosting.md)
 - [Artifact review and verification](docs/artifacts.md)

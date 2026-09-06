@@ -49,6 +49,7 @@ const HELP = `AXP — park an agent, share the session.
   axp publish SESSION --remote FORK         Restore and push the reviewed commit
   axp verify SESSION --native -- COMMAND    Test an exact checkpoint as verifier
   axp executors                            Show parked executor capabilities
+  axp aamp --config .axp/aamp.json          Bridge an AAMP mailbox to assigned sessions
   axp memory "query"                       Retrieve approved repository lessons
   axp rpc METHOD --params request.json      Call a typed AXP extension
 
@@ -227,6 +228,65 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       : profileSchema.parse(
           await jsonFile(option("profile", ".axp/maintainer.json")),
         );
+  if (command === "aamp") {
+    const { AampBridge, JmapSmtpMailbox, aampRouteSchema } =
+      await import("./aamp.js");
+    const config = z
+      .strictObject({
+        email: z.string().email(),
+        baseUrl: z.string().url(),
+        smtpHost: z.string().min(1),
+        smtpPort: z.number().int().min(1).max(65535).optional(),
+        smtpSecure: z.boolean().default(false),
+        passwordEnv: z
+          .string()
+          .regex(/^[A-Z_][A-Z0-9_]*$/)
+          .default("AAMP_MAILBOX_PASSWORD"),
+        database: z.string().default(".axp/aamp.db"),
+        routes: z.array(aampRouteSchema).min(1).max(64),
+      })
+      .parse(await jsonFile(option("config", ".axp/aamp.json")));
+    const password = process.env[config.passwordEnv];
+    requireThat(
+      password,
+      Codes.invalid,
+      `Set ${config.passwordEnv} to the mailbox password`,
+    );
+    const mailbox = new JmapSmtpMailbox({
+      ...config,
+      password,
+      smtpPort: config.smtpPort ?? (config.smtpSecure ? 465 : 587),
+    });
+    const bridge = new AampBridge({
+      ...profile,
+      mailbox,
+      routes: config.routes,
+      database: resolve(directory, config.database),
+    });
+    bridge.on("warning", (error) =>
+      process.stderr.write(
+        `AAMP: ${stripVTControlCharacters(error.message)}\n`,
+      ),
+    );
+    const controller = new AbortController();
+    print(
+      `AAMP adapter for ${config.email}; ${config.routes.length} local admission rule(s).`,
+    );
+    try {
+      await waitForStop(
+        async () => {
+          controller.abort();
+          await bridge.close();
+        },
+        undefined,
+        () => bridge.run(controller.signal),
+      );
+    } finally {
+      controller.abort();
+      await bridge.close();
+    }
+    return;
+  }
   if (command === "park") {
     requireThat(
       sessionId && commandArgs[0],

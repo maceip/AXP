@@ -673,7 +673,7 @@ export class Sessions {
     principal: Principal,
     resource: string,
     raw: unknown,
-    origin: ActionOrigin,
+    origin?: ActionOrigin,
   ): void {
     this.maintain(principal);
     const state = this.state(resource);

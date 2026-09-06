@@ -55,6 +55,20 @@ try {
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /park an agent/);
   assert.match(help.stdout, /--no-reconnect/);
+  assert.match(help.stdout, /aamp --config/);
+  const adapter = spawnSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      "import { AampBridge, JmapSmtpMailbox } from '@maceip/axp/aamp'; if (!AampBridge || !JmapSmtpMailbox) process.exit(1)",
+    ],
+    { encoding: "utf8", cwd: directory },
+  );
+  assert.equal(adapter.status, 0, adapter.stderr);
+  await assert.rejects(access(join(directory, "node_modules", "aamp-sdk")), {
+    code: "ENOENT",
+  });
   const git = spawnSync("git", ["init"], { cwd: directory, encoding: "utf8" });
   assert.equal(git.status, 0, git.stderr);
   const init = spawnSync(

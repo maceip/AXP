@@ -29,6 +29,7 @@ export interface ConnectOptions {
 }
 
 export interface CommandResults {
+  "_axp/dispatch": null;
   "_axp/register": ExecutorInfo;
   "_axp/grant": Grant;
   "_axp/revoke": null;
@@ -164,7 +165,15 @@ export class AxpClient extends EventEmitter<{
   }
   /** Use a request for actionable rejection errors; unmodified AHP notification
    * dispatch remains supported and receives the standard rejection echo. */
-  async dispatch(channel: string, action: StateAction): Promise<void> {
+  async dispatch(
+    channel: string,
+    action: StateAction,
+    operationId?: string,
+  ): Promise<void> {
+    if (operationId) {
+      await this.call("_axp/dispatch", { channel, action, operationId });
+      return;
+    }
     const request = this.ahp.request.bind(this.ahp) as (
       method: string,
       params: unknown,

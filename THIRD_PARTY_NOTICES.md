@@ -4,6 +4,10 @@
   https://github.com/microsoft/agent-host-protocol
 - Agent Client Protocol TypeScript SDK, Zed Industries, Apache-2.0:
   https://github.com/agentclientprotocol/typescript-sdk
+- Agent Asynchronous Messaging Protocol specification and reference SDK,
+  Lark Technologies Ltd., MIT: https://github.com/larksuite/aamp
+- Nodemailer, Andris Reinman and contributors, MIT-0:
+  https://github.com/nodemailer/nodemailer
 
 AXP depends on these upstream packages. It is an independent project and is
 not endorsed by Microsoft, Zed, Google, or any model provider. Dependency
