@@ -1229,6 +1229,7 @@ h1 {
 }
 .tab-content {
   min-height: 420px;
+  position: relative;
 }
 .contribution-content > .notice {
   margin: 12px 20px;

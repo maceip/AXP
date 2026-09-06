@@ -9,6 +9,16 @@ import { FileTree, useFileTree } from "@pierre/trees/react";
 import { Columns2, Rows3, MessageCircle, FileCode2 } from "lucide-react";
 import { api } from "./api.js";
 import { Empty, Loading } from "./components.js";
+import { StickyNote } from "./review/PencilCase.js";
+import type { Tool } from "./review/Pen.js";
+
+export interface DiffReview {
+  tool: Tool | null;
+  /** current highlighter ink, used to tint selected lines */
+  ink: string;
+  /** Post a note pinned to `reference` ("path:L3–L7"). */
+  onNote: (text: string, path: string, reference: string) => void;
+}
 
 // Keep comments readable on diff addition/removal backgrounds as well as white.
 registerCustomTheme("axp-light", async () => {
@@ -33,11 +43,13 @@ export default function DiffPanel({
   checkpoint,
   discuss,
   ready,
+  review,
 }: {
   session: string;
   checkpoint: string;
   discuss: (path: string) => void;
   ready: (manifestDigest: string | null) => void;
+  review?: DiffReview;
 }) {
   const [patch, setPatch] = useState<string>();
   const [error, setError] = useState<string>();
@@ -71,16 +83,24 @@ export default function DiffPanel({
       </div>
     );
   if (patch === undefined) return <Loading>Loading checkpoint…</Loading>;
-  return <Patch patch={patch} discuss={discuss} />;
+  return <Patch patch={patch} discuss={discuss} review={review} />;
 }
 
 function Patch({
   patch,
   discuss,
+  review,
 }: {
   patch: string;
   discuss: (path: string) => void;
+  review?: DiffReview;
 }) {
+  // Lines the reviewer has marked with the highlighter or note tool; a sticky
+  // note renders under the last one until it is pinned or discarded.
+  const [pending, setPending] = useState<{ start: number; end: number } | null>(
+    null,
+  );
+  const selecting = review?.tool === "highlighter" || review?.tool === "note";
   const parsed = useMemo(() => {
     try {
       return {
@@ -118,6 +138,7 @@ function Patch({
   });
   const file =
     parsed.files.find((file) => file.name === selected) ?? parsed.files[0];
+  useEffect(() => setPending(null), [selected, review?.tool]);
   if (parsed.error)
     return (
       <div className="notice error" role="alert">
@@ -172,14 +193,54 @@ function Patch({
         </div>
         <FileDiff
           fileDiff={file}
+          selectedLines={
+            pending ? { start: pending.start, end: pending.end } : null
+          }
+          lineAnnotations={
+            pending
+              ? [
+                  {
+                    side: "additions",
+                    lineNumber: pending.end,
+                    metadata: pending,
+                  },
+                ]
+              : []
+          }
+          renderAnnotation={(annotation) => {
+            const range = annotation.metadata as { start: number; end: number };
+            const reference =
+              range.start === range.end
+                ? `${file.name}:L${range.start}`
+                : `${file.name}:L${range.start}–L${range.end}`;
+            return (
+              <StickyNote
+                reference={reference}
+                onCancel={() => setPending(null)}
+                onPost={(text) => {
+                  review?.onNote(text, file.name, reference);
+                  setPending(null);
+                }}
+              />
+            );
+          }}
           options={{
             theme: "axp-light",
             themeType: "light",
             diffStyle: split ? "split" : "unified",
             overflow: "scroll",
             disableFileHeader: true,
-            unsafeCSS:
-              ":host { --diffs-font-family: 'IBM Plex Mono', monospace; --diffs-font-size: 12px; --diffs-line-height: 22px; }",
+            enableLineSelection: selecting,
+            controlledSelection: true,
+            onLineSelectionEnd: (range) => {
+              if (!selecting || !range) return;
+              const [start, end] =
+                range.start <= range.end
+                  ? [range.start, range.end]
+                  : [range.end, range.start];
+              setPending({ start, end });
+            },
+            unsafeCSS: `:host { --diffs-font-family: 'IBM Plex Mono', monospace; --diffs-font-size: 12px; --diffs-line-height: 22px; --diffs-bg-selection-override: color-mix(in srgb, ${review?.ink ?? "#f3d43a"} 42%, transparent); --diffs-bg-selection-number-override: color-mix(in srgb, ${review?.ink ?? "#f3d43a"} 70%, transparent); }`,
           }}
         />
       </div>
