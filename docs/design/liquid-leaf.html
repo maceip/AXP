@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Liquid Leaf</title>
+    <!-- Review artifact. Open directly in a browser; it links the real stylesheet. -->
+    <link rel="stylesheet" href="../../ui/src/liquid/liquid-leaf.css" />
+    <style>
+      @font-face {
+        font-family: "AXP Runde";
+        font-weight: 400;
+        src: url("../../ui/src/fonts/axp-runde/AXPRunde-Regular.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "AXP Runde";
+        font-weight: 600;
+        src: url("../../ui/src/fonts/axp-runde/AXPRunde-Semibold.woff2")
+          format("woff2");
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "AXP Runde", system-ui, sans-serif;
+        font-feature-settings: "cv05" 1;
+        color: #252c28;
+        background: #f6f7f4;
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.8px;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #626b65;
+        margin: 0 0 14px;
+      }
+      p.lede {
+        color: #626b65;
+        max-width: 64ch;
+        margin: 0 0 28px;
+        font-size: 14px;
+      }
+      .page {
+        padding: 40px clamp(20px, 5vw, 72px) 80px;
+      }
+      .scenes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 22px;
+      }
+      .scene {
+        border-radius: 22px;
+        padding: 26px;
+        position: relative;
+        overflow: hidden;
+        min-height: 420px;
+      }
+      .scene h2 {
+        color: inherit;
+        opacity: 0.75;
+      }
+      /* outdoor: a bright field, so the frost and glow show over detail */
+      .outdoor {
+        color: #1f3d2b;
+        background:
+          radial-gradient(60% 50% at 70% 20%, #fff8d6 0%, transparent 60%),
+          repeating-linear-gradient(115deg, #cfe6c6 0 12px, #bfdbb5 12px 24px),
+          linear-gradient(180deg, #e7f2df, #b9d7ad);
+      }
+      .outdoor::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            circle at 20% 80%,
+            rgba(255, 255, 255, 0.55) 0 60px,
+            transparent 61px
+          ),
+          radial-gradient(
+            circle at 60% 65%,
+            rgba(255, 255, 255, 0.4) 0 40px,
+            transparent 41px
+          ),
+          radial-gradient(
+            circle at 85% 75%,
+            rgba(93, 140, 105, 0.35) 0 90px,
+            transparent 91px
+          );
+        pointer-events: none;
+      }
+      /* indoor: night, lamp light, wood */
+      .indoor {
+        color: #e8f4ea;
+        background:
+          radial-gradient(
+            45% 40% at 78% 18%,
+            rgba(255, 214, 150, 0.55) 0%,
+            transparent 65%
+          ),
+          repeating-linear-gradient(0deg, #2b2620 0 18px, #332d26 18px 36px),
+          linear-gradient(180deg, #1c1a17, #2a2622);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+        margin: 18px 0;
+        position: relative;
+      }
+      .caption {
+        font-size: 11px;
+        opacity: 0.7;
+        margin: 26px 0 0;
+      }
+      .goo-row {
+        display: flex;
+      }
+      .goo-row .leaf-dot {
+        width: 22px;
+        height: 22px;
+        margin-right: -6px;
+      }
+      .big-card {
+        max-width: 260px;
+      }
+      .big-card h3 {
+        margin: 10px 0 4px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .big-card p {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.6;
+        opacity: 0.85;
+      }
+      .toggle {
+        --leaf-radius: 999px;
+        width: 46px;
+        height: 26px;
+        padding: 3px;
+        display: inline-flex;
+        cursor: pointer;
+      }
+      .toggle i {
+        display: block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1);
+      }
+      .toggle.on i {
+        transform: translateX(20px);
+      }
+      .principles {
+        margin-top: 44px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+      }
+      .principles div {
+        background: #fff;
+        border: 1px solid #e3e7e0;
+        border-radius: 14px;
+        padding: 16px 18px;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .principles b {
+        display: block;
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="leaf-defs" aria-hidden="true">
+      <defs>
+        <filter id="leaf-goo" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+          <feColorMatrix
+            in="blur"
+            mode="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"
+            result="goo"
+          />
+          <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+        </filter>
+        <filter id="leaf-wobble" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.012 0.02"
+            numOctaves="2"
+            seed="3"
+            result="noise"
+          >
+            <animate
+              attributeName="baseFrequency"
+              dur="0.9s"
+              values="0.012 0.02;0.02 0.03;0.012 0.02"
+              repeatCount="indefinite"
+            />
+          </feTurbulence>
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="noise"
+            scale="6"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </defs>
+    </svg>
+    <div class="page">
+      <h1>Liquid Leaf</h1>
+      <p class="lede">
+        Liquid glass, outdoors. A translucent sap surface with a meniscus, a
+        specular highlight that follows the pointer, a lit rim, frost behind it
+        and a coloured glow into the page. Two scenes: outdoor by day and indoor
+        by night. Hover and press the buttons.
+      </p>
+      <div class="scenes">
+        <section class="scene outdoor" data-scene="outdoor">
+          <h2>Outdoor · day</h2>
+          <div class="row">
+            <button class="leaf leaf-button">New contribution</button>
+            <button class="leaf leaf-button small">Approve</button>
+            <button class="leaf leaf-button" disabled>Disabled</button>
+          </div>
+          <div class="row">
+            <span class="leaf leaf-pill"
+              ><span class="leaf leaf-dot is-live"></span>Live workspace</span
+            >
+            <span class="leaf leaf-pill"
+              ><span class="leaf leaf-dot is-off"></span>Reconnecting</span
+            >
+            <span class="leaf toggle on"><i></i></span>
+          </div>
+          <div class="row">
+            <div class="leaf leaf-card big-card">
+              <span style="font-size: 26px">✳</span>
+              <h3>Connect an agent</h3>
+              <p>
+                You choose its budget. Maintainers direct the work. The card
+                frosts whatever sits behind it.
+              </p>
+            </div>
+          </div>
+          <div class="row">
+            <span class="leaf-goo goo-row" aria-label="three agents, merged">
+              <span class="leaf leaf-dot"></span
+              ><span class="leaf leaf-dot"></span
+              ><span class="leaf leaf-dot"></span>
+            </span>
+            <span style="font-size: 11px"
+              >← goo filter: touching drops merge</span
+            >
+          </div>
+          <p class="caption">
+            Palette: sprout #b8ec9c · grass #7dc395 · leaf #58aa72 · moss
+            #3d7a52
+          </p>
+        </section>
+        <section class="scene indoor" data-scene="indoor">
+          <h2>Indoor · night</h2>
+          <div class="row">
+            <button class="leaf leaf-button">New contribution</button>
+            <button class="leaf leaf-button small">Approve</button>
+            <button class="leaf leaf-button" disabled>Disabled</button>
+          </div>
+          <div class="row">
+            <span class="leaf leaf-pill"
+              ><span class="leaf leaf-dot is-live"></span>Live workspace</span
+            >
+            <span class="leaf leaf-pill"
+              ><span class="leaf leaf-dot is-off"></span>Reconnecting</span
+            >
+            <span class="leaf toggle"><i></i></span>
+          </div>
+          <div class="row">
+            <div class="leaf leaf-card big-card">
+              <span style="font-size: 26px">✳</span>
+              <h3>Connect an agent</h3>
+              <p>
+                Same surface, darker sap. The rim light is cooler and the glow
+                is what you notice first.
+              </p>
+            </div>
+          </div>
+          <div class="row">
+            <span class="leaf-goo goo-row"
+              ><span class="leaf leaf-dot"></span
+              ><span class="leaf leaf-dot"></span
+              ><span class="leaf leaf-dot"></span
+            ></span>
+            <span style="font-size: 11px">← goo filter</span>
+          </div>
+          <p class="caption">
+            Palette: sprout #9ad6a6 · grass #4c8f66 · leaf #2f6a49 · moss
+            #1f4a34
+          </p>
+        </section>
+      </div>
+      <div class="principles">
+        <div>
+          <b>Meniscus</b>A bright radial bead along the top where sap meets the
+          rim. This, more than the blur, is what says “liquid”.
+        </div>
+        <div>
+          <b>Specular that moves</b>The highlight is a radial gradient
+          positioned by two custom properties; the React hook sets them from the
+          pointer.
+        </div>
+        <div>
+          <b>Lit rim, shaded foot</b>A 1px gradient border, bright at the light
+          and dark opposite, made with a masked pseudo-element. liquid-dom does
+          this in a shader as an SDF rim band.
+        </div>
+        <div>
+          <b>Frost</b><code>backdrop-filter: blur(12px) saturate(1.35)</code>.
+          Falls back to a solid tint where unsupported.
+        </div>
+        <div>
+          <b>Squash and spring</b>Press scales to 0.97 × 0.94; release plays a
+          spring via a <code>linear()</code> easing and a 600 ms turbulence
+          wobble.
+        </div>
+        <div>
+          <b>Goo</b>The metaball filter (blur, then a hard alpha ramp) lets
+          presence drops merge when they touch.
+        </div>
+      </div>
+    </div>
+    <script>
+      for (const b of document.querySelectorAll(".leaf-button")) {
+        b.addEventListener("pointerdown", () => b.classList.add("is-pressed"));
+        const up = () => {
+          b.classList.remove("is-pressed");
+          b.classList.add("is-releasing", "is-wobbling");
+          setTimeout(
+            () => b.classList.remove("is-releasing", "is-wobbling"),
+            650,
+          );
+        };
+        b.addEventListener("pointerup", up);
+        b.addEventListener("pointerleave", () =>
+          b.classList.remove("is-pressed"),
+        );
+        b.addEventListener("pointermove", (e) => {
+          const r = b.getBoundingClientRect();
+          b.style.setProperty(
+            "--leaf-light-x",
+            (((e.clientX - r.left) / r.width) * 100).toFixed(1) + "%",
+          );
+          b.style.setProperty(
+            "--leaf-light-y",
+            (((e.clientY - r.top) / r.height) * 100).toFixed(1) + "%",
+          );
+        });
+      }
+      for (const t of document.querySelectorAll(".toggle"))
+        t.addEventListener("click", () => t.classList.toggle("on"));
+    </script>
+  </body>
+</html>

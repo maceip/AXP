@@ -200,12 +200,8 @@ code {
   padding-top: 40px;
 }
 .bring-agent {
-  background: #e5e9dd;
-  border: 1px solid #dce2d2;
-  border-radius: 12px;
   padding: 18px 16px;
   margin-bottom: 18px;
-  position: relative;
   overflow: hidden;
 }
 .bring-agent > .agent-symbol {
@@ -221,13 +217,14 @@ code {
   letter-spacing: -0.35px;
 }
 .bring-agent p {
-  color: #56624f;
+  color: var(--leaf-ink);
   font-size: 11px;
   line-height: 1.7;
   margin: 8px 0 14px;
 }
 .bring-agent button {
-  border-top: 1px solid #d0d8c6;
+  border-top: 1px solid rgba(31, 61, 43, 0.18);
+  color: var(--leaf-ink);
   width: 100%;
   padding: 12px 0 0;
   font-size: 11px;
@@ -310,23 +307,14 @@ code {
   gap: 18px;
 }
 .live-pill {
-  display: flex;
-  align-items: center;
-  gap: 7px;
   font-size: 10px;
-  color: #55634f;
-  white-space: nowrap;
 }
-.live-pill > span {
-  width: 5px;
-  height: 5px;
-  background: #6f975d;
-  border-radius: 50%;
-  box-shadow: 0 0 0 3px #e9efe3;
+.live-pill .leaf-dot {
+  width: 8px;
+  height: 8px;
 }
-.live-pill.is-offline > span {
-  background: #ac6b32;
-  box-shadow: 0 0 0 3px #f3e9da;
+.live-pill.is-offline {
+  filter: saturate(0.45) sepia(0.35);
 }
 .icon-button {
   display: inline-flex;

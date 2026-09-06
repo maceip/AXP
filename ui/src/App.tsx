@@ -24,6 +24,7 @@ import {
   people,
 } from "./components.js";
 import { ContributionPage } from "./Contribution.js";
+import { Leaf, LeafDefs } from "./liquid/LiquidLeaf.js";
 
 type Page = "overview" | "contributions" | "people" | "activity";
 function currentPage(): Page {
@@ -113,6 +114,7 @@ export default function App() {
   };
   return (
     <div className="app-shell">
+      <LeafDefs />
       <a className="skip-link" href="#main">
         Skip to workspace
       </a>
@@ -169,14 +171,14 @@ export default function App() {
           />
         </nav>
         <div className="sidebar-bottom">
-          <div className="bring-agent">
+          <Leaf variant="card" className="bring-agent">
             <span className="agent-symbol">✳</span>
             <h3>Connect an agent</h3>
             <p>You choose its budget. Maintainers direct the work.</p>
             <button onClick={() => setHelp(true)}>
               Agent setup <ArrowUpRight size={15} />
             </button>
-          </div>
+          </Leaf>
           <button className="help-link" onClick={() => setHelp(true)}>
             <CircleHelp size={16} /> Getting started
           </button>
@@ -203,14 +205,17 @@ export default function App() {
             <strong>{repository}</strong>
           </div>
           <div className="topbar-actions">
-            <span className={`live-pill ${error ? "is-offline" : ""}`}>
-              <span />
+            <Leaf
+              variant="pill"
+              className={`live-pill ${error ? "is-offline" : ""}`}
+            >
+              <Leaf variant="dot" live={!error && !!workspace} off={!!error} />
               {error
                 ? "Reconnecting"
                 : workspace
                   ? "Live workspace"
                   : "Connecting"}
-            </span>
+            </Leaf>
             <button
               className="icon-button"
               onClick={() => setHelp(true)}
@@ -307,13 +312,13 @@ export default function App() {
                   </p>
                 </div>
                 {workspace.principal.role === "maintainer" && (
-                  <button
-                    className="button primary"
+                  <Leaf
+                    variant="button"
                     disabled={!!error}
                     onClick={() => setCreate(true)}
                   >
                     <Plus size={16} /> New contribution
-                  </button>
+                  </Leaf>
                 )}
               </div>
               {page === "overview" && (
@@ -498,7 +503,7 @@ export default function App() {
                               <strong>{agent.name}</strong>
                               <span>with {agent.owner}</span>
                             </div>
-                            <span className="connection-dot" />
+                            <Leaf variant="dot" live />
                           </div>
                         ))
                       ) : (
