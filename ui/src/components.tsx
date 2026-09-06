@@ -14,6 +14,7 @@ import type {
   Contribution,
   WorkspaceView,
 } from "../../src/workspace-contract.js";
+import { useTypeset } from "./typeset.js";
 
 export function Mark({ small = false }: { small?: boolean }) {
   return (
@@ -161,9 +162,25 @@ export function ContributionCard({
     </button>
   );
 }
-export const Prose = memo(function Prose({ text }: { text: string }) {
+/** Markdown prose. Once `settled`, its paragraphs are typeset: justified with
+ * Knuth–Plass breaks, hyphenated, punctuation hung in the margin. While a turn
+ * is still streaming the text stays ragged so it does not reflow under the
+ * reader. Keyed by content so Justif and React never edit the same nodes. */
+export const Prose = memo(function Prose({
+  text,
+  settled = true,
+}: {
+  text: string;
+  settled?: boolean;
+}) {
   return (
-    <div className="prose">
+    <ProseBlock key={`${settled}:${text}`} text={text} settled={settled} />
+  );
+});
+function ProseBlock({ text, settled }: { text: string; settled: boolean }) {
+  const ref = useTypeset<HTMLDivElement>(settled, text);
+  return (
+    <div ref={ref} className={settled ? "prose prose--set" : "prose"}>
       <Markdown
         remarkPlugins={[remarkGfm]}
         skipHtml
@@ -183,7 +200,7 @@ export const Prose = memo(function Prose({ text }: { text: string }) {
       </Markdown>
     </div>
   );
-});
+}
 export function Empty({
   title,
   children,

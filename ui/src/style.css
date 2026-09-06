@@ -70,6 +70,37 @@ h3,
 p {
   margin: 0;
 }
+/* Ragged text gets the browser's better breaker; headings balance their lines. */
+p,
+li,
+dd,
+blockquote {
+  text-wrap: pretty;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+/* Justif enhances only elements whose computed text-align is justify. */
+.prose--set p,
+.prose--set li,
+.prose--set dd,
+.prose--set blockquote,
+.typeset {
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  hanging-punctuation: first last;
+  /* Justif plans every break; emergency breaks inside words would undo them. */
+  overflow-wrap: normal;
+}
+.prose--set code,
+.typeset code {
+  hyphens: none;
+  -webkit-hyphens: none;
+  overflow-wrap: normal;
+}
 code,
 pre {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
