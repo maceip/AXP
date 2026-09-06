@@ -12,6 +12,8 @@ const roots = [
   "remark-gfm",
   "@fontsource-variable/dm-sans",
   "@fontsource/ibm-plex-mono",
+  "elkjs",
+  "entities",
 ];
 const packages = new Map();
 async function visit(name, parent = process.cwd()) {

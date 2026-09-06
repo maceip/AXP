@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 502.66400000000004 612.2" width="502.66400000000004" height="612.2" style="--bg:#f6f7f4;--fg:#252c28;--line:#8aa392;--accent:#397452;--muted:#626b65;--surface:#ffffff;--border:#cfd9cc">
+<style>
+  
+  text { font-family: 'AXP Runde', system-ui, sans-serif; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .node > :first-child { filter: url(#axp-soft); }
+  .edge, .node *, .subgraph * { stroke-linejoin: round; stroke-linecap: round; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <filter id="axp-soft" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.4" flood-color="var(--fg)" flood-opacity="0.13" /></filter>
+  <marker id="arrowhead" markerWidth="15" markerHeight="9" refX="14" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0 1.9799999999999995 C4.5 -0.7199999999999998, 10.5 0, 15 4.5 C10.5 9, 4.5 9.719999999999999, 0 7.0200000000000005 Q2.4 4.5, 0 1.9799999999999995 Z" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.6" stroke-linejoin="round" /><path d="M1.7999999999999998 4.5 L11.700000000000001 4.5" stroke="var(--bg)" stroke-width="0.9" stroke-opacity="0.7" stroke-linecap="round" fill="none" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="15" markerHeight="9" refX="14" refY="4.5" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+    <path d="M0 1.9799999999999995 C4.5 -0.7199999999999998, 10.5 0, 15 4.5 C10.5 9, 4.5 9.719999999999999, 0 7.0200000000000005 Q2.4 4.5, 0 1.9799999999999995 Z" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.6" stroke-linejoin="round" /><path d="M1.7999999999999998 4.5 L11.700000000000001 4.5" stroke="var(--bg)" stroke-width="0.9" stroke-opacity="0.7" stroke-linecap="round" fill="none" />
+  </marker>
+</defs>
+<path class="edge" data-from="_start" data-to="Connecting" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M237.37 128.90 L237.37 188.90" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="Connecting" data-to="Parked" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="claim accepted" d="M237.37 225.80 L237.37 296.10 Q237.37 306.10 227.37 306.10 L200.64 306.10 Q190.64 306.10 190.64 316.10 L190.64 330.10" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="Parked" data-to="Working" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="prompt" d="M156.08 330.10 L156.08 324.10 Q156.08 318.10 150.08 318.10 L71 318.10 Q61 318.10 61 308.10 L61 259.80 Q61 249.80 71 249.80 L88.18 249.80 Q98.18 249.80 98.18 239.80 L98.18 76.90" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="Working" data-to="Parked" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="turn settled" d="M121.07 76.90 L121.07 247.97 Q121.07 249.80 122.90 249.80 L122.90 249.80 Q124.73 249.80 124.73 251.63 L124.73 296.10 Q124.73 306.10 134.73 306.10 L163.36 306.10 Q173.36 306.10 173.36 316.10 L173.36 330.10" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="Working" data-to="Reconnecting" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="socket lost" d="M143.97 76.90 L143.97 82.90 Q143.97 88.90 149.97 88.90 L371.42 88.90 Q381.42 88.90 381.42 98.90 L381.42 188.90" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="Reconnecting" data-to="Parked" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="same epoch" d="M360.85 225.80 L360.85 273.80 L360.13 273.80 L360.13 308.10 Q360.13 318.10 350.13 318.10 L213.92 318.10 Q207.92 318.10 207.92 324.10 L207.92 330.10" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="Reconnecting" data-to="Stopped" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="budget revoked" d="M402.00 225.80 L402.00 403.00 L402.71 403.00 L402.71 437.30 Q402.71 447.30 392.71 447.30 L289.78 447.30 Q283.78 447.30 283.78 453.30 L283.78 459.30" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="Parked" data-to="Stopped" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Ctrl-C" d="M182.00 367 L182.00 437.30 Q182.00 447.30 192.00 447.30 L247.49 447.30 Q253.49 447.30 253.49 453.30 L253.49 459.30" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="Stopped" data-to="_end" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M268.63 496.20 L268.63 544.20" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<g class="edge-label" data-from="Connecting" data-to="Parked" data-label="claim accepted">
+  <rect x="193.374" y="256.8" width="87.14800000000002" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="236.948" y="271.95" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">claim accepted</text>
+</g>
+<g class="edge-label" data-from="Parked" data-to="Working" data-label="prompt">
+  <rect x="36" y="280.8" width="49.726000000000006" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="60.863" y="295.95" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">prompt</text>
+</g>
+<g class="edge-label" data-from="Working" data-to="Parked" data-label="turn settled">
+  <rect x="89.726" y="256.8" width="69.328" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="124.39" y="271.95" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">turn settled</text>
+</g>
+<g class="edge-label" data-from="Working" data-to="Reconnecting" data-label="socket lost">
+  <rect x="346.92400000000004" y="127.60000000000002" width="68.14000000000001" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="380.994" y="142.75000000000003" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">socket lost</text>
+</g>
+<g class="edge-label" data-from="Reconnecting" data-to="Parked" data-label="same epoch">
+  <rect x="322.634" y="280.8" width="74.08000000000001" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="359.67400000000004" y="295.95" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">same epoch</text>
+</g>
+<g class="edge-label" data-from="Reconnecting" data-to="Stopped" data-label="budget revoked">
+  <rect x="356.71400000000006" y="410.00000000000006" width="91.9" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="402.66400000000004" y="425.15000000000003" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">budget revoked</text>
+</g>
+<g class="edge-label" data-from="Parked" data-to="Stopped" data-label="Ctrl-C">
+  <rect x="159.499625" y="410.00000000000006" width="44.379999999999995" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="181.689625" y="425.15000000000003" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Ctrl-C</text>
+</g>
+<g class="node" data-id="_start" data-label="" data-shape="state-start">
+  <circle cx="237.374" cy="114.9" r="12" fill="var(--_text)" stroke="none" />
+</g>
+<g class="node" data-id="Connecting" data-label="Connecting" data-shape="rounded">
+  <rect x="183.054" y="188.9" width="108.64" height="36.900000000000006" rx="14" ry="14" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="237.374" y="207.35000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Connecting</text>
+</g>
+<g class="node" data-id="Parked" data-label="Parked" data-shape="rounded">
+  <rect x="138.794625" y="330.1" width="86.41" height="36.900000000000006" rx="14" ry="14" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="181.99962499999998" y="348.55" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Parked</text>
+</g>
+<g class="node" data-id="Working" data-label="Working" data-shape="rounded">
+  <rect x="75.27583333333334" y="40" width="91.59700000000001" height="36.900000000000006" rx="14" ry="14" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="121.07433333333334" y="58.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Working</text>
+</g>
+<g class="node" data-id="Reconnecting" data-label="Reconnecting" data-shape="rounded">
+  <rect x="319.694" y="188.9" width="123.46" height="36.900000000000006" rx="14" ry="14" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="381.42400000000004" y="207.35000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Reconnecting</text>
+</g>
+<g class="node" data-id="Stopped" data-label="Stopped" data-shape="rounded">
+  <rect x="223.20545833333335" y="459.30000000000007" width="90.856" height="36.900000000000006" rx="14" ry="14" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="268.63345833333335" y="477.75000000000006" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Stopped</text>
+</g>
+<g class="node" data-id="_end" data-label="" data-shape="state-end">
+  <circle cx="268.63345833333335" cy="558.2" r="12" fill="none" stroke="var(--_text)" stroke-width="3" />
+  <circle cx="268.63345833333335" cy="558.2" r="8" fill="var(--_text)" stroke="none" />
+</g>
+</svg>

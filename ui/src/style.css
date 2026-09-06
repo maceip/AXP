@@ -1358,6 +1358,25 @@ h1 {
   border: 1px solid var(--edge-default);
   text-align: left;
 }
+.diagram {
+  margin: 14px 0;
+  padding: 16px 18px;
+  background: #fbfcf9;
+  border: 1px solid #e3e9dc;
+  border-radius: 14px;
+  overflow: auto;
+}
+.diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.diagram--source figcaption {
+  font-size: 10px;
+  color: var(--warning);
+  margin-top: 8px;
+}
 .prose blockquote {
   margin-left: 0;
   border-left: 2px solid #b9c9aa;

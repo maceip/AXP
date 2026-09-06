@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 933.7724583333334 916.904" width="933.7724583333334" height="916.904" style="--bg:#f6f7f4;--fg:#252c28;--line:#8aa392;--accent:#397452;--muted:#626b65;--surface:#ffffff;--border:#cfd9cc">
+<style>
+  
+  text { font-family: 'AXP Runde', system-ui, sans-serif; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .node > :first-child { filter: url(#axp-soft); }
+  .edge, .node *, .subgraph * { stroke-linejoin: round; stroke-linecap: round; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <filter id="axp-soft" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.4" flood-color="var(--fg)" flood-opacity="0.13" /></filter>
+  <marker id="arrowhead" markerWidth="15" markerHeight="9" refX="14" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0 1.9799999999999995 C4.5 -0.7199999999999998, 10.5 0, 15 4.5 C10.5 9, 4.5 9.719999999999999, 0 7.0200000000000005 Q2.4 4.5, 0 1.9799999999999995 Z" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.6" stroke-linejoin="round" /><path d="M1.7999999999999998 4.5 L11.700000000000001 4.5" stroke="var(--bg)" stroke-width="0.9" stroke-opacity="0.7" stroke-linecap="round" fill="none" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="15" markerHeight="9" refX="14" refY="4.5" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+    <path d="M0 1.9799999999999995 C4.5 -0.7199999999999998, 10.5 0, 15 4.5 C10.5 9, 4.5 9.719999999999999, 0 7.0200000000000005 Q2.4 4.5, 0 1.9799999999999995 Z" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.6" stroke-linejoin="round" /><path d="M1.7999999999999998 4.5 L11.700000000000001 4.5" stroke="var(--bg)" stroke-width="0.9" stroke-opacity="0.7" stroke-linecap="round" fill="none" />
+  </marker>
+</defs>
+<path class="edge" data-from="A" data-to="B" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M137.49 76.90 L137.49 124.90" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="B" data-to="C" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="no" d="M110.08 261.99 L110.08 406.31 Q110.08 412.70 103.68 412.70 L103.68 412.70 Q97.28 412.70 97.28 419.10 L97.28 491.80" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="B" data-to="D" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="yes" d="M164.91 261.99 L164.91 315.40 Q164.91 325.40 174.91 325.40 L222.81 325.40 Q232.81 325.40 232.81 335.40 L232.81 415.89" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="D" data-to="E" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M232.81 452.79 L232.81 462.55 Q232.81 472.30 223.06 472.30 L180.75 472.30 Q170.75 472.30 170.75 482.30 L170.75 577.90" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="D" data-to="F" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M232.81 452.79 L232.81 462.55 Q232.81 472.30 242.57 472.30 L348.54 472.30 Q358.30 472.30 358.30 482.05 L358.30 491.80" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="F" data-to="G" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="no" d="M321.25 602.95 L321.25 640.80 Q321.25 650.80 311.25 650.80 L266.21 650.80 Q256.21 650.80 256.21 660.80 L256.21 709.10 Q256.21 719.10 246.21 719.10 L243.92 719.10 Q233.92 719.10 233.92 729.10 L233.92 743.10" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="G" data-to="F" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M299.03 743.10 L299.03 729.10 Q299.03 719.10 309.03 719.10 L348.30 719.10 Q358.30 719.10 358.30 709.10 L358.30 640.00" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="F" data-to="H" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="yes" d="M395.35 602.95 L395.35 664.80 Q395.35 674.80 405.35 674.80 L444.61 674.80 Q454.61 674.80 454.61 684.80 L454.61 743.10" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="H" data-to="I" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M454.61 780.00 L454.61 800.00 Q454.61 810.00 464.61 810.00 L531.29 810.00 Q541.29 810.00 541.29 820.00 L541.29 840.00" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="I" data-to="J" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M541.29 840.00 L541.29 834.00 Q541.29 828.00 535.29 828.00 L534.19 828.00 Q527.08 828.00 527.08 820.90 L527.08 672.80 Q527.08 662.80 537.08 662.80 L628.76 662.80 Q638.76 662.80 638.76 652.80 L638.76 186.16" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="J" data-to="K" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="yes" d="M687.48 234.88 L687.48 664.80 Q687.48 674.80 677.48 674.80 L637.97 674.80 Q627.97 674.80 627.97 684.80 L627.97 743.10" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="K" data-to="I" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M627.97 780.00 L627.97 800.00 Q627.97 810.00 617.97 810.00 L551.29 810.00 Q541.29 810.00 541.29 820.00 L541.29 840.00" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="J" data-to="L" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="no" d="M736.20 186.16 L736.20 236.88 Q736.20 246.88 746.20 246.88 L809.82 246.88 Q819.82 246.88 819.82 256.88 L819.82 327.18" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="L" data-to="M" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M819.82 378.08 L819.82 415.89" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<g class="edge-label" data-from="B" data-to="C" data-label="no">
+  <rect x="82.28399999999999" y="419.7040000000001" width="29.53" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="97.04899999999999" y="434.8540000000001" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">no</text>
+</g>
+<g class="edge-label" data-from="B" data-to="D" data-label="yes">
+  <rect x="214.8125" y="332.4030000000001" width="35.47" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="232.5475" y="347.55300000000005" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">yes</text>
+</g>
+<g class="edge-label" data-from="F" data-to="G" data-label="no">
+  <rect x="241.20795833333335" y="657.8040000000001" width="29.53" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="255.97295833333334" y="672.9540000000001" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">no</text>
+</g>
+<g class="edge-label" data-from="F" data-to="H" data-label="yes">
+  <rect x="436.61245833333334" y="681.8040000000001" width="35.47" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="454.34745833333335" y="696.9540000000001" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">yes</text>
+</g>
+<g class="edge-label" data-from="J" data-to="K" data-label="yes">
+  <rect x="609.9714583333333" y="681.8040000000001" width="35.47" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="627.7064583333333" y="696.9540000000001" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">yes</text>
+</g>
+<g class="edge-label" data-from="J" data-to="L" data-label="no">
+  <rect x="804.8159583333334" y="253.88399999999993" width="29.53" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="819.5809583333333" y="269.03399999999993" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">no</text>
+</g>
+<g class="node" data-id="A" data-label="Email arrives" data-shape="rectangle">
+  <rect x="77.61612500000001" y="40.000000000000085" width="119.755" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="137.493625" y="58.45000000000009" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Email arrives</text>
+</g>
+<g class="node" data-id="B" data-label="Sender allowed?" data-shape="diamond">
+  <path d="M127.31 135.08 Q137.49 124.90 147.68 135.08 L209.56 196.97 Q219.75 207.15 209.56 217.33 L147.68 279.22 Q137.49 289.40 127.31 279.22 L65.42 217.33 Q55.24 207.15 65.42 196.97 Z" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="137.49362499999998" y="207.15150000000008" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Sender allowed?</text>
+</g>
+<g class="node" data-id="C" data-label="Warn locally" data-shape="rectangle">
+  <rect x="40" y="491.8035000000001" width="114.568" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="97.28399999999999" y="510.2535000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Warn locally</text>
+</g>
+<g class="node" data-id="D" data-label="Save task" data-shape="rectangle">
+  <rect x="182.56799999999998" y="415.8935" width="100.489" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="232.8125" y="434.3435" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Save task</text>
+</g>
+<g class="node" data-id="E" data-label="Acknowledge by email" data-shape="stadium">
+  <rect x="85.31116666666668" y="577.9040000000001" width="170.88399999999996" height="36.900000000000006" rx="18.450000000000003" ry="18.450000000000003" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="170.75316666666666" y="596.3540000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Acknowledge by email</text>
+</g>
+<g class="node" data-id="F" data-label="Session free?" data-shape="diamond">
+  <path d="M348.11 501.99 Q358.30 491.80 368.48 501.99 L422.21 555.72 Q432.40 565.90 422.21 576.09 L368.48 629.82 Q358.30 640.00 348.11 629.82 L294.38 576.09 Q284.20 565.90 294.38 555.72 Z" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="358.29566666666665" y="565.9040000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Session free?</text>
+</g>
+<g class="node" data-id="G" data-label="Queue behind current turn" data-shape="rectangle">
+  <rect x="168.80445833333334" y="743.104" width="195.337" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="266.47295833333334" y="761.5540000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Queue behind current turn</text>
+</g>
+<g class="node" data-id="H" data-label="Start AHP turn" data-shape="rectangle">
+  <rect x="392.14145833333333" y="743.104" width="124.94200000000001" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="454.61245833333334" y="761.5540000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Start AHP turn</text>
+</g>
+<g class="node" data-id="I" data-label="Agent works in worktree" data-shape="subroutine">
+  <rect x="449.55145833333336" y="840.004" width="183.481" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <line x1="457.55145833333336" y1="840.004" x2="457.55145833333336" y2="876.904" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <line x1="625.0324583333334" y1="840.004" x2="625.0324583333334" y2="876.904" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="541.2919583333334" y="858.4540000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Agent works in worktree</text>
+</g>
+<g class="node" data-id="J" data-label="Tool needs approval?" data-shape="diamond">
+  <path d="M677.30 50.18 Q687.48 40 697.66 50.18 L774.74 127.26 Q784.92 137.44 774.74 147.62 L697.66 224.70 Q687.48 234.88 677.30 224.70 L600.22 147.62 Q590.04 137.44 600.22 127.26 Z" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="687.4807500000001" y="137.44199999999998" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Tool needs approval?</text>
+</g>
+<g class="node" data-id="K" data-label="Ask a maintainer in AXP" data-shape="rectangle">
+  <rect x="538.0834583333334" y="743.104" width="179.77599999999998" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="627.9714583333334" y="761.5540000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Ask a maintainer in AXP</text>
+</g>
+<g class="node" data-id="L" data-label="Checkpoint saved" data-shape="cylinder">
+  <rect x="745.8594583333334" y="334.18399999999997" width="147.913" height="36.900000000000006" fill="var(--_node-fill)" stroke="none" />
+  <line x1="745.8594583333334" y1="334.18399999999997" x2="745.8594583333334" y2="371.08399999999995" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <line x1="893.7724583333334" y1="334.18399999999997" x2="893.7724583333334" y2="371.08399999999995" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <ellipse cx="819.8159583333334" cy="371.08399999999995" rx="73.9565" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <ellipse cx="819.8159583333334" cy="334.18399999999997" rx="73.9565" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="819.8159583333334" y="352.63399999999996" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Checkpoint saved</text>
+</g>
+<g class="node" data-id="M" data-label="Reply with result" data-shape="stadium">
+  <rect x="751.4169583333334" y="415.8935" width="136.798" height="36.900000000000006" rx="18.450000000000003" ry="18.450000000000003" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="819.8159583333334" y="434.3435" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Reply with result</text>
+</g>
+</svg>

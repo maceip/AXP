@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1796.7720000000002 381.75" width="1796.7720000000002" height="381.75" style="--bg:#f6f7f4;--fg:#252c28;--line:#8aa392;--accent:#397452;--muted:#626b65;--surface:#ffffff;--border:#cfd9cc">
+<style>
+  
+  text { font-family: 'AXP Runde', system-ui, sans-serif; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .node > :first-child { filter: url(#axp-soft); }
+  .edge, .node *, .subgraph * { stroke-linejoin: round; stroke-linecap: round; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <filter id="axp-soft" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.4" flood-color="var(--fg)" flood-opacity="0.13" /></filter>
+  <marker id="arrowhead" markerWidth="15" markerHeight="9" refX="14" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0 1.9799999999999995 C4.5 -0.7199999999999998, 10.5 0, 15 4.5 C10.5 9, 4.5 9.719999999999999, 0 7.0200000000000005 Q2.4 4.5, 0 1.9799999999999995 Z" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.6" stroke-linejoin="round" /><path d="M1.7999999999999998 4.5 L11.700000000000001 4.5" stroke="var(--bg)" stroke-width="0.9" stroke-opacity="0.7" stroke-linecap="round" fill="none" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="15" markerHeight="9" refX="14" refY="4.5" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+    <path d="M0 1.9799999999999995 C4.5 -0.7199999999999998, 10.5 0, 15 4.5 C10.5 9, 4.5 9.719999999999999, 0 7.0200000000000005 Q2.4 4.5, 0 1.9799999999999995 Z" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.6" stroke-linejoin="round" /><path d="M1.7999999999999998 4.5 L11.700000000000001 4.5" stroke="var(--bg)" stroke-width="0.9" stroke-opacity="0.7" stroke-linecap="round" fill="none" />
+  </marker>
+</defs>
+<g class="subgraph" data-id="Contributor" data-label="Contributor">
+  <rect x="1152.63" y="40" width="571.142" height="96.9" rx="16" ry="16" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" stroke-dasharray="6 5" />
+  <path d="M1168.63 40 H1707.7720000000002 A16 16 0 0 1 1723.7720000000002 56 V68 H1152.63 V56 A16 16 0 0 1 1168.63 40 Z" fill="var(--_group-hdr)" stroke="none" />
+  <text x="1164.63" y="54" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">Contributor</text>
+</g>
+<g class="subgraph" data-id="Maintainer" data-label="Maintainer">
+  <rect x="58" y="47.089500000000044" width="455.631" height="223.021" rx="16" ry="16" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" stroke-dasharray="6 5" />
+  <path d="M74 47.089500000000044 H497.631 A16 16 0 0 1 513.631 63.089500000000044 V75.08950000000004 H58 V63.089500000000044 A16 16 0 0 1 74 47.089500000000044 Z" fill="var(--_group-hdr)" stroke="none" />
+  <text x="70" y="61.089500000000044" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">Maintainer</text>
+</g>
+<g class="subgraph" data-id="Verifier" data-label="Verifier">
+  <rect x="573.631" y="140.75000000000003" width="524.999" height="176" rx="16" ry="16" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" stroke-dasharray="6 5" />
+  <path d="M589.631 140.75000000000003 H1082.63 A16 16 0 0 1 1098.63 156.75000000000003 V168.75000000000003 H573.631 V156.75000000000003 A16 16 0 0 1 589.631 140.75000000000003 Z" fill="var(--_group-hdr)" stroke="none" />
+  <text x="585.631" y="154.75000000000003" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">Verifier</text>
+</g>
+<path class="edge" data-from="C" data-to="D" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M1707.77 102.45 L1731.77 102.45 Q1741.77 102.45 1741.77 112.45 L1741.77 316.75 Q1741.77 326.75 1731.77 326.75 L50 326.75 Q40 326.75 40 316.75 L40 182.60 Q40 172.60 50 172.60 L74 172.60" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="D" data-to="A" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="changes needed" d="M209.85 145.43 L545.63 145.43 Q555.63 145.43 555.63 135.43 L555.63 112.45 Q555.63 102.45 565.63 102.45 L1168.63 102.45" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="E" data-to="F" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M497.63 199.77 L545.63 199.77 Q555.63 199.77 555.63 209.77 L555.63 232.75 Q555.63 242.75 565.63 242.75 L589.63 242.75" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="A" data-to="B" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M1330.62 102.45 L1378.62 102.45" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="B" data-to="C" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M1529.50 102.45 L1577.50 102.45" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="D" data-to="E" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="approve" d="M209.85 199.77 L383.06 199.77" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="F" data-to="G" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M774.59 242.75 L822.59 242.75" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<path class="edge" data-from="G" data-to="H" data-style="solid" data-arrow-start="false" data-arrow-end="true" d="M918.63 242.75 L966.63 242.75" fill="none" stroke="var(--_line)" stroke-width="1.75" marker-end="url(#arrowhead)" />
+<g class="edge-label" data-from="D" data-to="A" data-label="changes needed">
+  <rect x="1005.9779999999998" y="86.45000000000005" width="96.65200000000002" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="1054.3039999999999" y="101.60000000000005" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">changes needed</text>
+</g>
+<g class="edge-label" data-from="D" data-to="E" data-label="approve">
+  <rect x="281.02099999999996" y="183.77016666666668" width="58.042" height="30.3" rx="9" ry="9" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="310.042" y="198.9201666666667" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">approve</text>
+</g>
+<g class="node" data-id="A" data-label="Agent edits worktree" data-shape="rectangle">
+  <rect x="1168.63" y="84" width="161.99200000000002" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="1249.6260000000002" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Agent edits worktree</text>
+</g>
+<g class="node" data-id="B" data-label="Checkpoint bundle" data-shape="rectangle">
+  <rect x="1378.622" y="84" width="150.877" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="1454.0605" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Checkpoint bundle</text>
+</g>
+<g class="node" data-id="C" data-label="Sign manifest" data-shape="asymmetric">
+  <path d="M1584.59 91.54 Q1589.50 84 1598.50 84 L1698.77 84 Q1707.77 84 1707.77 93 L1707.77 111.90 Q1707.77 120.90 1698.77 120.90 L1598.50 120.90 Q1589.50 120.90 1584.59 113.36 L1582.41 109.99 Q1577.50 102.45 1582.41 94.91 Z" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="1642.6355000000003" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Sign manifest</text>
+</g>
+<g class="node" data-id="D" data-label="Review changes" data-shape="diamond">
+  <path d="M145.33 101.27 Q155.51 91.09 165.69 101.27 L226.84 162.42 Q237.02 172.60 226.84 182.78 L165.69 243.93 Q155.51 254.11 145.33 243.93 L84.18 182.78 Q74.00 172.60 84.18 162.42 Z" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="155.51049999999998" y="172.60000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Review changes</text>
+</g>
+<g class="node" data-id="E" data-label="Countersign" data-shape="rectangle">
+  <rect x="383.063" y="181.3201666666667" width="114.568" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="440.347" y="199.77016666666668" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Countersign</text>
+</g>
+<g class="node" data-id="F" data-label="Restore exact commit" data-shape="trapezoid">
+  <path d="M611.97 231.49 Q617.37 224.30 626.37 224.30 L737.84 224.30 Q746.84 224.30 752.25 231.49 L769.18 254.01 Q774.59 261.20 765.59 261.20 L598.63 261.20 Q589.63 261.20 595.04 254.01 Z" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="682.1089999999999" y="242.75" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Restore exact commit</text>
+</g>
+<g class="node" data-id="G" data-label="Run tests" data-shape="rectangle">
+  <rect x="822.587" y="224.3" width="96.043" height="36.900000000000006" rx="10" ry="10" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="870.6085" y="242.75" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Run tests</text>
+</g>
+<g class="node" data-id="H" data-label="Verified" data-shape="doublecircle">
+  <circle cx="1024.63" cy="242.75000000000003" r="58" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <circle cx="1024.63" cy="242.75000000000003" r="53" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5" />
+  <text x="1024.63" y="242.75000000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Verified</text>
+</g>
+</svg>

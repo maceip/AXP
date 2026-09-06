@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from "react";
+import { isValidElement, lazy, memo, Suspense, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import {
   ArrowUpRight,
@@ -14,6 +14,18 @@ import type {
   Contribution,
   WorkspaceView,
 } from "../../src/workspace-contract.js";
+
+// The diagram renderer bundles a layout engine; only fetch it when prose has one.
+const Diagram = lazy(() => import("./Diagram.js"));
+
+/** A fenced ```mermaid block arrives as <pre><code class="language-mermaid">. */
+function mermaidSource(children: ReactNode): string | null {
+  if (!isValidElement<{ className?: string; children?: ReactNode }>(children))
+    return null;
+  const { className, children: code } = children.props;
+  if (!className?.split(" ").includes("language-mermaid")) return null;
+  return typeof code === "string" ? code : null;
+}
 
 export function Mark({ small = false }: { small?: boolean }) {
   return (
@@ -177,6 +189,22 @@ export const Prose = memo(function Prose({ text }: { text: string }) {
           img: ({ alt }) => (
             <span className="muted">[Image: {alt || "attachment"}]</span>
           ),
+          pre: ({ children, ...rest }) => {
+            delete (rest as { node?: unknown }).node;
+            const code = mermaidSource(children);
+            if (code === null) return <pre {...rest}>{children}</pre>;
+            return (
+              <Suspense
+                fallback={
+                  <pre {...rest}>
+                    <code>{code}</code>
+                  </pre>
+                }
+              >
+                <Diagram code={code} />
+              </Suspense>
+            );
+          },
         }}
       >
         {text}

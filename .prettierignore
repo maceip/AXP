@@ -7,3 +7,5 @@ package-lock.json
 schema
 test/upstream
 docs/DOMAIN-DEPLOYMENT-HANDOFF-*.md
+ui/vendor/beautiful-mermaid
+docs/design/diagrams/*.svg
